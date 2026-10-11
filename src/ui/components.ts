@@ -51,3 +51,31 @@ export function luckyRow(l: { colors: string[]; numbers: number[]; directions: s
 export function sectionTitle(text: string, sub?: string): HTMLElement {
   return reveal(h("div", { class: "sec-title" }, h("h2", null, text), sub && h("p", null, sub)));
 }
+
+/** Chinese numeral for small counts (1-99), e.g. 14 → 十四. */
+export function cnNum(n: number): string {
+  const D = "零一二三四五六七八九";
+  if (n < 10) return D[n]!;
+  const t = Math.floor(n / 10);
+  return `${t > 1 ? D[t] : ""}十${n % 10 ? D[n % 10] : ""}`;
+}
+
+/** Content shown only in one reading mode. body[data-mode] switches it with CSS, so no re-render is needed. */
+export const onlyPro = (...children: (Node | string | false | null | undefined)[]) => h("div", { class: "only-pro" }, ...children);
+export const onlyPlain = (...children: (Node | string | false | null | undefined)[]) => h("div", { class: "only-plain" }, ...children);
+
+export const TONE_MARK = { good: "▲", bad: "▼", mixed: "◆" } as const;
+export const TONE_NAME = { good: "顺", bad: "慎", mixed: "平" } as const;
+
+/**
+ * One statement from one system. Pro mode shows the rule and the everyday sentence;
+ * plain mode shows only the everyday sentence.
+ */
+export function statement(s: { tone: keyof typeof TONE_MARK; weight: number; pro: string; plain: string }, source: string | Node, i = 0): HTMLElement {
+  return h(
+    "li",
+    { class: `stmt tone-${s.tone} w${s.weight}`, style: { "--i": i } as never },
+    h("i", { class: "stmt-mark", "aria-label": TONE_NAME[s.tone] }, TONE_MARK[s.tone]),
+    h("div", null, h("p", { class: "stmt-plain" }, s.plain), h("p", { class: "stmt-pro only-pro" }, s.pro), h("small", { class: "stmt-src" }, source)),
+  );
+}

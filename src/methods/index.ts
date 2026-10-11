@@ -1,12 +1,14 @@
 import type { Chart } from "../core/chart";
 import { astrology } from "./astrology";
 import { bazi } from "./bazi";
+import { chaldean } from "./chaldean";
 import { chenggu } from "./chenggu";
+import { firdaria } from "./firdaria";
+import { hellenistic } from "./hellenistic";
 import { kyusei } from "./kyusei";
 import { maya } from "./maya";
 import { meihua } from "./meihua";
 import { numerology } from "./numerology";
-import { shengxiao } from "./shengxiao";
 import { sukuyo } from "./sukuyo";
 import { tarot } from "./tarot";
 import type { MethodFn, MethodId, MethodResult } from "./types";
@@ -18,15 +20,17 @@ export const METHODS: Record<MethodId, MethodFn> = {
   ziwei,
   chenggu,
   meihua,
-  shengxiao,
   kyusei,
   sukuyo,
   astrology,
+  hellenistic,
+  chaldean,
+  firdaria,
   tarot,
   numerology,
   vedic,
   maya,
-} as Record<MethodId, MethodFn>;
+};
 
 export const METHOD_ORDER = Object.keys(METHODS) as MethodId[];
 

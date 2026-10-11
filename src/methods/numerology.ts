@@ -1,6 +1,7 @@
 import { digitSum } from "../core/ganzhi";
 import { LIFE_PATH, PERSONAL_YEAR } from "../data/numerology";
-import { profileLucky, profileSections } from "./profile";
+import { PLAIN_NUM_LINE, PLAIN_NUM_MISSING } from "../data/plain-numerology";
+import { plainProfileSections, profileLucky, profileSections } from "./profile";
 import type { MethodFn } from "./types";
 
 const MASTER = [11, 22, 33];
@@ -60,6 +61,10 @@ export const numerology: MethodFn<NumerologyVisual> = (chart) => {
     .filter(([, v]) => v === 0)
     .map(([k]) => k);
 
+  const base = plainProfileSections(p, `把你出生年月日的数字一位位加起来，直到只剩一位（11、22、33除外），你得到的核心数字是 ${lp.value}，也就是「${p.title}」这一类人。`);
+  const plainLines = lines.map((n) => PLAIN_NUM_LINE[n.split(" ")[0]!]).filter(Boolean);
+  const plainMissing = missing.map((m) => PLAIN_NUM_MISSING[m]).filter(Boolean).slice(0, 3);
+
   return {
     id: "numerology",
     name: "生命灵数",
@@ -89,6 +94,25 @@ export const numerology: MethodFn<NumerologyVisual> = (chart) => {
       },
       { title: `${now} 流年 ${personalYear} · ${py.name}`, body: py.text },
     ],
+    plain: {
+      summary: `你的核心数字是 ${lp.value}：「${p.title}」。${p.summary}${now} 年对你来说是「${py.name.replace(/^个人年 \d · /, "")}」。`,
+      sections: [
+        base[0]!,
+        base[1]!,
+        base[2]!,
+        {
+          title: "数字里的强项和功课",
+          body:
+            (plainLines.length ? `你的生日数字凑在一起，显示你${plainLines.join("；")}。` : "你的生日数字比较分散，特点是灵活，不被单一模式限制。") +
+            (plainMissing.length ? `生日里没出现的一些数字，提示你可以多练习这些事，比如：${plainMissing.join("；")}。` : "九个数字都出现了，各方面比较均衡。"),
+        },
+        { title: `${now} 年的节奏和建议`, body: `${py.text}${base[3]!.body}` },
+        {
+          title: "这套方法怎么算的",
+          body: "生命灵数来自古希腊毕达哥拉斯的数字学说，认为数字背后有性格的规律。它把出生的年、月、日分别加到一位数，再相加，得到一个核心数字；再看生日里出现了哪些数字，看哪些特点强，哪些需要练习。",
+        },
+      ],
+    },
     caveats: ["生命灵数有多种化约流派，此处采用“月、日、年分别化约后相加”，并保留大师数 11/22/33。"],
     visual: { lifePath: lp.value, digits, grid, lines, birthday, personalYear },
   };

@@ -1,7 +1,7 @@
 import { WU_XING } from "../data/bazi";
 import type { WuXing } from "../data/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
-import { luckyRow, scoreBars, sectionTitle } from "./components";
+import { cnNum, luckyRow, scoreBars, sectionTitle } from "./components";
 import { countUp, h, reveal, sleep, svg, typewrite, WX_COLOR } from "./dom";
 import { birthLine } from "./hub";
 import { getState } from "./state";
@@ -12,6 +12,7 @@ export function renderSummary(view: HTMLElement) {
   const { results, fusion } = getState();
   if (!results || !fusion) return;
   const year = new Date().getFullYear();
+  const n = cnNum(results.length);
 
   const score = h("b", null, "0");
   const oracle = h("div", { class: "oracle" }, ...fusion.oracle.map(() => h("p")));
@@ -20,7 +21,7 @@ export function renderSummary(view: HTMLElement) {
     h(
       "header",
       { class: "page-head" },
-      h("p", { class: "eyebrow" }, "TWELVE SYSTEMS · ONE CHART"),
+      h("p", { class: "eyebrow" }, `${results.length} SYSTEMS · ONE CHART`),
       h("h1", { class: "title-glow small" }, "命运全息图"),
       h("p", { class: "birth-line" }, birthLine()),
       h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, "综合星运")),
@@ -57,7 +58,7 @@ export function renderSummary(view: HTMLElement) {
   }).sort((a, b) => b.sd - a.sd)[0]!;
 
   view.append(
-    sectionTitle("五维星图", "金色为十二体系的平均值，淡色线为每一种体系各自的判断"),
+    sectionTitle("五维星图", `金色为${n}体系的平均值，淡色线为每一种体系各自的判断`),
     reveal(h("div", { class: "glass v-row radar-row" }, radar, h("div", null, scoreBars(fusion.scores), h("p", { class: "v-caption" }, `体系之间分歧最大的是「${DIM_NAMES[spread.d]}」（标准差 ${spread.sd.toFixed(1)} 分）——不同文明对它的看法并不一致。`)))),
   );
 
@@ -91,7 +92,7 @@ export function renderSummary(view: HTMLElement) {
         h(
           "div",
           { class: "glass pad" },
-          h("h4", null, "十二体系的投票"),
+          h("h4", null, `${n}体系的投票`),
           h("ul", { class: "votes" }, ...votes.map((d) => h("li", null, h("b", null, DIM_NAMES[d]), h("span", null, ...Array.from({ length: fusion.topVotes[d] }, (_, i) => h("i", { style: { "--i": i } as never }))), h("small", null, `${fusion.topVotes[d]} 票`)))),
           h("p", { class: "v-caption" }, "每种体系把自己评分最高的一项作为一票。"),
         ),
@@ -106,7 +107,8 @@ export function renderSummary(view: HTMLElement) {
     reveal(luckyRow(fusion.lucky)),
     sectionTitle(`${year} 流年展望`, "各体系对今年的判断"),
     reveal(h("div", { class: "outlook" }, ...fusion.outlook.map((o, i) => reveal(h("div", { class: "glass outlook-item" }, h("small", null, o.from), h("p", null, o.text)), i * 80)))),
-    sectionTitle("十二扇门", "点击回到任意一种体系"),
+    reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-primary", href: "#/timeline" }, "逐年逐月看未来运程 ☽"), h("a", { class: "btn btn-ghost", href: "#/people" }, "关系合盘 ❦"))),
+    sectionTitle(`${n}扇门`, "点击回到任意一种体系"),
     reveal(
       h(
         "div",
@@ -129,7 +131,7 @@ export function renderSummary(view: HTMLElement) {
         { class: "caveats disclaimer" },
         h("b", null, "ⓘ 关于这份报告"),
         h("p", null, "命理与占星是流传千年的文化传统，不是经过验证的科学。没有可靠研究表明出生时刻能预测性格或命运；许多描述之所以“很准”，部分来自巴纳姆效应——笼统的描述人人都觉得像自己。"),
-        h("p", null, "十二种体系彼此独立，结论常常互相矛盾。“融合分数”只是把各体系的结果按同等权重取平均，是一种娱乐化的启发式算法，不代表任何真实的概率。"),
+        h("p", null, `${n}种体系彼此独立，结论常常互相矛盾。“融合分数”只是把各体系的结果按同等权重取平均，是一种娱乐化的启发式算法，不代表任何真实的概率。`),
         h("p", null, "不同流派在细节上也有分歧：年界取立春还是春节、子时如何换日、玛雅历用 GMT 还是 Dreamspell 算法等。本站在每个页面的“推算说明”中注明了所用规则。"),
         h("p", null, "请把它当作一面有趣的镜子，而不是人生决策的依据。全部计算都在你的浏览器内完成，不上传任何数据。"),
       ),

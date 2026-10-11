@@ -1,5 +1,6 @@
 import { RELATION, SHUKU } from "../data/sukuyo";
-import { profileLucky, profileSections } from "./profile";
+import { PLAIN_SUKUYO_REL } from "../data/plain-sukuyo";
+import { plainProfileSections, profileLucky, profileSections } from "./profile";
 import type { MethodFn } from "./types";
 
 /** Index (in SHUKU order 昴…胃) of the mansion on the 1st day of each lunar month. */
@@ -55,6 +56,22 @@ export const sukuyo: MethodFn<SukuyoVisual> = (chart) => {
         body: (["荣亲", "友衰", "安坏", "危成", "业胎"] as const).map((r) => `【${RELATION[r].name}】${names(r)}——${RELATION[r].text}`).join(""),
       },
     ],
+    plain: {
+      summary: `你是「${s.title}」型的人：${s.summary.replace(/^如/, "像")}和你最合拍的搭档是：${names("荣亲") || "暂无"}。`,
+      sections: [
+        ...plainProfileSections(s, `按你的农历生日，你属于二十七种类型里的「${s.name}」，也就是「${s.title}」这一类人。`),
+        {
+          title: "和谁合得来",
+          body: (["荣亲", "友衰", "危成", "安坏"] as const)
+            .map((r) => `${PLAIN_SUKUYO_REL[r].label}（${names(r)}）：${PLAIN_SUKUYO_REL[r].text}`)
+            .join(""),
+        },
+        {
+          title: "这套方法怎么算的",
+          body: "宿曜占星术是日本僧人从唐朝带回去的一套方法。它把一个月的每一天对应到二十七个“宿”（二十七种类型）中的一个，由你的农历生日找出你的类型，再按类型之间的距离，看两个人合不合拍。",
+        },
+      ],
+    },
     caveats: ["宿曜按日本旧历推算；中日农历在少数年份的初一日期相差一天，可能导致本命宿相邻一位。"],
     visual: { index, relations },
   };

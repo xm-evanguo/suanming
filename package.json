@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "bun index.html",
-    "build": "bun build ./index.html --outdir dist --minify",
+    "build": "rm -rf dist && bun build ./index.html --outdir dist --minify",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p ."
   }

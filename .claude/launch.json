@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "dev", "runtimeExecutable": "bun", "runtimeArgs": ["--port=5173", "index.html"], "port": 5173 }
+    { "name": "dev", "runtimeExecutable": "bun", "runtimeArgs": ["--port=5173", "index.html"], "port": 5173 },
+    { "name": "dist", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "5180", "-d", "dist"], "port": 5180 }
   ]
 }

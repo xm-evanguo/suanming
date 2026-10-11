@@ -1,3 +1,4 @@
+import { PLAIN_CHENGGU_PARTS, PLAIN_CHENGGU_TIERS } from "../data/plain-chenggu";
 import { type MethodFn, UNKNOWN_TIME_NOTE } from "./types";
 
 /** Bone weights in 钱 (1 两 = 10 钱). Source: the traditional 称骨 tables (e.g. 华易网 k366.com). */
@@ -108,6 +109,14 @@ export const chenggu: MethodFn<ChengguVisual> = (chart) => {
   const reading = READINGS[Math.min(Math.max(total - 21, 0), READINGS.length - 1)]!;
   const base = 48 + (total - 21) * 0.9;
   const tierIndex = TIERS.indexOf(tier);
+  const pt = PLAIN_CHENGGU_TIERS[tierIndex]!;
+  // Folk mapping: 年 = childhood, 月 = youth, 日 = midlife, 时 = later life. Ties go to the earlier stage.
+  const heaviest = parts.reduce((a, b) => (b.weight > a.weight ? b : a));
+  const lightest = parts.reduce((a, b) => (b.weight < a.weight ? b : a));
+  const stageLine =
+    heaviest.label === lightest.label
+      ? ""
+      : `四项里，“${PLAIN_CHENGGU_PARTS[heaviest.label]}”这一项分量最重，通常会更顺一些；“${PLAIN_CHENGGU_PARTS[lightest.label]}”这一项分量最轻，需要你自己多用点力。`;
 
   return {
     id: "chenggu",
@@ -138,6 +147,22 @@ export const chenggu: MethodFn<ChengguVisual> = (chart) => {
         body: "称骨法只以农历生辰查表相加，不论五行生克，是流传最广的民间速算。骨轻并非命苦的判决，更像在提醒你：命里少的那一分，要靠后天的努力补上。",
       },
     ],
+    plain: {
+      summary: `你的“骨重”是 ${fmtLiang(total)}，在传统的 2两1 到 7两1 之间。${pt.core}这只是一个流传很广的民间玩法，当作有趣的参考就好。`,
+      sections: [
+        {
+          title: "这个数字是什么意思",
+          body: `老办法把你出生的年、月、日、时各折成一个重量，加起来就是你的“骨重”：${parts.map((p) => `${p.label}${fmtLiang(p.weight)}`).join("、")}，合计 ${fmtLiang(total)}。数字越大，传统上说越“福厚”，但它不决定你的好坏。${stageLine}`,
+        },
+        { title: "你的人生节奏", body: pt.rhythm },
+        { title: "适合做什么", body: pt.work },
+        { title: "给你的建议", body: pt.advice },
+        {
+          title: "这套方法怎么算的",
+          body: "称骨法是民间流传的速算法，据说始于唐代。它只用农历的出生年、月、日、时去查四张表，把四个重量相加，再对应一段老话。算法简单，所以更适合当作一个有趣的参考。",
+        },
+      ],
+    },
     caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "称骨以农历正月初一为年界，闰月按本月计。"],
     visual: { parts, total },
   };

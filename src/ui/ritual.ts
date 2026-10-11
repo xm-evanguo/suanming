@@ -4,6 +4,7 @@ import { ZODIAC } from "../data/zodiac";
 import { PLANETS } from "../data/planets";
 import type { BaziVisual } from "../methods/bazi";
 import type { MeihuaVisual } from "../methods/meihua";
+import { cnNum } from "./components";
 import { esc, h, reducedMotion, sleep } from "./dom";
 import { getState, result } from "./state";
 
@@ -126,7 +127,7 @@ export function renderRitual(view: HTMLElement, setWarp: (on: boolean) => void):
 
     // 7. Fusion
     const fuse = fusionVisual(results.map((r) => r.icon));
-    await phase(6, "十二体系 · 融为一图", "东方、西方、东瀛、天竺、玛雅，汇于一处", fuse.el);
+    await phase(6, `${cnNum(results.length)}体系 · 融为一图`, "华夏、东瀛、希腊、罗马、波斯、天竺、玛雅，汇于一处", fuse.el);
     for (const r of results) await line(r.name, r.headline, 120);
     fuse.converge();
     await sleep(1600);

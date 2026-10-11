@@ -1,13 +1,17 @@
 import { fmtTime } from "../core/chart";
 import { DIMS } from "../methods/fusion";
 import type { MethodResult, Origin } from "../methods/types";
+import { cnNum } from "./components";
 import { countUp, h, reveal, tilt, typewrite } from "./dom";
-import { getState } from "./state";
+import { getState, listPeople } from "./state";
 
 const ORIGIN_TITLE: Record<Origin, string> = {
   中国: "东方 · 华夏命理",
   日本: "东瀛 · 日本星术",
   西方: "西方 · 星与数",
+  古希腊: "古希腊 · 希腊化占星",
+  古罗马: "古罗马 · 迦勒底七曜",
+  波斯: "波斯 · 法达星限",
   印度: "天竺 · 吠陀",
   玛雅: "中美洲 · 玛雅",
 };
@@ -37,7 +41,7 @@ export function renderHub(view: HTMLElement) {
       h("a", { class: "btn btn-ghost", href: "#/new" }, "↺ 重新输入"),
     ),
   );
-  typewrite(guide, "十二扇门已经为你打开。每一扇门后，都是一个古老文明看见的你。先逐一推开，或直接前往融合总结。", 32);
+  typewrite(guide, `${cnNum(results.length)}扇门已经为你打开。每一扇门后，都是一个古老文明看见的你。先逐一推开，或直接前往融合总结。`, 32);
 
   const score = h("b", null, "0");
   const ring = h("div", { class: "ring", style: { "--p": fusion.overall } as never }, score, h("small", null, "综合星运"));
@@ -49,7 +53,7 @@ export function renderHub(view: HTMLElement) {
       "div",
       null,
       h("p", { class: "eyebrow" }, "FUSION · 融合总结"),
-      h("h2", null, "十二体系的命运全息图"),
+      h("h2", null, `${cnNum(results.length)}体系的命运全息图`),
       h("p", null, fusion.oracle[3] ?? ""),
       h("span", { class: "btn btn-primary" }, "查看融合总结 ✦"),
     ),
@@ -57,6 +61,23 @@ export function renderHub(view: HTMLElement) {
   view.append(reveal(card));
   setTimeout(() => countUp(score, fusion.overall, 1600), 400);
   tilt(card, 4);
+
+  const people = listPeople().length;
+  const feature = (href: string, glyph: string, eyebrow: string, title: string, text: string, go: string) => {
+    const el = h("a", { class: "feature-card glass", href }, h("span", { class: "fc-glyph", "aria-hidden": "true" }, glyph), h("p", { class: "eyebrow" }, eyebrow), h("h3", null, title), h("p", null, text), h("span", { class: "mc-go" }, go));
+    tilt(el, 6);
+    return el;
+  };
+  view.append(
+    reveal(
+      h(
+        "div",
+        { class: "feature-row" },
+        feature("#/timeline", "☽", "TEMPUS · 流年流月", "未来运程", "今年起三年、未来十二个月。按事业、财富、感情等领域，看各体系说了什么。", "查看时间轴 →"),
+        feature("#/people", "❦", "CONIUNCTIO · 关系合盘", "你与身边的人", people ? `已添加 ${people} 人。看缘分、相处，以及谁能在事业上帮你。` : "加入伴侣、父母或朋友的生日，看缘分、相处，以及谁能在事业上帮你。", people ? "查看合盘 →" : "添加一个人 →"),
+      ),
+    ),
+  );
 
   const origins = [...new Set(results.map((r) => r.origin))];
   let n = 0;
@@ -73,7 +94,8 @@ function methodCard(r: MethodResult, i: number): HTMLElement {
     h("div", { class: "mc-icon" }, r.icon),
     h("div", { class: "mc-top" }, h("span", { class: "mc-name" }, r.name), h("span", { class: "origin-chip" }, r.origin)),
     h("p", { class: "mc-headline" }, r.headline),
-    h("p", { class: "mc-tagline" }, r.tagline),
+    h("p", { class: "mc-tagline only-pro" }, r.tagline),
+    r.plain && h("p", { class: "mc-tagline only-plain" }, r.plain.summary.split(/(?<=。)/)[0]),
     h("div", { class: "mini-bars" }, ...DIMS.map((d) => h("i", { style: { "--v": `${r.scores[d]}%` } as never }))),
     h("span", { class: "mc-go" }, "推开这扇门 →"),
   );

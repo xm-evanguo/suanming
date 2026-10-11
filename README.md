@@ -1,8 +1,15 @@
 # 天机星图 · suanming
 
-A single-page fortune-telling website. The user enters a birth date, time and place. The site then plays an animated "calculation ritual" and shows the results of 12 fortune-telling systems from China, Japan, India, the West and Mesoamerica. Each system has its own page. A fusion page combines all of the results.
+A single-page fortune-telling website. The user enters a birth date, time and place. The site plays an animated "calculation ritual" and then shows the results of 14 fortune-telling systems from China, Japan, ancient Greece, Rome, Persia, India, the modern West and Mesoamerica. Each system has its own page. A fusion page combines all of the results.
 
-All calculations run in the browser. There is no server and no network request for user data.
+Other features:
+
+- **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The professional view is the default.
+- **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom).
+- **Relationships (`#/people`).** The user can add a partner, parents, friends or colleagues. The site compares the two charts and answers questions such as "is this person my fate" or "can my parents help my career".
+- **Hand-drawn tarot.** On the tarot page, the user shuffles and draws three cards.
+
+All calculations run in the browser. There is no server and no network request for user data. The only external requests load Google Fonts.
 
 ## Run
 
@@ -14,45 +21,63 @@ bun install
 bun run dev
 ```
 
-The dev server prints its URL (the default is http://localhost:3000).
+The dev server prints its URL. `.claude/launch.json` starts it on port 5173.
 
 ## Scripts
 
 | Script | Purpose |
 | --- | --- |
 | `bun run dev` | Start the Bun HTML dev server with hot reload. |
-| `bun run build` | Build a static site into `dist/`. |
-| `bun test` | Run the engine tests in `tests/`. |
+| `bun run build` | Clear `dist/` and build the static site into it. |
+| `bun test` | Run the tests in `tests/`. |
 | `bun run typecheck` | Run `tsc --noEmit`. |
 
-## The 12 systems
+## Deploy
 
-| Page | System | Origin | Main input |
-| --- | --- | --- | --- |
-| `bazi` | 八字 (Four Pillars) | China | Solar terms, true solar time |
-| `ziwei` | 紫微斗数 | China | Lunar date, hour branch, gender (iztro) |
-| `chenggu` | 袁天罡称骨 | China | Lunar year, month, day, hour |
-| `meihua` | 梅花易数 | China | Lunar numbers to a King Wen hexagram |
-| `shengxiao` | 生肖 | China | 立春-based year branch |
-| `kyusei` | 九星気学 | Japan | 立春-based year and month star |
-| `sukuyo` | 宿曜占星術 | Japan | Lunar month and day to one of 27 mansions |
-| `astrology` | Western astrology | West | Planet longitudes, ASC and MC (astronomy-engine) |
-| `tarot` | Tarot birth cards | West | Mary K. Greer reduction, daily seeded spread |
-| `numerology` | Numerology | West | Life path number, Lo Shu grid |
-| `vedic` | Vedic nakshatra | India | Sidereal Moon (Lahiri), Vimshottari dasha |
-| `maya` | Maya Tzolk'in | Mesoamerica | GMT correlation 584283 |
+The site is static and uses hash routes, so it needs no redirect rules. It is deployed to Cloudflare Pages:
+
+```bash
+bun run build
+```
+
+```bash
+bunx wrangler@4 pages deploy dist --project-name suanming --branch main
+```
+
+## The 14 systems
+
+| Page | System | Origin | Main input | Period forecast |
+| --- | --- | --- | --- | --- |
+| `bazi` | 八字 (Four Pillars, includes 生肖) | China | Solar terms, true solar time | Years and months |
+| `ziwei` | 紫微斗数 | China | Lunar date, hour branch, gender (iztro) | Years and months |
+| `chenggu` | 袁天罡称骨 | China | Lunar year, month, day, hour | None |
+| `meihua` | 梅花易数 | China | Lunar numbers to a King Wen hexagram | None |
+| `kyusei` | 九星気学 | Japan | 立春-based year and month star | Years and months |
+| `sukuyo` | 宿曜占星術 | Japan | Lunar month and day to one of 27 mansions | None (note only) |
+| `astrology` | Western astrology | West | Planet longitudes, ASC and MC (astronomy-engine) | Years and months (transits) |
+| `hellenistic` | Hellenistic astrology | Ancient Greece | Whole-sign houses, sect, lots | Years and months (profections) |
+| `chaldean` | Chaldean planetary days and hours | Ancient Rome | Weekday and unequal hour at birth, decan | None |
+| `firdaria` | Persian firdaria | Persia | Day or night chart, 75-year sequence | Years only |
+| `tarot` | Tarot birth cards + hand draw | West | Mary K. Greer reduction | Years only |
+| `numerology` | Numerology | West | Life path number, Lo Shu grid | Years and months |
+| `vedic` | Vedic nakshatra | India | Sidereal Moon (Lahiri), Vimshottari dasha | Years and months |
+| `maya` | Maya Tzolk'in | Mesoamerica | GMT correlation 584283 | None |
 
 ## Structure
 
 - `src/core/` — the chart engine: time zone and DST to UTC, true solar time, planets, ASC/MC, 干支 helpers, and the city list.
-- `src/methods/` — one file per system. Each returns a `MethodResult` with text, five scores (0–100) and visual data. `fusion.ts` combines the results.
-- `src/data/` — static interpretation tables.
-- `src/ui/` — views (hero and wizard, ritual, hub, method page, summary), SVG visuals and the `h()` DOM helper.
-- `tests/engine.test.ts` — checks for tables, calendar maths and the full pipeline.
+- `src/methods/` — one file per system. Each returns a `MethodResult` with professional text, plain text (`plain`), five scores (0–100) and visual data. `fusion.ts` combines the results.
+- `src/forecast/` — period forecasts. Each system gives `Signal`s (area, tone, weight, professional and plain text) for 3 years and 12 months. `index.ts` holds the registry and `runForecasts`.
+- `src/compat/` — relationship comparison. Each system gives tagged `CompatItem`s for a pair of charts. `index.ts` holds `runCompat`.
+- `src/data/` — static interpretation tables and text pools (`plain-*`, `forecast-*`, `compat-*`).
+- `src/ui/` — views (wizard, ritual, hub, method page, summary, timeline, people), the mode toggle, the tarot draw, SVG visuals and the `h()` DOM helper.
+- `src/css/` — styles for the newer features (`features.css`) and the ancient-system visuals (`ancient.css`).
+- `tests/` — engine, plain-text, ancient-system, forecast and compatibility tests.
 
 ## Known limits
 
-- Fortune-telling has no scientific basis. The site shows a disclaimer on the summary page.
-- Schools differ. This site uses 立春 for the year boundary, the lunar-javascript default 子时 rule, true solar time when the user enables it, the GMT correlation for Maya (not Dreamspell), and Lahiri ayanamsa. Other schools can give different results.
-- The fusion score is an equal-weight mean of the 12 systems. It is a heuristic, not a measurement.
-- The last input is kept in `localStorage` in the user's browser only.
+- Fortune-telling has no scientific basis. The site shows disclaimers on the summary, timeline and relationship pages.
+- A specific statement is not an accurate statement. The forecasts use traditional rules, and the systems often disagree.
+- Schools differ. This site uses 立春 for the year boundary, the lunar-javascript default 子时 rule, true solar time when the user enables it, the GMT correlation for Maya (not Dreamspell), Lahiri ayanamsa, mean lunar nodes, and the Abu Ma'shar firdaria order. Other schools can give different results.
+- The fusion score and the timeline index add the signals of all systems with equal weight. They are heuristics, not probabilities.
+- The last input, the mode and the added people are kept in `localStorage` in the user's browser only.

@@ -22,6 +22,7 @@ import type { MethodId, MethodResult } from "../methods/types";
 import type { VedicVisual } from "../methods/vedic";
 import type { ZiweiVisual } from "../methods/ziwei";
 import { esc, h, svg, WX_COLOR } from "./dom";
+import { ANCIENT_VISUALS } from "./visuals-ancient";
 
 // Each renderer narrows the visual payload of its own method.
 // biome-ignore lint: heterogeneous visual payloads
@@ -89,6 +90,8 @@ function bazi(r: MethodResult<BaziVisual>): HTMLElement {
     { class: "v-bazi" },
     pillars,
     h("div", { class: "v-row" }, h("div", null, h("h4", null, "五行能量"), wx, caption(`日主自身力量 ${v.selfShare}% · 喜用 ${v.favorable.join("、")}`)), h("div", null, h("h4", null, "大运长河"), yun, caption(v.startYun))),
+    h("h4", null, "生肖与太岁"),
+    zodiacWheel(v.zodiac),
   );
 }
 
@@ -175,8 +178,8 @@ function meihua(r: MethodResult<MeihuaVisual>): HTMLElement {
 }
 
 // ───────────────────────── 生肖
-function shengxiao(r: MethodResult<ShengxiaoVisual>): HTMLElement {
-  const v = r.visual;
+/** 生肖 wheel with 三合 / 六合 / 冲 / 害 lines. Shown on the 八字 page. */
+function zodiacWheel(v: ShengxiaoVisual): HTMLElement {
   const pos = (i: number, rr = 150) => polar(200, 200, rr, i * 30 - 90);
   const ln = (a: number, b: number, cls: string) => {
     const p = pos(a, 132);
@@ -392,15 +395,12 @@ function tarot(r: MethodResult<TarotVisual>): HTMLElement {
   const v = r.visual;
   const year = new Date().getFullYear();
   const life = [card(v.personality, "人格牌", 0), ...(v.soul !== v.personality ? [card(v.soul, "灵魂牌", 1)] : []), card(v.yearCard, `${year} 年度牌`, 2)];
-  const spread = v.spread.map((s, i) => card(s.card, s.position, 3 + i, s.reversed));
   const root = h(
     "div",
     { class: "v-tarot" },
     h("h4", null, "生命牌"),
     h("div", { class: "tarot-row" }, ...life),
-    h("h4", null, "今日 · 时间之流牌阵"),
-    h("div", { class: "tarot-row" }, ...spread),
-    caption("卡牌会依次翻开；点击任意一张可以把它翻回去，再看一次。"),
+    caption("生命牌由生日数字算出，一生不变；年度牌每年更换。点击卡牌可以翻回去再看一次。"),
   );
   const io = new IntersectionObserver((es) => {
     if (!es.some((e) => e.isIntersecting)) return;
@@ -468,12 +468,11 @@ function maya(r: MethodResult<MayaVisual>): HTMLElement {
   );
 }
 
-export const VISUALS: Record<MethodId, Renderer> = {
+export const VISUALS: Partial<Record<MethodId, Renderer>> = {
   bazi,
   ziwei,
   chenggu,
   meihua,
-  shengxiao,
   kyusei,
   sukuyo,
   astrology,
@@ -481,4 +480,5 @@ export const VISUALS: Record<MethodId, Renderer> = {
   numerology,
   vedic,
   maya,
+  ...ANCIENT_VISUALS,
 };

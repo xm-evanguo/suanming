@@ -1,6 +1,7 @@
 import { zhiIndex } from "../core/ganzhi";
 import { HEXAGRAMS, TRIGRAMS } from "../data/hexagrams";
 import { WU_XING } from "../data/bazi";
+import { PLAIN_HEXAGRAMS, PLAIN_MOVING_STAGE, PLAIN_TI_YONG } from "../data/plain-meihua";
 import { type MethodFn, UNKNOWN_TIME_NOTE } from "./types";
 
 /** 先天八卦数: 1乾 2兑 3离 4震 5巽 6坎 7艮 8坤. */
@@ -101,6 +102,11 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
   const scores = { ...hb.scores };
   for (const k of Object.keys(scores) as (keyof typeof scores)[]) scores[k] = Math.max(10, Math.min(99, Math.round(scores[k] * 0.7 + hv.scores[k] * 0.3 + rel.delta)));
   const tiInfo = WU_XING[tiWx];
+  const plainBen = PLAIN_HEXAGRAMS[ben.num - 1]!;
+  const plainHu = PLAIN_HEXAGRAMS[hu.num - 1]!;
+  const plainBian = PLAIN_HEXAGRAMS[bian.num - 1]!;
+  const plainRel = PLAIN_TI_YONG[relKey]!;
+  const sameEnd = ben.num === bian.num;
 
   return {
     id: "meihua",
@@ -130,6 +136,23 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
         body: `体卦为${ti}（${TRIGRAMS[ti]!.nature}，属${tiWx}），代表你自身；用卦为${yong}（${TRIGRAMS[yong]!.nature}，属${yongWx}），代表外境。${rel.text}`,
       },
     ],
+    plain: {
+      summary: `用你的出生时间起出的“卦”，说的是你人生的底色，关键词是「${hb.keywords[0]}」「${hb.keywords[1]}」。${sameEnd ? "" : `后面会往「${hv.keywords[0]}」的方向发展。`}${{ 比和: "你和环境很合拍。", 用生体: "整体环境偏顺。", 体克用: "局面你能掌控。", 体生用: "要留意量力而行。", 用克体: "外部压力偏大。" }[relKey]}`,
+      sections: [
+        { title: "你人生的底色", body: `${plainBen}（这个卦传统上叫“${hb.name}”。）` },
+        { title: "过程中会经历什么", body: hu.num === ben.num ? "事情发展到中途，情形和底色很相近，不会有太大的反差。" : `事情发展到中途，常会碰到这样的情形：${plainHu}（传统上叫“${hh.name}”。）` },
+        { title: "最后往哪里走", body: `变化出现在${PLAIN_MOVING_STAGE[moving - 1]}。${sameEnd ? "走向与底色相近，说明你的路比较一致。" : bian.num === hu.num ? "最终的走向和中途的情形相近，前面的提示同样适用。" : `事情会逐渐往这样的方向发展：${plainBian}（传统上叫“${hv.name}”。）`}` },
+        { title: "你和外部环境的关系", body: plainRel },
+        {
+          title: "给你的建议",
+          body: `${rel.delta >= 0 ? "整体趋势对你有利，" : "整体需要谨慎一些，"}最要用心的是${PLAIN_MOVING_STAGE[moving - 1]}。${rel.delta >= 0 ? "顺势而为就好。" : "做决定前，多留一点余量。"}`,
+        },
+        {
+          title: "这套方法怎么算的",
+          body: "梅花易数用农历出生的年、月、日、时，各换成一个数字，再加起来得出一个“卦”（一种由六条线组成的图形）。它是用你的生辰起的，所以说的是人生底色，不是在回答某个具体问题。",
+        },
+      ],
+    },
     caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "此为以生辰起的“本命卦”，象征一生的底色，而非对某件具体事情的占问。"],
     visual: { ben, hu, bian, moving, numbers: { year, month, day, hour } },
   };

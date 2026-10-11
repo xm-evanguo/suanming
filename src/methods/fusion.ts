@@ -79,7 +79,7 @@ export function fuse(results: MethodResult[]): Fusion {
     `在东方的命盘里，你是「${h("bazi")}」——${t("bazi")}；紫微星盘说你${h("ziwei")}，梅花易数为你起出${h("meihua")}。`,
     `在西方的星空下，你是${h("astrology")}，${t("astrology")}；数字称你为「${t("numerology")}」，塔罗为你翻开${h("tarot")}。`,
     `日本的星宿认你为${h("sukuyo")}、${h("kyusei")}；恒河畔的占星师看见你的${h("vedic")}，玛雅祭司则唤你「${t("maya")}」。`,
-    `十二种体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是此生最值得经营的课题。五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}`,
+    `${results.length} 种体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是此生最值得经营的课题。五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}`,
   ];
 
   const outlook: Fusion["outlook"] = [];
@@ -87,7 +87,7 @@ export function fuse(results: MethodResult[]): Fusion {
     const f = by[id]?.facts.find((x) => x.label.includes(labelIncludes));
     if (f) outlook.push({ from: by[id]!.name, text: `${f.label}：${f.value}` });
   };
-  addFact("shengxiao", "流年");
+  addFact("bazi", "太岁");
   addFact("kyusei", "年盘");
   addFact("tarot", "年度牌");
   addFact("numerology", "个人流年");

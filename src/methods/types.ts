@@ -6,16 +6,18 @@ export type MethodId =
   | "ziwei"
   | "chenggu"
   | "meihua"
-  | "shengxiao"
   | "kyusei"
   | "sukuyo"
   | "astrology"
+  | "hellenistic"
+  | "chaldean"
+  | "firdaria"
   | "tarot"
   | "numerology"
   | "vedic"
   | "maya";
 
-export type Origin = "中国" | "日本" | "西方" | "印度" | "玛雅";
+export type Origin = "中国" | "日本" | "西方" | "古希腊" | "古罗马" | "波斯" | "印度" | "玛雅";
 
 export interface Fact {
   label: string;
@@ -45,6 +47,11 @@ export interface MethodResult<V = unknown> {
   /** Computed technical values, shown during the calculation ritual and on the page. */
   facts: Fact[];
   sections: Section[];
+  /**
+   * Plain-language reading for the 通俗版 toggle. No jargon; short sentences; second person;
+   * concrete, everyday advice. `summary` is 2-4 sentences. `sections` are 3-6 short blocks.
+   */
+  plain: { summary: string; sections: Section[] };
   /** Notes on approximations (unknown birth time, school differences...). */
   caveats: string[];
   visual: V;

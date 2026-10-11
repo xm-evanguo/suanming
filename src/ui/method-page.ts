@@ -1,9 +1,10 @@
 import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
-import { chips, luckyRow, scoreBars, sectionTitle } from "./components";
+import { chips, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
 import { result } from "./state";
+import { tarotDraw } from "./tarot-draw";
 import { VISUALS } from "./visuals";
 
 export function renderMethod(view: HTMLElement, id: MethodId) {
@@ -35,20 +36,24 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
   );
   setTimeout(() => typewrite(headline, r.headline, 55), 500);
 
-  const visual = VISUALS[id](r);
-  view.append(reveal(h("section", { class: "m-visual glass" }, visual)));
+  const render = VISUALS[id];
+  if (render) view.append(reveal(h("section", { class: "m-visual glass" }, render(r))));
 
+  const article = (s: { title: string; body: string }, i: number) =>
+    reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, s.title), h("p", null, s.body)), 60);
   view.append(
-    sectionTitle("推演数据", "以下数值均由你的出生信息实时计算得出"),
-    reveal(h("dl", { class: "facts" }, ...r.facts.flatMap((f) => [h("div", { class: "fact" }, h("dt", null, f.label), h("dd", null, f.value))]))),
+    onlyPro(
+      sectionTitle("推演数据", "以下数值均由你的出生信息实时计算得出"),
+      reveal(h("dl", { class: "facts" }, ...r.facts.flatMap((f) => [h("div", { class: "fact" }, h("dt", null, f.label), h("dd", null, f.value))]))),
+    ),
+    r.plain ? onlyPlain(sectionTitle("一句话说你", "通俗版：不用术语，说说这套方法看到了什么"), reveal(h("section", { class: "glass plain-summary" }, h("p", null, r.plain.summary)))) : "",
     sectionTitle("五维能量", "事业 · 财富 · 感情 · 健康 · 智慧"),
     scoreBars(r.scores),
     reveal(chips(r.keywords)),
-    sectionTitle("命运解读", "向下滑动，逐段揭示"),
+    onlyPro(sectionTitle("命运解读", "向下滑动，逐段揭示"), ...r.sections.map(article)),
+    r.plain ? onlyPlain(sectionTitle("说给你听", "通俗版解读"), ...r.plain.sections.map(article)) : "",
   );
-  r.sections.forEach((s, i) => {
-    view.append(reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, s.title), h("p", null, s.body)), 60));
-  });
+  if (id === "tarot") view.append(sectionTitle("亲手抽牌", "有具体问题时，用传统的方式问一问"), reveal(tarotDraw()));
   view.append(sectionTitle("开运指引"), reveal(luckyRow(r.lucky)));
   if (r.caveats.length) view.append(reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 推算说明"), ...r.caveats.map((c) => h("p", null, c)))));
 

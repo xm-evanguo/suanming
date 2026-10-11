@@ -1,5 +1,6 @@
 import { DAY_SIGNS, TONES } from "../data/maya";
-import { profileLucky, profileSections } from "./profile";
+import { PLAIN_TONES } from "../data/plain-maya";
+import { plainProfileSections, profileLucky, profileSections } from "./profile";
 import { type MethodFn, shiftScores } from "./types";
 
 /** GMT correlation constant: JDN of the Long Count origin 0.0.0.0.0 (4 Ajaw 8 Kumk'u). */
@@ -40,6 +41,8 @@ export const maya: MethodFn<MayaVisual> = (chart) => {
   const tone = TONES[t.tone - 1]!;
   const guide = DAY_SIGNS[(t.sign + 10) % 20]!;
 
+  const base = plainProfileSections(s, `玛雅历把每一天配上20种“印记”（20种类型）和13种“音调”（13种做事节奏）。你出生那天的印记是「${s.name}」，也就是「${s.title}」这一类人。`);
+
   return {
     id: "maya",
     name: "玛雅历",
@@ -63,6 +66,23 @@ export const maya: MethodFn<MayaVisual> = (chart) => {
       { title: `音调 · ${tone.name}`, body: tone.text },
       { title: "对面的镜子", body: `在 20 印记之环上，与你遥遥相对的是「${guide.name}」。它代表你最容易忽略、却最能让你完整的力量：${guide.summary}` },
     ],
+    plain: {
+      summary: `你是「${s.title}」型的人：${s.summary.replace(/^如/, "像")}你做事节奏的关键词是「${tone.keywords.slice(0, 2).join("」「")}」。`,
+      sections: [
+        base[0]!,
+        base[1]!,
+        base[2]!,
+        base[3]!,
+        {
+          title: "你的做事节奏和盲点",
+          body: `${PLAIN_TONES[t.tone - 1]}和你遥遥相对的类型是「${guide.name}」，它代表你最容易忽略、却能让你更完整的一面：${guide.summary}`,
+        },
+        {
+          title: "这套方法怎么算的",
+          body: "玛雅人有一种260天一轮的神圣历法：20种印记和13种音调，轮流组合。用你出生的日期算出这一天在这一轮中的位置，就得到你的印记和音调。这里用的是学界通用的算法。",
+        },
+      ],
+    },
     caveats: ["采用学界通用的 GMT 关联常数（584283）推算传统卓尔金历；流行的“13 月亮历/Dreamspell”算法不同，Kin 编号会有差异。"],
     visual: { tone: t.tone, sign: t.sign, kin: t.kin, longCount: t.longCount },
   };

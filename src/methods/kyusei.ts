@@ -1,7 +1,8 @@
 import { Solar } from "lunar-javascript";
 import { zhiIndex } from "../core/ganzhi";
 import { MONTH_STAR_TEXT, NINE_STARS } from "../data/kyusei";
-import { profileLucky, profileSections } from "./profile";
+import { PLAIN_KYUSEI_THEME, PLAIN_KYUSEI_YEAR } from "../data/plain-kyusei";
+import { plainProfileSections, profileLucky, profileSections } from "./profile";
 import { type MethodFn, shiftScores } from "./types";
 
 /** 後天定位盤 (Lo Shu): positions in reading order SE S SW / E C W / NE N NW. */
@@ -69,6 +70,14 @@ export const kyusei: MethodFn<KyuseiVisual> = (chart) => {
   const palace = LOSHU_DIRS[yearBoard.indexOf(star)]!;
   const py = PALACE_YEAR_TEXT[palace]!;
 
+  // Month star text starts with "月命星为X，"; drop that prefix for the plain reading.
+  const inner = (MONTH_STAR_TEXT[month] ?? "").replace(/^月命星为[^，]*，/, "");
+  const plainBase = plainProfileSections(
+    s,
+    `按你的出生年份，你属于九星里的「${s.name}」，也就是「${s.title}」这一类人（九星气学把人分成九种类型）。`,
+    "",
+  );
+
   return {
     id: "kyusei",
     name: "九星気学",
@@ -93,6 +102,20 @@ export const kyusei: MethodFn<KyuseiVisual> = (chart) => {
       { title: `月命星 · ${ms.name}`, body: MONTH_STAR_TEXT[month] ?? "" },
       { title: `${thisYear} 年运 · 本命星落${palace}`, body: py.text },
     ],
+    plain: {
+      summary: `你是「${s.title}」型的人：${s.summary.replace(/^如/, "像")}${thisYear} 年的关键词是「${PLAIN_KYUSEI_THEME[palace]}」。`,
+      sections: [
+        { ...plainBase[0]!, body: `${plainBase[0]!.body}另外，${inner}` },
+        plainBase[1]!,
+        plainBase[2]!,
+        plainBase[3]!,
+        { title: `${thisYear} 年的节奏`, body: PLAIN_KYUSEI_YEAR[palace]! },
+        {
+          title: "这套方法怎么算的",
+          body: "九星气学把一到九这九个数字，各配上一种“星”（九种类型）。它用立春作一年的起点，由出生年算出你的类型，再由出生月算出你的内心类型，最后看今年九种类型在九宫格里怎么移动，你落在哪一格。",
+        },
+      ],
+    },
     caveats: ["九星以立春与各月“节入”为界，节气前后出生者请留意月命星的边界。"],
     visual: { star, month, birthBoard: boardFor(star), yearBoard, thisYear, thisYearCenter, palace },
   };

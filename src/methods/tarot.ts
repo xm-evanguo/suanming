@@ -1,6 +1,6 @@
 import { digitSum } from "../core/ganzhi";
 import { MAJOR_ARCANA } from "../data/tarot";
-import { profileLucky } from "./profile";
+import { plainProfileSections, profileLucky } from "./profile";
 import { type MethodFn, mixScores } from "./types";
 
 /** Mary K. Greer's birth-card reduction: sum until ≤ 22; 22 is The Fool (0). */
@@ -13,27 +13,10 @@ export function greerCards(sum: number): { personality: number; soul: number } {
   return { personality, soul };
 }
 
-/** Small deterministic PRNG (mulberry32) so a reading is stable for a given person and day. */
-export function seededRandom(seedText: string): () => number {
-  let h = 1779033703 ^ seedText.length;
-  for (let i = 0; i < seedText.length; i++) {
-    h = Math.imul(h ^ seedText.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-  let a = h >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 export interface TarotVisual {
   personality: number;
   soul: number;
   yearCard: number;
-  spread: { card: number; reversed: boolean; position: string }[];
   sum: number;
 }
 
@@ -44,23 +27,17 @@ export const tarot: MethodFn<TarotVisual> = (chart) => {
   const now = new Date();
   const yearCard = greerCards(month + day + now.getFullYear()).personality;
 
-  const today = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-  const rand = seededRandom(`${year}-${month}-${day}-${chart.input.hour}:${chart.input.minute}|${today}`);
-  const deck = MAJOR_ARCANA.map((c) => c.num);
-  const spread = ["过去 · 根源", "现在 · 课题", "未来 · 指引"].map((position) => {
-    const card = deck.splice(Math.floor(rand() * deck.length), 1)[0]!;
-    return { card, reversed: rand() < 0.3, position };
-  });
 
   const p = MAJOR_ARCANA[personality]!;
   const s = MAJOR_ARCANA[soul]!;
   const y = MAJOR_ARCANA[yearCard]!;
   const same = personality === soul;
+  const base = plainProfileSections(p, `塔罗的22张大牌里，用出生日期的数字可以找到最对应你的一张，你的是「${p.name}」。`);
 
   return {
     id: "tarot",
     name: "塔罗牌",
-    intro: "以生日数字求得一生相随的“生命牌”（Mary K. Greer 法），再为今天抽出三张大阿卡纳的时间之流牌阵。",
+    intro: "以生日数字求得一生相随的“生命牌”（Mary K. Greer 法）。若有具体问题，可以在本页亲手抽三张牌。",
     origin: "西方",
     icon: p.symbol,
     headline: same ? `生命牌 · ${p.name}` : `人格牌 ${p.name} · 灵魂牌 ${s.name}`,
@@ -79,14 +56,24 @@ export const tarot: MethodFn<TarotVisual> = (chart) => {
       { title: `人格牌 · ${p.name}`, body: `${p.birthCard}${p.personality}` },
       ...(same ? [] : [{ title: `灵魂牌 · ${s.name}`, body: s.birthCard }]),
       { title: `${now.getFullYear()} 年度牌 · ${y.name}`, body: y.upright },
-      ...spread.map((c) => {
-        const card = MAJOR_ARCANA[c.card]!;
-        return { title: `${c.position} · ${card.name}${c.reversed ? "（逆位）" : ""}`, body: c.reversed ? card.reversed : card.upright };
-      }),
       { title: "事业与感情", body: `${p.career}${p.love}` },
       { title: "牌的低语", body: p.advice },
     ],
-    caveats: ["今日牌阵由你的生辰与今天的日期共同决定，每天会有不同的三张牌。"],
-    visual: { personality, soul, yearCard, spread, sum },
+    plain: {
+      summary: `按你的生日，和你最对应的一张牌是「${p.name}」（${p.title}）。${p.summary}${same ? "" : `你内心更深的一面，对应「${s.name}」。`}`,
+      sections: [
+        { ...base[0]!, body: `${base[0]!.body}${same ? "" : `你内心更深的一面是「${s.name}」：${s.birthCard}`}` },
+        base[1]!,
+        base[2]!,
+        base[3]!,
+        { title: `${now.getFullYear()} 年的提示`, body: `今年用同样的方法算出的提示牌是「${y.name}」。${y.upright}` },
+        {
+          title: "这套方法怎么算的",
+          body: "塔罗大牌共有22张，编号0到21。把你出生的月、日、年的数字全部加起来，再一位位相加，直到落在22以内，就对应到一张牌。它不需要抽牌，说的是你一生都带着的主题。",
+        },
+      ],
+    },
+    caveats: ["生命牌与年度牌由生日数字算出，不需要抽牌。页面下方的三张牌由你亲手抽取，与生辰无关，结果不计入综合评分。"],
+    visual: { personality, soul, yearCard, sum },
   };
 };

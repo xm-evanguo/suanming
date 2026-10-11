@@ -1,6 +1,9 @@
 import { generatedBy, ganWuXing, WUXING, wxRelation } from "../core/ganzhi";
 import { DAY_MASTERS, SHI_SHEN, WU_XING } from "../data/bazi";
+import { PLAIN_DAY_MASTER, PLAIN_DAYUN, PLAIN_ELEMENT_HELP, PLAIN_EXCESS, PLAIN_LACK, PLAIN_SHISHEN, PLAIN_TAISUI } from "../data/plain-bazi";
+import { SHENG_XIAO } from "../data/shengxiao";
 import type { WuXing } from "../data/types";
+import { type ShengxiaoVisual, zodiacInfo } from "./shengxiao";
 import { type MethodFn, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
 
 export interface Pillar {
@@ -22,6 +25,7 @@ export interface BaziVisual {
   favorable: WuXing[];
   dayun: { ganzhi: string; startAge: number; startYear: number; endYear: number }[];
   startYun: string;
+  zodiac: ShengxiaoVisual;
 }
 
 const HIDDEN_WEIGHTS: Record<number, number[]> = { 1: [1], 2: [0.7, 0.3], 3: [0.6, 0.3, 0.1] };
@@ -99,7 +103,30 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
   const maxWx = WUXING.reduce((a, b) => (wuxing[a] >= wuxing[b] ? a : b));
   const fav = favorable.map((w) => WU_XING[w]);
   const now = new Date().getFullYear();
+  const zodiac = zodiacInfo(chart);
   const currentYun = dayun.find((d: { startYear: number; endYear: number }) => now >= d.startYear && now <= d.endYear);
+
+  // Plain reading: same computed values, everyday wording.
+  const pdm = PLAIN_DAY_MASTER[dayGan]!;
+  const animal = SHENG_XIAO[zodiac.visual.index]!;
+  const animalName = (i: number) => SHENG_XIAO[i]!.name;
+  const friends = zodiac.visual.sanhe.filter((i) => i !== zodiac.visual.index).map(animalName).join("、");
+  const taisui = PLAIN_TAISUI[zodiac.visual.thisYear.relation] ?? "";
+  const wealthShare = share("我克");
+  const workMoney =
+    wealthShare >= 20
+      ? "你对赚钱的机会比较敏感，抓得住就能有收获。"
+      : wealthShare === 0
+        ? "赚钱不是你天生最敏感的一块，靠专业技能慢慢积累，比追机会更稳。"
+        : "钱的方面，稳扎稳打比押注更适合你。";
+  const firstSentence = (t: string) => (t.includes("。") ? `${t.slice(0, t.indexOf("。"))}。` : t);
+  const helpLines = favorable.slice(0, 2).map((w) => PLAIN_ELEMENT_HELP[w]);
+  const phase = currentYun ? PLAIN_DAYUN[wxRelation(self, ganWuXing(currentYun.ganzhi.charAt(0)))] : "";
+  const energyLine = strong
+    ? "你自身的力量很足，不缺主见和底气，更需要的是找到出口，把力气用在事业、表达和责任上。"
+    : "你自身的力量偏弱，单打独斗容易累，有团队、长辈或好导师的支持，你会走得更稳。";
+  const balanceLine =
+    wuxing[maxWx] >= 30 ? PLAIN_EXCESS[maxWx] : missing.length ? "" : "你身上各种特质比较均衡，没有哪一块特别突出或缺失，这让你比较能适应不同环境。";
 
   return {
     id: "bazi",
@@ -123,9 +150,11 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
       { label: "五行分布", value: WUXING.map((w) => `${w}${wuxing[w]}%`).join(" ") },
       { label: "喜用参考", value: favorable.join("、") },
       { label: "起运", value: startYun },
+      ...zodiac.facts,
     ],
     sections: [
       { title: "日主本相", body: `${dm.summary}${dm.personality}` },
+      ...zodiac.sections,
       {
         title: "五行格局",
         body:
@@ -147,10 +176,35 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
           : dm.advice,
       },
     ],
+    plain: {
+      summary:
+        `你像${pdm.image}。${energyLine}` +
+        `你属${animal.name}，${animal.summary.replace(/^属.的你/, "").replace(/^，/, "")}`,
+      sections: [
+        { title: "你是怎样的人", body: `${pdm.who}属${animal.name}的你，${firstSentence(animal.personality).replace(/^你/, "")}${topGods.map((g) => firstSentence(PLAIN_SHISHEN[g] ?? "")).join("")}` },
+        { title: "适合做什么", body: `${pdm.work}${workMoney}` },
+        { title: "感情里的你", body: `${pdm.love}属${animal.name}的你，和属${friends}的人比较合拍；和属${animalName(zodiac.visual.chong)}的人容易碰撞，多沟通就能磨合。` },
+        {
+          title: "身体和精力",
+          body: `${pdm.body}${balanceLine}${missing.length ? missing.map((m) => PLAIN_LACK[m]).join("") : ""}`,
+        },
+        {
+          title: "给你的建议",
+          body:
+            `${strong ? "你的力气够用，重点是用对地方。" : "你需要借力，别一个人硬扛。"}日常可以这样补充能量：${helpLines.join("；")}。` +
+            `${taisui}${phase ? `你正走在一个十年阶段（${currentYun!.startYear}–${currentYun!.endYear}）：${phase}` : ""}`,
+        },
+        {
+          title: "这套方法怎么算的",
+          body: "八字把你出生的年、月、日、时，各换成两个字，一共八个字。再看里面木、火、土、金、水五种元素各占多少，以及它们怎样互相帮忙或互相克制，由此推出你的性格倾向和人生节奏。属相是出生年对应的动物，按立春划分年份。",
+        },
+      ],
+    },
     caveats: [
       ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]),
+      zodiac.caveat,
       "喜用神为简化推算（按同党比例判断身强弱），专业断法还需看调候、格局与通关。",
     ],
-    visual: { pillars, dayGan, wuxing, strong, selfShare, favorable, dayun, startYun },
+    visual: { pillars, dayGan, wuxing, strong, selfShare, favorable, dayun, startYun, zodiac: zodiac.visual },
   };
 };

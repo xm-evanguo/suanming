@@ -1,10 +1,11 @@
 import { Solar } from "lunar-javascript";
 import type { BirthInput, Gender } from "../core/chart";
 import { CITIES, type City, TIMEZONES } from "../core/cities";
+import { cnNum } from "./components";
 import { h, typewrite } from "./dom";
 import { compute, getState } from "./state";
 
-const METHOD_LABELS = ["生辰八字", "紫微斗数", "袁天罡称骨", "梅花易数", "生肖纳音", "九星気学", "宿曜占星", "西洋占星", "塔罗牌", "生命灵数", "吠陀占星", "玛雅历"];
+const METHOD_LABELS = ["生辰八字", "紫微斗数", "袁天罡称骨", "梅花易数", "九星気学", "宿曜占星", "西洋占星", "希腊化占星", "迦勒底七曜", "波斯法达", "塔罗牌", "生命灵数", "吠陀占星", "玛雅历"];
 const SHICHEN = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -38,7 +39,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
     h("div", { class: "orbit-deco", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("b")),
     h("p", { class: "eyebrow" }, "ASTRA · FATUM · 天机"),
     h("h1", { class: "title-glow" }, ...[..."天机星图"].map((c, i) => h("span", { style: { "--i": i } as never }, c))),
-    h("p", { class: "hero-sub" }, "十二种古老体系 · 一张属于你的命运全息图"),
+    h("p", { class: "hero-sub" }, `${cnNum(METHOD_LABELS.length)}种古老体系 · 流年流月 · 关系合盘`),
     guide,
     h(
       "div",
