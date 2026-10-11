@@ -23,6 +23,7 @@ Run all three checks (types, tests, build) before a commit.
 - Mode toggle: wrap professional-only content in `onlyPro()` and plain-only content in `onlyPlain()` (`src/ui/components.ts`). The switch is CSS only (`body[data-mode]`), so views do not re-render.
 - Before you add a class name, search `src/styles.css` for it. Global rules such as `.flash { opacity: 0 }` exist there.
 - Animations: an element with base `opacity: 0` must use a keyframe that has a `to` frame, or it stays invisible.
+- Do not put `filter` on a `transform-style: preserve-3d` element (for example `.tcard-inner`). The filter flattens it, and the back face shows. Put the filter on the faces.
 - Registered `@property --p` is a `<number>`. Do not put a percent value in it. Use a different property name.
 - Astrology glyphs carry `︎`, so they show as text, not as emoji.
 - Code comments and docs are in English. UI text is in Chinese.

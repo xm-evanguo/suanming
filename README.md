@@ -7,7 +7,7 @@ Other features:
 - **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The professional view is the default.
 - **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom).
 - **Relationships (`#/people`).** The user can add a partner, parents, friends or colleagues. The site compares the two charts and answers questions such as "is this person my fate" or "can my parents help my career".
-- **Hand-drawn tarot.** On the tarot page, the user shuffles and draws three cards.
+- **Hand-drawn tarot.** On the tarot page, the user shuffles and draws three cards. The deck order and the reversals come from a seed: the question, the topic and the local time to the minute (`src/core/draw-seed.ts`). The same question in the same minute gives the same deck. The cards that the user clicks then select the three cards. The animation shows the question characters move into the deck, a riffle shuffle, the cards fly to their positions, and the flip.
 - **AI tarot reading.** After the draw, the user can enter a specific question, add context, and use a personal DeepSeek API key. The model uses the three card positions and orientations to give actions and explain missing information.
 
 All chart calculations run in the browser. The site has no backend. Google Fonts loads from an external service. The optional AI reading sends the question, context, topic and drawn cards directly from the browser to DeepSeek only when the user requests it. It does not send birth data. The API key goes only to DeepSeek for authentication. DeepSeek charges the user's API account for each request.

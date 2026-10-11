@@ -147,10 +147,10 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 .draw .field { max-width: 520px; justify-self: center; width: 100%; }
 .draw-actions { display: flex; justify-content: center; gap: 12px; }
 .draw-status { margin: 0; color: var(--muted); }
-.fan { position: relative; height: clamp(180px, 34vw, 240px); margin: 10px 0; transition: opacity 0.6s, height 0.6s; }
+.fan { position: relative; height: calc(clamp(180px, 34vw, 240px) + var(--lift)); margin: 10px 0; transition: opacity 0.6s, height 0.6s; }
 .fan.gone { opacity: 0; height: 0; pointer-events: none; }
 .fan-card {
-  position: absolute; left: 50%; bottom: 0; width: clamp(54px, 9vw, 76px); aspect-ratio: 0.6; margin-left: calc(clamp(54px, 9vw, 76px) / -2);
+  position: absolute; left: 50%; bottom: var(--lift); width: clamp(54px, 9vw, 76px); aspect-ratio: 0.6; margin-left: calc(clamp(54px, 9vw, 76px) / -2);
   border-radius: 8px; border: 1.5px solid var(--gold); cursor: pointer; padding: 0;
   background: radial-gradient(circle, rgba(245, 200, 107, 0.25), transparent 60%), repeating-linear-gradient(45deg, #1c1340 0 6px, #2a1b5c 6px 12px);
   transform-origin: 50% 260%;
@@ -160,11 +160,39 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 }
 .fan-card i { font-style: normal; color: var(--gold); font-size: 20px; }
 .fan-card:hover:not(:disabled) { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 5deg)) translateY(-18px); box-shadow: 0 0 22px rgba(245, 200, 107, 0.8); transition-delay: 0ms; }
-.fan.shuffling .fan-card { transform: rotate(0deg) translateY(calc(var(--i) * -1px)); }
+.fan.shuffling .fan-card { transform: rotate(0deg) translateY(calc(var(--i) * -0.6px)); }
 .fan-card.taken { opacity: 0; transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 5deg)) translateY(-80px); cursor: default; transition-delay: 0ms; }
 .draw-slot figcaption small { display: block; color: var(--dim); font-size: 11px; }
 .slot-empty { width: clamp(110px, 22vw, 150px); aspect-ratio: 0.6; border-radius: 12px; border: 1.5px dashed rgba(245, 200, 107, 0.35); display: grid; place-items: center; color: rgba(245, 200, 107, 0.4); font-size: 30px; }
-.tcard.drawn { animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.draw { position: relative; overflow: hidden; }
+.seed-line { margin: 0; color: var(--dim); font-size: 13px; letter-spacing: 0.08em; }
+.seed-line b { margin-left: 10px; color: var(--gold); font-size: 18px; font-weight: normal; letter-spacing: 0.25em; text-shadow: 0 0 10px rgba(245, 200, 107, 0.7); }
+/* --lift raises the fan so the outer cards of the arc do not drop into the slots. */
+.deck-stage { position: relative; --lift: calc(clamp(54px, 9vw, 76px) / 0.6 * 0.88); }
+.glyphs { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.glyphs span { position: absolute; left: 50%; bottom: calc(var(--lift) + clamp(54px, 9vw, 76px) / 1.2); opacity: 0; color: var(--gold2); font-size: 22px; text-shadow: 0 0 12px rgba(245, 200, 107, 0.9); }
+.fly-card {
+  position: absolute; z-index: 5; display: grid; place-items: center; border-radius: 8px; border: 1.5px solid var(--gold); pointer-events: none;
+  background: radial-gradient(circle, rgba(245, 200, 107, 0.25), transparent 60%), repeating-linear-gradient(45deg, #1c1340 0 6px, #2a1b5c 6px 12px);
+  box-shadow: 0 0 26px rgba(245, 200, 107, 0.85);
+}
+.fly-card i { font-style: normal; color: var(--gold); font-size: 20px; }
+.tcard.drawn { animation: land 0.6s ease-out both; }
+@keyframes land { from { filter: brightness(1.8) drop-shadow(0 0 18px rgba(245, 200, 107, 0.9)); } to { filter: none; } }
+/* A reversed card turns as a whole after it flips open. */
+.tcard.rev { transition: transform 0.7s cubic-bezier(0.4, 1.4, 0.5, 1) 0.9s; }
+.tcard.rev.open { transform: rotate(180deg); }
+.draw-slot { position: relative; }
+.draw-slot > .tcard, .draw-slot > figcaption { position: relative; z-index: 1; }
+.draw-slot.lit::before, .draw-slot.lit::after { content: ""; position: absolute; left: 50%; top: calc(clamp(110px, 22vw, 150px) / 1.2); border-radius: 50%; pointer-events: none; }
+.draw-slot.lit::before {
+  width: calc(clamp(110px, 22vw, 150px) * 1.9); aspect-ratio: 1; translate: -50% -50%;
+  background: conic-gradient(transparent 0 8%, rgba(245, 200, 107, 0.3) 10%, transparent 12% 33%, rgba(245, 200, 107, 0.22) 35%, transparent 37% 58%, rgba(245, 200, 107, 0.3) 60%, transparent 62% 83%, rgba(245, 200, 107, 0.22) 85%, transparent 87%);
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%);
+  animation: rays 1.2s ease-out both, spin 30s linear 1.2s infinite;
+}
+.draw-slot.lit::after { width: clamp(110px, 22vw, 150px); aspect-ratio: 1; translate: -50% -50%; border: 2px solid var(--gold); opacity: 0; animation: pulse 0.9s ease-out 0.35s both; }
+@keyframes rays { from { opacity: 0; transform: scale(0.3) rotate(-60deg); } to { opacity: 1; transform: none; } }
 .draw-reading { text-align: left; display: grid; gap: 0; }
 .llm-reading { padding: clamp(16px, 4vw, 28px); margin: 16px 0; min-width: 0; }
 .llm-form { display: grid; gap: 14px; margin-top: 16px; }
@@ -191,7 +219,8 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
   .pf-row { grid-template-columns: 1fr; gap: 6px; }
   .pf-row > span { padding-top: 0; }
   .qa-grid { grid-template-columns: 1fr; }
-  .fan-card { transform-origin: 50% 300%; transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3.6deg)); }
-  .fan-card:hover:not(:disabled) { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3.6deg)) translateY(-14px); }
-  .fan-card.taken { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3.6deg)) translateY(-60px); }
+  .deck-stage { --lift: calc(clamp(54px, 9vw, 76px) / 0.6 * 0.55); }
+  .fan-card { transform-origin: 50% 300%; transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)); }
+  .fan-card:hover:not(:disabled) { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-14px); }
+  .fan-card.taken { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-60px); }
 }
