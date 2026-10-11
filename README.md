@@ -34,7 +34,7 @@ The dev server prints its URL. `.claude/launch.json` starts it on port 5173.
 
 ## Deploy
 
-The site is static and uses hash routes, so it needs no redirect rules. It is deployed to Cloudflare Pages:
+The site is static and uses hash routes, so it needs no redirect rules. It is deployed to the Cloudflare Pages project `suanming` (https://suanming-7pj.pages.dev). The project was created with `wrangler pages project create --force`, because wrangler 4.149 otherwise sends new Pages projects to Workers. Later deploys do not need `--force`:
 
 ```bash
 bun run build
