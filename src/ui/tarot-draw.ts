@@ -1,5 +1,7 @@
 import { MAJOR_ARCANA, type TarotCard } from "../data/tarot";
+import { QUESTION_LIMIT } from "../llm/tarot";
 import { h, reveal, sleep } from "./dom";
+import { tarotLlm } from "./tarot-llm";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"];
 type Topic = "all" | "career" | "wealth" | "love" | "health" | "study";
@@ -50,10 +52,12 @@ function face(c: TarotCard, reversed: boolean): HTMLElement {
  */
 export function tarotDraw(): HTMLElement {
   let topic: Topic = "all";
+  let cancelReading: (() => void) | undefined;
   const root = h("section", { class: "draw glass" });
 
   function start() {
-    const question = h("input", { class: "field", maxlength: "40", placeholder: "想问的事（可不填），例如：这份新工作适合我吗？" });
+    cancelReading?.();
+    const question = h("textarea", { class: "field", rows: "3", maxlength: String(QUESTION_LIMIT), "aria-label": "抽牌问题（可选）", placeholder: "想问的具体问题（可不填），例如：我想换工作，但新岗位要搬家，应该先确认哪些条件？" });
     const chips = h(
       "div",
       { class: "rel-chips" },
@@ -81,6 +85,7 @@ export function tarotDraw(): HTMLElement {
       h("p", { class: "v-caption" }, "塔罗的传统用法是先有问题、再由你自己抽牌。先在心里想好一件具体的事，选一个方向，然后洗牌。"),
       chips,
       question,
+      h("p", { class: "v-caption" }, "写清处境、选择和顾虑，能让问题更具体。抽牌后可填写 DeepSeek API Key，结合问题获得 AI 解读；只有点击解读时才会发送数据。"),
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-primary", onclick: () => fan(question.value.trim()) }, "洗牌 ✦")),
     );
   }
@@ -133,6 +138,9 @@ export function tarotDraw(): HTMLElement {
       s.querySelector("figcaption")!.append(h("em", null, picks[slots.indexOf(s)]!.reversed ? " 逆位" : " 正位"));
     }
     await sleep(600);
+    if (!root.isConnected) return;
+    const llm = tarotLlm({ question: q, context: "", topic: TOPICS.find(([t]) => t === topic)![1], cards: picks });
+    cancelReading = llm.cancel;
     const reading = h(
       "div",
       { class: "draw-reading" },
@@ -142,7 +150,8 @@ export function tarotDraw(): HTMLElement {
         const body = i === 2 ? `${reversed ? c.reversed : c.upright}${c.advice}` : `${reversed ? c.reversed : c.upright}${topicText(c, topic)}`;
         return reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, `${pos.name} · ${c.name}${reversed ? "（逆位）" : ""}`), h("p", null, body)), i * 120);
       }),
-      h("p", { class: "v-caption" }, `${q ? "这次的问题会被忘记，不会保存。" : ""}这三张牌由浏览器的随机数决定，与你的生辰无关，也不计入任何评分。同一个问题反复抽，答案会不同——把它当作换个角度想问题的提示。`),
+      h("p", { class: "v-caption" }, "以上是通用牌义，尚未结合具体问题。这三张牌由浏览器的随机数决定，与你的生辰无关，也不计入任何评分。同一个问题反复抽，答案会不同——把它当作换个角度想问题的提示。问题不会保存在本站。"),
+      llm.element,
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: start }, "↺ 换个问题再抽")),
     );
     root.append(reading);

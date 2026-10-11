@@ -8,8 +8,13 @@ Other features:
 - **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom).
 - **Relationships (`#/people`).** The user can add a partner, parents, friends or colleagues. The site compares the two charts and answers questions such as "is this person my fate" or "can my parents help my career".
 - **Hand-drawn tarot.** On the tarot page, the user shuffles and draws three cards.
+- **AI tarot reading.** After the draw, the user can enter a specific question, add context, and use a personal DeepSeek API key. The model uses the three card positions and orientations to give actions and explain missing information.
 
-All calculations run in the browser. There is no server and no network request for user data. The only external requests load Google Fonts.
+All chart calculations run in the browser. The site has no backend. Google Fonts loads from an external service. The optional AI reading sends the question, context, topic and drawn cards directly from the browser to DeepSeek only when the user requests it. It does not send birth data. The API key goes only to DeepSeek for authentication. DeepSeek charges the user's API account for each request.
+
+The user can save or clear the API key in this browser's `localStorage`. The key is not encrypted. Do not save it on a shared device. Questions and AI answers stay in page memory and are not saved by this site. DeepSeek's own data policy applies to data sent to its API. AI output is shown as text, so it cannot add HTML or run scripts. Requests can be cancelled and have a 90-second timeout. A cancellation cannot undo data already sent or charges already incurred.
+
+This release supports only DeepSeek (`deepseek-flash`). ChatGPT website sign-in needs an approved OAuth client and a backend. The open-source ChatGPT plan flow uses a local callback. See the [official website sign-in guide](https://developers.openai.com/siwc/website) and the [ChatGPT plan guide](https://developers.openai.com/siwc/token-sharing-open-source). Neither flow is enabled in this static site.
 
 ## Run
 

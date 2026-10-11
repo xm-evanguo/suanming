@@ -166,6 +166,17 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 .slot-empty { width: clamp(110px, 22vw, 150px); aspect-ratio: 0.6; border-radius: 12px; border: 1.5px dashed rgba(245, 200, 107, 0.35); display: grid; place-items: center; color: rgba(245, 200, 107, 0.4); font-size: 30px; }
 .tcard.drawn { animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
 .draw-reading { text-align: left; display: grid; gap: 0; }
+.llm-reading { padding: clamp(16px, 4vw, 28px); margin: 16px 0; min-width: 0; }
+.llm-form { display: grid; gap: 14px; margin-top: 16px; }
+.llm-form label { display: grid; gap: 8px; color: var(--gold2); }
+.draw .llm-form .field { max-width: none; }
+.draw textarea.field { resize: vertical; min-height: 88px; font: inherit; line-height: 1.6; }
+.draw-actions { flex-wrap: wrap; }
+.llm-form .btn:disabled { opacity: 0.6; cursor: wait; }
+.llm-form [hidden] { display: none; }
+.llm-output p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; }
+.llm-output h4 { color: var(--gold2); }
+.llm-form .field:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
 @media (max-width: 560px) {
   .mode-toggle button { padding: 7px 12px; font-size: 13px; }
