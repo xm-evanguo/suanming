@@ -80,3 +80,8 @@ describe("jiao verdict", () => {
     expect(jiaoVerdict(["圣杯", "笑杯", "圣杯"]).tone).toBe("unclear");
   });
 });
+
+test("an empty question still throws, the same way within one minute", () => {
+  const at = new Date(2026, 9, 11, 20, 5, 30);
+  expect(throwJiao("", at, 0)).toEqual(throwJiao("  ", new Date(2026, 9, 11, 20, 5, 1), 0));
+});

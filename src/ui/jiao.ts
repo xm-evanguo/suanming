@@ -101,7 +101,7 @@ function place(c: Cup, face: Face) {
 }
 
 /**
- * 掷圣杯: a yes/no question and up to three throws of two crescent blocks. The faces come from the question
+ * 掷圣杯: an optional yes/no question and up to three throws of two crescent blocks. The faces come from the question
  * and the local minute (src/core/jiao.ts). It is a ritual: it does not use the birth data, does not call
  * any API, and the question is not stored or sent anywhere.
  */
@@ -112,7 +112,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
   let disposed = false;
   const live: Animation[] = [];
 
-  const input = h("input", { type: "text", class: "field", maxlength: String(QUESTION_LIMIT), "aria-label": "要问的是非题", placeholder: "写一个能用“是”或“否”回答的问题", autocomplete: "off" });
+  const input = h("input", { type: "text", class: "field", maxlength: String(QUESTION_LIMIT), "aria-label": "要问的是非题", placeholder: "可以不写，在心里默念也行", autocomplete: "off" });
   const status = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
   const seedLine = h("p", { class: "seed-line", hidden: true });
   const cups = [makeCup("flat", false), makeCup("round", true)] as const;
@@ -134,7 +134,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     resetBtn.hidden = !started;
     resetBtn.disabled = busy;
     seedLine.hidden = !at;
-    if (at) seedLine.textContent = `起卦 ${minuteStamp(at)}　仪式用，不会让结果更准`;
+    if (at) seedLine.textContent = `起卦 ${minuteStamp(at)}`;
     verdict.hidden = !started;
     if (started) {
       verdict.dataset.tone = v.tone;
@@ -151,11 +151,6 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
   async function run() {
     if (busy || disposed) return;
     const q = normalizeQuestion(input.value);
-    if (!q) {
-      status.textContent = "请先写下一个能用“是”或“否”回答的问题。";
-      input.focus();
-      return;
-    }
     const v = jiaoVerdict(thrown.map((t) => t.result));
     if (thrown.length >= MAX_THROWS || (thrown.length > 0 && v.done)) return;
     busy = true;
@@ -199,7 +194,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
       s.querySelector(".jiao-slot-body")!.replaceChildren("？");
       s.querySelector("figcaption")!.textContent = `第 ${i + 1} 掷`;
     });
-    status.textContent = "已清空。换一个问题，或把同一件事问得更具体。";
+    status.textContent = "已清空，可以再问。";
     sync();
     input.focus();
   }
@@ -218,14 +213,14 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     { class: "jiao glass" },
     markup(GRADIENTS),
     h("h3", null, "掷圣杯"),
-    h("p", { class: "v-caption" }, "筊杯是两块一面平、一面圆的月牙形木块，在闽台和南方的庙里用来请示神明。先在心里想好一件事，只问一个能用“是”或“否”回答的问题；一次只问一件事。"),
+    h("p", { class: "v-caption" }, "心里想好一件是非题，掷出两块月牙形的筊杯。"),
     h(
       "form",
       { class: "jiao-form", onsubmit: (event: Event) => {
         event.preventDefault();
         void run();
       } },
-      h("label", null, "你要问的是非题", input),
+      h("label", null, "你要问的是非题（可不写）", input),
       chips,
       stage,
       h("div", { class: "tarot-row jiao-slots" }, ...slots),
@@ -236,7 +231,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     verdict,
     h("h4", { class: "jiao-sub" }, "三种结果怎么看"),
     legend,
-    h("p", { class: "v-caption" }, "常见做法：连续三次圣杯才算明确同意，所以最多掷三次；出笑杯或阴杯就停，不硬掷到想要的结果。这里把每个杯当作 50/50 的两面，圣杯约占 50%，笑杯和阴杯各约 25%；真实的筊杯并不恰好是 50/50。结果由你的问题和起卦时刻（精确到分钟）算出：同一分钟问同一件事，结果相同，所以重新问时请换个问法或等下一分钟。这只是仪式，不会让答案更准，与你的生辰无关，也不能代替你自己的判断。问题不会保存，也不会发送到任何地方。"),
+    h("p", { class: "v-caption" }, "连续三次圣杯才算同意；出笑杯或阴杯就停。"),
   );
   sync();
   return {

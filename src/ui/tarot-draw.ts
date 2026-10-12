@@ -139,10 +139,10 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
     );
     root.replaceChildren(
       h("h3", null, "亲手抽三张牌"),
-      h("p", { class: "v-caption" }, "塔罗的传统用法是先有问题、再由你自己抽牌。先在心里想好一件具体的事，选一个方向，然后洗牌。你写下的问题、选的方向和此刻的时间会一起决定牌序。"),
+      h("p", { class: "v-caption" }, "想好一件具体的事，选一个方向，然后洗牌。"),
       chips,
       question,
-      h("p", { class: "v-caption" }, "写清处境、选择和顾虑，能让问题更具体。抽牌后可填写 DeepSeek API Key，结合问题获得 AI 解读；只有点击解读时才会发送数据。"),
+      h("p", { class: "v-caption" }, "抽牌后可以用 AI 结合问题解读。"),
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-primary", onclick: () => fan(question.value.trim()) }, "洗牌 ✦")),
     );
   }
@@ -223,7 +223,7 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
         const body = i === 2 ? `${reversed ? c.reversed : c.upright}${c.advice}` : `${reversed ? c.reversed : c.upright}${topicText(c, topic)}`;
         return reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, `${pos.name} · ${c.name}${reversed ? "（逆位）" : ""}`), h("p", null, body)), i * 120);
       }),
-      h("p", { class: "v-caption" }, "以上是通用牌义，尚未结合具体问题。牌序由你的问题、方向和起卦时刻（精确到分钟）算出，你点的位置决定抽到哪三张：同一分钟问同一件事，牌序不变；换个问法或换个时刻，牌序就会变。这只是仪式，不会让结果更准；它与你的生辰无关，也不计入任何评分。问题不会保存在本站。"),
+      h("p", { class: "v-caption" }, "以上是通用牌义。"),
       llm.element,
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: start }, "↺ 换个问题再抽")),
     );

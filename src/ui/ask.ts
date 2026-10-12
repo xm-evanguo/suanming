@@ -72,11 +72,10 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   function renderPreview() {
     const v = view();
     preview.replaceChildren(
-      h("p", { class: "eyebrow" }, "本地摘要 · 不联网"),
+      h("p", { class: "eyebrow" }, "本地摘要"),
       h("div", { class: "tp-head" }, h("h3", null, TOPIC_LABEL[topic]), h("span", { class: "tp-avg" }, h("b", null, String(Math.round(v.avg))), " 分")),
       h("p", { class: "tp-consensus" }, consensusText(v, results.length)),
       h("p", { class: "tp-months" }, monthsLine(v) || "这个话题没有明显偏顺或偏紧的月份。"),
-      h("p", { class: "v-caption" }, "分数只是本站为了方便阅读做的换算，不会发送给 AI。"),
     );
   }
 
@@ -153,7 +152,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
         followInput.value = "";
       }
       thread.hidden = false;
-      status.textContent = "回答完成。问题与回答只在这个页面里，不会保存在本站。";
+      status.textContent = "回答完成。";
       thread.lastElementChild?.scrollIntoView({ block: "nearest" });
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "请求失败，请重试。";
@@ -184,7 +183,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     preview,
     h("div", { class: "ask-block" }, h("h3", null, "2 · 你想问什么"), templateChips, question),
     h("div", { class: "ask-block" }, h("h3", null, "3 · 你现在的处境（可多选）"), situationChips, h("label", null, "补充情况（可选）", context)),
-    h("p", { class: "v-caption" }, "服务商：DeepSeek · 模型：deepseek-flash。点击后才会发送请求，由你的 DeepSeek 账户按 API 用量付费。"),
+    h("p", { class: "v-caption" }, "DeepSeek · deepseek-flash，按你的 API 用量计费。"),
     key.element,
     h("details", { class: "ask-details" }, h("summary", null, "将发送给 AI 的内容"), sent),
     h("div", { class: "draw-actions" }, submit, cancel),

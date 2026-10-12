@@ -29,7 +29,7 @@ export function tarotLlm(input: TarotQuestion): { element: HTMLElement; cancel: 
       const answer = await interpretTarot(key.value(), { ...input, question: question.value, context: context.value }, signal);
       if (signal.aborted || !form.isConnected) return;
       output.replaceChildren(h("h4", null, "针对本次问题的 AI 解读"), h("p", null, answer));
-      status.textContent = "解读完成。问题与回答不会保存在本站。";
+      status.textContent = "解读完成。";
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "解读失败，请重试。";
     } finally {
@@ -41,11 +41,11 @@ export function tarotLlm(input: TarotQuestion): { element: HTMLElement; cancel: 
       cancel.hidden = true;
     }
   } },
-    h("p", { class: "v-caption" }, "服务商：DeepSeek · 模型：deepseek-flash。点击解读才会发送请求，由你的 DeepSeek 账户按 API 用量付费。"),
+    h("p", { class: "v-caption" }, "DeepSeek · deepseek-flash，按你的 API 用量计费。"),
     key.element,
     h("label", null, "你想问的具体问题", question),
     h("label", null, "补充背景（可选）", context),
-    h("p", { class: "v-caption" }, "解读时，会把问题、背景、方向和三张牌的牌位及正逆位发送给 DeepSeek；不会发送你的生辰。增加具体背景能减少空泛的建议，但不代表预测更准确。"),
+    h("p", { class: "v-caption" }, "解读时会把问题、背景、方向和三张牌发送给 AI。"),
     h("div", { class: "draw-actions" }, submit, cancel), status, output,
   );
   const root = h("section", { class: "llm-reading glass" }, h("h3", null, "用 AI 解读你的具体问题"), form);

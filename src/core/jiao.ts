@@ -49,15 +49,15 @@ export type JiaoVerdict = {
  */
 export function jiaoVerdict(results: JiaoResult[]): JiaoVerdict {
   const holy = results.filter((r) => r === "圣杯").length;
-  if (results.length === 0) return { tone: "going", title: "还没有掷", text: "先写下一个能用“是”或“否”回答的问题，再掷筊。", done: false };
+  if (results.length === 0) return { tone: "going", title: "还没有掷", text: "心里想好一件事，就可以掷筊。", done: false };
   if (results.includes("阴杯")) {
     const early = holy > 0 ? `前面有 ${holy} 次圣杯，但` : "";
-    return { tone: "no", title: "暂缓", text: `${early}出了阴杯：神明不同意，或时机未到。先不要急着做，等条件变了、想清楚了，换一个问法再问。`, done: true };
+    return { tone: "no", title: "暂缓", text: `${early}出了阴杯：神明不同意，或时机未到，先缓一缓。`, done: true };
   }
   if (results.includes("笑杯")) {
     const early = holy > 0 ? `前面有 ${holy} 次圣杯，但` : "";
-    return { tone: "unclear", title: "问题不清楚，换个问法", text: `${early}出了笑杯：神明笑而不答。问题可能太笼统、一次问了两件事，或答案你心里已经有数。把问题改成一个具体的“是”或“否”再问。`, done: true };
+    return { tone: "unclear", title: "问题不清楚，换个问法", text: `${early}出了笑杯：神明笑而不答，换个问法再问。`, done: true };
   }
-  if (holy >= MAX_THROWS) return { tone: "yes", title: "三次圣杯：可以去做", text: "连续三次圣杯，在这个传统里算明确的同意。它只表示这个仪式给了你一个“可以”，实际的条件和风险仍要自己核实。", done: true };
+  if (holy >= MAX_THROWS) return { tone: "yes", title: "三次圣杯：可以去做", text: "连续三次圣杯，神明点头了。", done: true };
   return { tone: "going", title: `已有 ${holy} 次圣杯`, text: `需要连续 ${MAX_THROWS} 次圣杯才算明确同意。再掷 ${MAX_THROWS - holy} 次。`, done: false };
 }
