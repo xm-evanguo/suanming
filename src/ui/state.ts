@@ -19,7 +19,8 @@ export interface AppState {
 }
 
 const KEY = "tianji.input.v1";
-const MODE_KEY = "tianji.mode.v1";
+// v1 saved the default on every visit, so it cannot tell a choice from the old "pro" default.
+const MODE_KEY = "tianji.mode.v2";
 const PEOPLE_KEY = "tianji.people.v1";
 const METHODS_KEY = "tianji.methods.v1";
 const state: AppState = {};
@@ -120,12 +121,12 @@ export function getForecasts(): Partial<Record<MethodId, Forecast>> {
 
 // ───────── reading mode
 
-let mode: Mode = load<Mode>(MODE_KEY) === "plain" ? "plain" : "pro";
+/** Plain is the default. Only a click on the toggle saves a mode. */
+let mode: Mode = load<Mode>(MODE_KEY) === "pro" ? "pro" : "plain";
 export const getMode = () => mode;
 export function setMode(m: Mode) {
   mode = m;
   save(MODE_KEY, m);
-  document.body.dataset.mode = m;
 }
 
 // ───────── other people

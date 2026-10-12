@@ -126,7 +126,6 @@ button { font: inherit; color: inherit; }
 .marquee-track span { display: inline-flex; gap: 28px; align-items: center; }
 .marquee-track i { font-style: normal; color: var(--gold); font-size: 10px; }
 @keyframes marquee { to { transform: translateX(-50%); } }
-.privacy { color: var(--dim); font-size: 13px; margin-top: 28px; }
 
 /* ─── Wizard ─── */
 .wizard { min-height: calc(100vh - 64px); display: grid; place-items: center; }
@@ -577,8 +576,6 @@ button { font: inherit; color: inherit; }
 .mx-icon { font-size: 22px; text-align: center; }
 .mx-head { color: var(--muted); font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mx-score { font-family: var(--latin); color: var(--gold2); text-align: right; }
-.disclaimer { border-left-color: var(--gold); background: rgba(245, 200, 107, 0.05); }
-.disclaimer b { color: var(--gold); }
 .end-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 40px; }
 
 /* ─── Responsive ─── */

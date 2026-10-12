@@ -46,7 +46,7 @@ export function qimenPanel(): HTMLElement {
   );
   return h("section", { class: "qimen glass" },
     h("h3", null, "奇门遁甲 · 问事"),
-    h("p", { class: "v-caption" }, "围绕一个具体问题，按所选时刻起局。排盘与基础解读在浏览器内完成。"),
+    h("p", { class: "v-caption" }, "围绕一个具体问题，按所选时刻起局。"),
     form, result,
     h("details", { class: "ask-details" }, h("summary", null, "排局规则与解读范围"),
       h("p", null, QIMEN_RULE),

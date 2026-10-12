@@ -9,7 +9,7 @@ import { VISUALS } from "./visuals";
 /** Plain sections that most systems share: the same four questions, answered 10 times. They go into a fold. */
 const GENERIC_TITLES = new Set(["你是怎样的人", "适合做什么", "感情里的你", "给你的建议", "这套方法怎么算的"]);
 
-/** This system's reading of the current year, or its note when it has no year rule. Computed after the first paint. */
+/** This system's reading of the current year, if it has a year rule. Computed after the first paint. */
 function nowSlot(id: MethodId): HTMLElement {
   const slot = h("div", { class: "now-slot" });
   setTimeout(() => {
@@ -21,8 +21,6 @@ function nowSlot(id: MethodId): HTMLElement {
         sectionTitle(`现在 · ${cur.period.year} 年`, "这套方法眼下读到的信号"),
         reveal(h("section", { class: "glass now-card" }, onlyPro(h("p", { class: "now-label" }, cur.label)), h("ul", { class: "stmts" }, ...top.map((s, i) => statement(s, `${cur.period.year} 年`, i))))),
       );
-    } else if (forecast?.note) {
-      slot.append(sectionTitle("现在"), reveal(h("p", { class: "v-caption" }, forecast.note)));
     }
   }, 0);
   return slot;
@@ -82,10 +80,10 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
         ),
     ),
   );
-  if (id === "tarot") view.append(reveal(h("a", { class: "glass tarot-go", href: "#/ask/tarot" }, h("b", null, "去问事页亲手抽三张牌 →"), h("small", null, "有具体问题时，用传统的方式问一问：洗牌、凭直觉抽牌，还可以请 AI 结合问题解读。"))));
+  if (id === "tarot") view.append(reveal(h("a", { class: "glass tarot-go", href: "#/ask/tarot" }, h("b", null, "去问事页亲手抽三张牌 →"), h("small", null, "有具体问题时，洗牌，凭直觉抽三张。"))));
   view.append(reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: `#/ask/m/${id}` }, "就这一页提问 →"))));
   view.append(sectionTitle("开运指引"), reveal(luckyRow(r.lucky)));
-  if (r.caveats.length) view.append(reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 推算说明"), ...r.caveats.map((c) => h("p", null, c)))));
+  if (r.caveats.length) view.append(onlyPro(reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 推算说明"), ...r.caveats.map((c) => h("p", null, c))))));
 
   view.append(
     reveal(

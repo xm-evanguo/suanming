@@ -3,7 +3,7 @@ import { forecastPeriods, type Period, periodName, type PeriodReading, type Sign
 import { DIM_NAMES, DIMS } from "../methods/fusion";
 import { periodScore } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
-import { cnNum, dimLabel, onlyPro, sectionTitle, statement, topbar } from "./components";
+import { dimLabel, onlyPro, sectionTitle, statement, topbar } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
 import { getForecasts, getState } from "./state";
@@ -33,10 +33,8 @@ export function renderTimeline(view: HTMLElement) {
     const f = forecasts[r.id];
     return f && (f.years.length > 0 || f.months.length > 0);
   });
-  const natalOnly = results.filter((r) => !withRules.includes(r));
   const yearly = withRules.filter((r) => forecasts[r.id]!.years.length > 0);
   const monthly = withRules.filter((r) => forecasts[r.id]!.months.length > 0);
-  const yearOnly = yearly.filter((r) => forecasts[r.id]!.months.length === 0);
 
   // Readings per period key, per system.
   const index = new Map<string, Row[]>();
@@ -77,7 +75,7 @@ export function renderTimeline(view: HTMLElement) {
   );
   typewrite(
     guide,
-    `年运使用${cnNum(yearly.length)}种体系的年度信号，月运使用${cnNum(monthly.length)}种体系的月度信号。出生画像分数不参与运程计算。选一个领域，查看接下来三年和十二个月的变化。`,
+    "选一个领域，查看接下来三年和十二个月的变化。",
     28,
   );
 
@@ -88,38 +86,11 @@ export function renderTimeline(view: HTMLElement) {
 
   view.append(
     hasAny ? reveal(chipsEl) : "",
-    sectionTitle("三年大势", hasYears ? `${yearly.length} 个体系提供年运。点击一年查看详情` : "所选体系没有年运资料。"),
+    sectionTitle("三年大势", hasYears ? "点击一年查看详情" : "所选体系没有年运资料。"),
     hasYears ? reveal(yearsEl) : "",
-    sectionTitle("未来十二个月", hasMonths ? `${monthly.length} 个体系提供月运，不加入年度信号。点击月份查看详情` : "所选体系没有月运资料。"),
+    sectionTitle("未来十二个月", hasMonths ? "点击月份查看详情" : "所选体系没有月运资料。"),
     hasMonths ? reveal(h("div", { class: "glass curve-card" }, curveEl)) : "",
     hasAny ? detailEl : "",
-  );
-  if (natalOnly.length)
-    view.append(
-      reveal(
-        h(
-          "aside",
-          { class: "caveats" },
-          h("b", null, "ⓘ 只看本命的体系"),
-          h("p", null, `${natalOnly.map((r) => r.name).join("、")}在本站只提供出生画像，不参与年运、月运和运势指数。`),
-          ...natalOnly.flatMap((r) => (forecasts[r.id]?.note ? [h("p", null, `${r.name}：${forecasts[r.id]!.note}`)] : [])),
-        ),
-      ),
-    );
-  if (yearOnly.length)
-    view.append(
-      reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 只提供年运的体系"), h("p", null, `${yearOnly.map((r) => r.name).join("、")}只参与年度预测，不参与每月曲线、月度详情和月度运势指数。`))),
-    );
-  view.append(
-    reveal(
-      h(
-        "aside",
-        { class: "caveats disclaimer" },
-        h("b", null, "ⓘ 怎样看这些预测"),
-        h("p", null, "每条预测都来自对应体系的一条传统规则，专业版会写出规则本身。体系之间经常互相矛盾，曲线只是把各体系的信号按强弱相加，不是概率。"),
-        h("p", null, "说得具体，不等于说得准。请把它当作安排计划时的一个参考角度，重要决定请以现实信息为准。"),
-      ),
-    ),
   );
 
   function renderChips() {

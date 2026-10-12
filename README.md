@@ -5,7 +5,7 @@ A single-page fortune-telling website. The user enters a birth date, time and pl
 Other features:
 
 - **Profile (`#/profile`).** The user can change birth data, set the DeepSeek API key and select which birth systems to use. All 14 start enabled. A disabled system is removed from pages, fusion, forecasts, compatibility and AI question evidence, including focus data. An empty selection shows an empty state. The three separate rituals (Qimen, tarot draw and jiao) stay available.
-- **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The professional view is the default.
+- **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The plain view is the default. A click on the toggle saves the choice in the browser.
 - **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom). If the selected systems have no year or month forecasts, that section shows a no-data message. If only year forecasts are available, the details start with this year.
 - **Relationships (`#/people`).** The user can add a partner, parents, friends or colleagues. The site compares the two charts and answers questions such as "is this person my fate" or "can my parents help my career".
 - **By topic.** The fusion page groups the readings by topic (career, wealth, love, health, wisdom). For each topic it shows which systems agree or disagree, a few statements from different systems, this year's strongest signals, and the best and worst months (`src/methods/topics.ts`). Method pages show this year first and fold the generic personality sections.

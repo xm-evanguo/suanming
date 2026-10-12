@@ -140,7 +140,6 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
       h("p", { class: "v-caption" }, "想好一件具体的事，选一个方向，然后洗牌。"),
       chips,
       question,
-      h("p", { class: "v-caption" }, "抽牌后可以用 AI 结合问题解读。"),
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-primary", onclick: () => fan(question.value.trim()) }, "洗牌 ✦")),
     );
   }
@@ -221,7 +220,6 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
         const body = i === 2 ? `${reversed ? c.reversed : c.upright}${c.advice}` : `${reversed ? c.reversed : c.upright}${topicText(c, topic)}`;
         return reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, `${pos.name} · ${c.name}${reversed ? "（逆位）" : ""}`), h("p", null, body)), i * 120);
       }),
-      h("p", { class: "v-caption" }, "以上是通用牌义。"),
       llm.element,
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: start }, "↺ 换个问题再抽")),
     );

@@ -52,7 +52,6 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
       { class: "marquee", "aria-label": "包含的体系" },
       h("div", { class: "marquee-track" }, ...[...methodLabels, ...methodLabels].map((m) => h("span", null, m, h("i", null, "✦")))),
     ),
-    h("p", { class: "privacy" }, "🔒 所有推演都在你的浏览器内完成。只有你点击 AI 解读（塔罗解读、问事）时，相关内容才会直接发送给 DeepSeek。"),
   );
   view.append(hero);
   typewrite(guide, "从你出生的那一刻开始，用你选中的体系汇集画像。你可以在 Profile 中随时修改出生信息和体系选择。");

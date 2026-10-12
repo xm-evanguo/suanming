@@ -35,7 +35,7 @@ export function profileApiLink(): HTMLAnchorElement {
   return link;
 }
 
-/** The password field closes after entry. Saving to browser storage is optional. */
+/** The password field closes after entry. Enter or the save button stores the key in this browser. */
 function keyField(say: (message: string) => void): HTMLElement {
   const input = h("input", { type: "password", class: "field", autocomplete: "off", spellcheck: "false", "aria-label": "DeepSeek API Key", placeholder: "输入你的 DeepSeek API Key" });
   const summary = h("summary");
@@ -53,18 +53,15 @@ function keyField(say: (message: string) => void): HTMLElement {
     updateKeys();
     return true;
   };
-  const useSession = () => {
-    if (accept()) say("Key 已用于本次会话，未写入本地存储。");
-  };
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") { event.preventDefault(); useSession(); }
-  });
-  const use = h("button", { type: "button", class: "btn btn-ghost", onclick: useSession }, "仅本次使用");
-  const save = h("button", { type: "button", class: "btn btn-ghost", onclick: () => {
+  const saveKey = () => {
     if (!accept()) return;
     try { localStorage.setItem(KEY_STORAGE, currentKey()); say("Key 已保存在当前浏览器，可随时清除。"); }
     catch { say("浏览器无法保存 Key，本次仍可使用，刷新后需要重填。"); }
-  } }, "保存 Key 到此浏览器");
+  };
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); saveKey(); }
+  });
+  const save = h("button", { type: "button", class: "btn btn-ghost", onclick: saveKey }, "保存 Key 到此浏览器");
   const clear = h("button", { type: "button", class: "btn btn-ghost", onclick: () => {
     sessionKey = "";
     try { localStorage.removeItem(KEY_STORAGE); say("已清除当前浏览器保存的 Key。"); }
@@ -72,8 +69,7 @@ function keyField(say: (message: string) => void): HTMLElement {
     updateKeys();
   } }, "清除 Key");
   const element = h("div", { class: "llm-key", "data-keysync": true }, editor,
-    h("p", { class: "v-caption" }, "填写后请选择“仅本次使用”或保存到浏览器，也可按回车仅用于本次会话。"),
-    h("div", { class: "draw-actions" }, use, save, clear),
+    h("div", { class: "draw-actions" }, save, clear),
     h("p", { class: "v-caption" }, "保存后，Key 留在此浏览器的 localStorage，未加密；请勿在共用设备保存。Key 只会直接发送给 DeepSeek，不经过本站服务器。"),
   );
   element.addEventListener("keychange", sync);
@@ -84,7 +80,7 @@ function keyField(say: (message: string) => void): HTMLElement {
 /** The Profile API settings card. Profile shows it in the page; the AI panels show it in a dialog. */
 export function apiSettings(): HTMLElement {
   const status = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
-  return h("section", { class: "glass profile-card", id: "profile-api" }, h("h2", null, "DeepSeek API 配置"), h("p", { class: "v-caption" }, "AI 问事和塔罗 AI 解读使用这里的 Key。未配置时，AI 部分默认折叠。"), keyField((message) => { status.textContent = message; }), status);
+  return h("section", { class: "glass profile-card", id: "profile-api" }, h("h2", null, "DeepSeek API 配置"), h("p", { class: "v-caption" }, "AI 问事和塔罗 AI 解读使用这里的 Key。"), keyField((message) => { status.textContent = message; }), status);
 }
 
 /** Keep the question page mounted while the user changes Profile API settings. */

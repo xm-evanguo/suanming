@@ -140,7 +140,7 @@ export function renderSummary(view: HTMLElement) {
   }).sort((a, b) => b.sd - a.sd)[0]!;
 
   view.append(
-    sectionTitle("五维星图 · 出生画像", `金色为${n}体系的画像平均值，淡色线为各体系的画像分数；这些分数不参与年运和月运`),
+    sectionTitle("五维星图 · 出生画像", `金色为${n}体系的画像平均值，淡色线为各体系的画像分数`),
     reveal(h("div", { class: "glass v-row radar-row" }, radar, h("div", null, scoreBars(fusion.scores), h("p", { class: "v-caption" }, `体系之间分歧最大的是「${DIM_NAMES[spread.d]}」（标准差 ${spread.sd.toFixed(1)} 分）——不同文明对它的看法并不一致。`)))),
   );
 
@@ -205,15 +205,6 @@ export function renderSummary(view: HTMLElement) {
             h("span", { class: "mx-score" }, String(Math.round(DIMS.reduce((s, d) => s + r.scores[d], 0) / DIMS.length))),
           ),
         ),
-      ),
-    ),
-    reveal(
-      h(
-        "aside",
-        { class: "caveats disclaimer" },
-        h("b", null, "ⓘ 关于这份报告"),
-        h("p", null, `${n}种体系彼此独立，结论常常互相矛盾。“融合分数”是把各体系的结果等权平均的换算，方便阅读。各流派的取法见每页的“推算说明”。`),
-        h("p", null, "全部计算都在你的浏览器内完成；只有点击 AI 解读（塔罗解读、问事）时，相关内容才会发送给 AI。"),
       ),
     ),
     h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: "#/hub" }, "← 回到星盘"), h("a", { class: "btn btn-primary", href: "#/new" }, "为另一个人推演 ✦")),

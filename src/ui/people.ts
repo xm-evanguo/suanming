@@ -97,25 +97,13 @@ export function renderPeople(view: HTMLElement) {
     }),
     h("button", { type: "button", class: "person-card add glass", onclick: () => openForm() }, h("span", { class: "pc-icon" }, "＋"), h("b", null, "添加一个人")),
   );
-  view.append(reveal(grid), formSlot, privacyNote());
+  view.append(reveal(grid), formSlot);
   if (!people.length) openForm();
 
   function openForm() {
     formSlot.replaceChildren(personForm());
     formSlot.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-}
-
-function privacyNote(): HTMLElement {
-  return reveal(
-    h(
-      "aside",
-      { class: "caveats disclaimer" },
-      h("b", null, "ⓘ 隐私与分寸"),
-      h("p", null, "他人的出生信息只保存在你这台设备的浏览器里，不会上传。添加别人的信息前，最好先征得对方同意。"),
-      h("p", null, "合盘是一种传统的看法，不是对一段关系的判决。请不要因为某个分数而疏远家人、朋友或伴侣；它更适合用来理解彼此的差异。"),
-    ),
-  );
 }
 
 /** Add or edit a person. Time and place are optional: unknown time uses 12:00, the place defaults to the user's. */
@@ -292,7 +280,6 @@ export function renderPerson(view: HTMLElement, id: string) {
       ),
     ),
     editSlot,
-    privacyNote(),
   );
 }
 
