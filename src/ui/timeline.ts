@@ -1,6 +1,7 @@
 import type { Dim } from "../data/types";
 import { forecastPeriods, type Period, type PeriodReading, type Signal } from "../forecast/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
+import { periodScore } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
 import { cnNum, onlyPro, sectionTitle, statement } from "./components";
 import { h, reveal, typewrite } from "./dom";
@@ -20,21 +21,6 @@ const FILTER_KEY = "tianji.timeline.dim";
 
 const key = (p: Period) => `${p.year}-${p.month ?? 0}`;
 const periodName = (p: Period) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
-
-/** 0-100 from weighted good/bad signals; 50 means no lean either way. */
-export function periodScore(signals: Signal[]): number {
-  let good = 0;
-  let bad = 0;
-  for (const s of signals) {
-    if (s.tone === "good") good += s.weight;
-    else if (s.tone === "bad") bad += s.weight;
-    else {
-      good += s.weight / 2;
-      bad += s.weight / 2;
-    }
-  }
-  return Math.round(50 + (50 * (good - bad)) / (good + bad + 4));
-}
 
 const byStrength = (a: Signal, b: Signal) => b.weight - a.weight;
 

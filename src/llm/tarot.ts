@@ -1,14 +1,13 @@
 import { MAJOR_ARCANA } from "../data/tarot";
+import { type ApiRequest, type ChatMessage, chatCompletion } from "./client";
 
-export const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions";
-export const KEY_STORAGE = "suanming.deepseek.api-key";
+export { type ApiRequest, DEEPSEEK_ENDPOINT, KEY_STORAGE } from "./client";
 export const QUESTION_LIMIT = 1000;
 export const CONTEXT_LIMIT = 2000;
 export type DrawnCard = { num: number; reversed: boolean };
 export type TarotQuestion = { question: string; context: string; topic: string; cards: DrawnCard[] };
-export type ApiRequest = (url: string, options: RequestInit) => Promise<Response>;
 
-export function tarotMessages(input: TarotQuestion) {
+export function tarotMessages(input: TarotQuestion): ChatMessage[] {
   const question = input.question.trim();
   if (!question) throw new Error("请先填写一个具体问题。");
   if (question.length > QUESTION_LIMIT || input.context.length > CONTEXT_LIMIT) throw new Error("问题或背景过长，请精简后再试。");
@@ -32,35 +31,5 @@ export function tarotMessages(input: TarotQuestion) {
 }
 
 export async function interpretTarot(apiKey: string, input: TarotQuestion, signal?: AbortSignal, request: ApiRequest = fetch): Promise<string> {
-  const key = apiKey.trim();
-  if (!key || /\s/.test(key)) throw new Error("请填写有效的 DeepSeek API Key，不能含空格或换行。");
-  const messages = tarotMessages(input);
-  let response: Response;
-  try {
-    response = await request(DEEPSEEK_ENDPOINT, {
-      method: "POST", mode: "cors", credentials: "omit", redirect: "error", referrerPolicy: "no-referrer",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model: "deepseek-flash", messages, thinking: { type: "disabled" }, max_tokens: 2400, stream: false }),
-      signal,
-    });
-  } catch {
-    if (signal?.aborted) throw new Error(signal.reason?.name === "TimeoutError" ? "解读超时，请稍后重试。" : "已取消本次解读。");
-    throw new Error("无法连接 DeepSeek，请检查网络和浏览器的跨域访问设置后重试。");
-  }
-  if (!response.ok) {
-    const errors: Record<number, string> = { 400: "DeepSeek 未接受请求，请稍后重试。", 401: "API Key 无效，请检查后重试。", 402: "DeepSeek 余额不足，请在 DeepSeek 平台充值。", 403: "此 Key 没有访问权限，请检查 DeepSeek 账户设置。", 429: "请求过于频繁，请稍后重试。" };
-    throw new Error(errors[response.status] ?? "DeepSeek 服务暂时不可用，请稍后重试。");
-  }
-  let data;
-  try { data = await response.json(); }
-  catch {
-    if (signal?.aborted) throw new Error("解读已取消或超时，请重试。");
-    throw new Error("DeepSeek 返回了无法读取的内容，请重试。");
-  }
-  const choice = data?.choices?.[0];
-  const content = choice?.message?.content;
-  if (typeof content !== "string" || !content.trim()) throw new Error("DeepSeek 没有返回解读，请重试。");
-  if (choice.finish_reason === "length") throw new Error("解读超过输出长度，未能完成。请精简问题后重试。");
-  if (choice.finish_reason !== "stop") throw new Error("DeepSeek 未完成解读，请重试。");
-  return content.trim();
+  return chatCompletion(apiKey, tarotMessages(input), { maxTokens: 2400 }, signal, request);
 }

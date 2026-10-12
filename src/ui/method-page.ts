@@ -1,11 +1,33 @@
 import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
-import { chips, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle } from "./components";
+import { chips, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
-import { result } from "./state";
+import { getForecasts, result } from "./state";
 import { tarotDraw } from "./tarot-draw";
 import { VISUALS } from "./visuals";
+
+/** Plain sections that most systems share: the same four questions, answered 10 times. They go into a fold. */
+const GENERIC_TITLES = new Set(["你是怎样的人", "适合做什么", "感情里的你", "给你的建议", "这套方法怎么算的"]);
+
+/** This system's reading of the current year, or its note when it has no year rule. Computed after the first paint. */
+function nowSlot(id: MethodId): HTMLElement {
+  const slot = h("div", { class: "now-slot" });
+  setTimeout(() => {
+    const forecast = getForecasts()[id];
+    const cur = forecast?.years[0];
+    if (cur && cur.signals.length > 0) {
+      const top = [...cur.signals].sort((a, b) => b.weight - a.weight).slice(0, 3);
+      slot.append(
+        sectionTitle(`现在 · ${cur.period.year} 年`, "这套方法眼下读到的信号"),
+        reveal(h("section", { class: "glass now-card" }, onlyPro(h("p", { class: "now-label" }, cur.label)), h("ul", { class: "stmts" }, ...top.map((s, i) => statement(s, `${cur.period.year} 年`, i))))),
+      );
+    } else if (forecast?.note) {
+      slot.append(sectionTitle("现在"), reveal(h("p", { class: "v-caption" }, forecast.note)));
+    }
+  }, 0);
+  return slot;
+}
 
 export function renderMethod(view: HTMLElement, id: MethodId) {
   const r = result(id);
@@ -38,9 +60,12 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
 
   const render = VISUALS[id];
   if (render) view.append(reveal(h("section", { class: "m-visual glass" }, render(r))));
+  view.append(nowSlot(id));
 
   const article = (s: { title: string; body: string }, i: number) =>
     reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, s.title), h("p", null, s.body)), 60);
+  const specific = r.plain?.sections.filter((s) => !GENERIC_TITLES.has(s.title)) ?? [];
+  const generic = r.plain?.sections.filter((s) => GENERIC_TITLES.has(s.title)) ?? [];
   view.append(
     onlyPro(
       sectionTitle("推演数据", "以下数值均由你的出生信息实时计算得出"),
@@ -51,9 +76,22 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
     scoreBars(r.scores),
     reveal(chips(r.keywords)),
     onlyPro(sectionTitle("命运解读", "向下滑动，逐段揭示"), ...r.sections.map(article)),
-    r.plain ? onlyPlain(sectionTitle("说给你听", "通俗版解读"), ...r.plain.sections.map(article)) : "",
+    r.plain
+      ? onlyPlain(
+          sectionTitle("说给你听", "通俗版解读"),
+          ...specific.map(article),
+          generic.length > 0 &&
+            h(
+              "details",
+              { class: "more fold", open: specific.length === 0 },
+              h("summary", null, "性格与通用建议（与其他体系相近，展开查看）"),
+              ...generic.map((s, i) => article(s, specific.length + i)),
+            ),
+        )
+      : "",
   );
   if (id === "tarot") view.append(sectionTitle("亲手抽牌", "有具体问题时，用传统的方式问一问"), reveal(tarotDraw()));
+  view.append(reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: `#/ask/m/${id}` }, "就这一页提问 →"))));
   view.append(sectionTitle("开运指引"), reveal(luckyRow(r.lucky)));
   if (r.caveats.length) view.append(reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 推算说明"), ...r.caveats.map((c) => h("p", null, c)))));
 

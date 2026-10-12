@@ -1,4 +1,5 @@
 import type { BirthInput } from "./core/chart";
+import { renderAsk } from "./ui/ask";
 import { renderHub } from "./ui/hub";
 import { renderMethod } from "./ui/method-page";
 import { mountModeToggle } from "./ui/mode-toggle";
@@ -54,6 +55,9 @@ function route() {
     }
     case "summary":
       renderSummary(view);
+      break;
+    case "ask":
+      current = renderAsk(view, parts.slice(1));
       break;
     case "timeline":
       renderTimeline(view);

@@ -168,7 +168,7 @@ export const chaldean: MethodFn<ChaldeanVisual> = (chart) => {
       },
       {
         title: `行星时 · ${hourWord}第 ${hourNo} 时`,
-        body: `把日出到日落平分成 12 份是白天的 12 小时，日落到次日日出平分成 12 份是夜晚的 12 小时，所以夏天白天的“小时”更长。第一个小时属于日主星，之后按土、木、火、日、金、水、月的迦勒底序依次轮换。你出生在${localHM(hr.start.getTime(), tz)}–${localHM(hr.end.getTime(), tz)} 这一时，守护星是${H.zh}（${H.kw.join("、")}）。这类时辰适合${H.hourText}。${unk}`,
+        body: `把日出到日落平分成 12 份是白天的 12 小时，日落到次日日出平分成 12 份是夜晚的 12 小时，所以夏天白天的“小时”更长。第一个小时属于日主星，之后按土、木、火、日、金、水、月的迦勒底序依次轮换。你出生在${localHM(hr.start.getTime(), tz)}–${localHM(hr.end.getTime(), tz)} 这一时，守护星是${H.zh}（${H.kw.join("、")}）。这类时辰${H.hourText}。${unk}`,
       },
       {
         title: `太阳十度区 · ${F.zh}之面`,
@@ -184,7 +184,7 @@ export const chaldean: MethodFn<ChaldeanVisual> = (chart) => {
         {
           title: "出生那一刻的星",
           body: known
-            ? `你出生的那一个小时由${H.zh}值班（管${H.plainKw}）。${H.zh}的小时适合${H.hourText}，想做相关的事，可以挑这类时段试试。${hr.ruler === dayRuler ? `而且它和出生那天的守护星是同一颗，${D.zh}的气质在你身上会更明显。` : ""}`
+            ? `你出生的那一个小时由${H.zh}值班（管${H.plainKw}）。${H.zh}的小时${H.hourText}，想做相关的事，可以挑这类时段试试。${hr.ruler === dayRuler ? `而且它和出生那天的守护星是同一颗，${D.zh}的气质在你身上会更明显。` : ""}`
             : `没有出生时间，我们算不出你出生那一小时由哪颗星值班。日主星${D.zh}那部分仍然有效，想看这一部分，可以向家人问问出生时间。`,
         },
         { title: "你的太阳带着谁的味道", body: DECAN_FLAVOR[decanRuler] },

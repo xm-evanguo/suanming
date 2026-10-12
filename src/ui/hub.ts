@@ -73,6 +73,7 @@ export function renderHub(view: HTMLElement) {
       h(
         "div",
         { class: "feature-row" },
+        feature("#/ask", "✦", "QUAESTIO · 问事", "问事", "带着一个具体问题来：换工作、感情、搬家……按你的处境，综合各体系回答。", "去提问 →"),
         feature("#/timeline", "☽", "TEMPUS · 流年流月", "未来运程", "今年起三年、未来十二个月。按事业、财富、感情等领域，看各体系说了什么。", "查看时间轴 →"),
         feature("#/people", "❦", "CONIUNCTIO · 关系合盘", "你与身边的人", people ? `已添加 ${people} 人。看缘分、相处，以及谁能在事业上帮你。` : "加入伴侣、父母或朋友的生日，看缘分、相处，以及谁能在事业上帮你。", people ? "查看合盘 →" : "添加一个人 →"),
       ),

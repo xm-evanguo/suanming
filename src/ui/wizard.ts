@@ -52,7 +52,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
       { class: "marquee", "aria-label": "包含的体系" },
       h("div", { class: "marquee-track" }, ...[...METHOD_LABELS, ...METHOD_LABELS].map((m) => h("span", null, m, h("i", null, "✦")))),
     ),
-    h("p", { class: "privacy" }, "🔒 所有推演都在你的浏览器内完成，不上传任何数据。"),
+    h("p", { class: "privacy" }, "🔒 所有推演都在你的浏览器内完成。只有你点击 AI 解读（塔罗解读、问事）时，相关内容才会直接发送给 DeepSeek。"),
   );
   view.append(hero);
   typewrite(guide, "在你出生的那一刻，日月五星排成了只属于你的图案。东方的干支、西方的星座、东瀛的宿曜、玛雅的神圣历——今夜，它们将同时为你一人而转动。");

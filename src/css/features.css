@@ -224,3 +224,60 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
   .fan-card:hover:not(:disabled) { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-14px); }
   .fan-card.taken { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-60px); }
 }
+
+/* ───────── topic digest (summary page) and "now" card (method page) */
+.topic-slot { min-height: 8px; }
+.topic-cards { margin-top: 16px; }
+.topic-card { padding: clamp(16px, 4vw, 28px); animation: rise 0.5s both; }
+.topic-card[hidden] { display: none; }
+.tp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.tp-head h3 { margin: 0; font-size: 22px; color: var(--gold2); }
+.tp-avg { color: var(--muted); font-size: 13px; }
+.tp-avg b { font-family: var(--latin); font-size: 28px; color: var(--gold2); font-weight: 400; }
+.tp-consensus { margin: 6px 0 14px; color: var(--muted); font-size: 14px; }
+.tp-stmts { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.tp-stmt { padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line); overflow-wrap: anywhere; }
+.tp-stmt p { margin: 0; color: #e6e1fb; }
+.tp-stmt .tp-pro { font-size: 13px; color: var(--cyan); font-family: var(--mono); }
+.tp-now { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.tp-now-title { color: var(--gold); letter-spacing: 0.15em; font-size: 12px; }
+.tp-months { margin: 10px 0 0; font-size: 14px; color: var(--gold2); overflow-wrap: anywhere; }
+.tp-link { display: inline-block; margin-top: 14px; color: var(--gold); font-size: 13px; text-decoration: none; }
+.tp-link:hover { text-decoration: underline; }
+
+.now-card { padding: clamp(16px, 4vw, 26px); }
+.now-label { margin: 0 0 4px; color: var(--cyan); font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+
+/* Generic plain sections folded into one block. */
+.fold { margin-top: 18px; }
+.fold > summary { padding: 14px 18px; border: 1px dashed rgba(245, 200, 107, 0.4); border-radius: 14px; background: rgba(245, 200, 107, 0.04); }
+.fold[open] > summary { margin-bottom: 14px; }
+
+/* ───────── 问事 (ask page) and the shared key field */
+.llm-key { display: grid; gap: 14px; }
+.tp-links { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.ask-card textarea.field { resize: vertical; min-height: 88px; font: inherit; line-height: 1.6; }
+.ask-card .ask-follow textarea.field { min-height: 64px; }
+.ask-card .ask-form .field { max-width: none; }
+.ask-block { display: grid; gap: 12px; }
+.ask-block h3 { margin: 0; font-size: 16px; color: var(--gold2); }
+.ask-block .rel-chips { margin: 0; }
+.ask-card .dim-filter { justify-content: flex-start; margin: 0; }
+.ask-card .dim-chip { text-align: left; }
+.ask-card .dim-chip:disabled { opacity: 0.5; cursor: wait; }
+.ask-preview { padding: 16px 18px; display: grid; gap: 4px; background: rgba(255, 255, 255, 0.03); }
+.ask-preview .eyebrow { margin: 0; }
+.ask-preview .tp-consensus { margin: 2px 0 0; }
+.ask-details > summary { cursor: pointer; color: var(--gold2); }
+.ask-sent { margin: 10px 0 0; padding: 12px 14px; max-height: 320px; overflow: auto; border-radius: 12px; border: 1px solid var(--line); background: rgba(5, 4, 20, 0.6); color: var(--muted); font: inherit; font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ask-privacy { text-align: left; }
+.ask-thread[hidden], .ask-follow[hidden] { display: none; }
+.ask-thread { display: grid; gap: 12px; margin-top: 20px; }
+.ask-msg { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
+.ask-msg small { color: var(--gold); letter-spacing: 0.15em; font-size: 12px; }
+.ask-msg p { margin: 4px 0 0; }
+.ask-q { background: rgba(245, 200, 107, 0.06); border-color: rgba(245, 200, 107, 0.25); }
+.ask-follow { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.ask-focus { margin: 0 0 12px; padding: 10px 16px; border-radius: 12px; border: 1px dashed rgba(245, 200, 107, 0.4); color: var(--muted); font-size: 14px; }
+.ask-focus b { color: var(--gold2); }
+.ask-focus a { margin-left: 8px; color: var(--gold); }

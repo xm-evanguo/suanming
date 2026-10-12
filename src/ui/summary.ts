@@ -1,12 +1,92 @@
 import { WU_XING } from "../data/bazi";
 import type { WuXing } from "../data/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
-import { cnNum, luckyRow, scoreBars, sectionTitle } from "./components";
+import { consensusText, strongestSignals, type TopicPeriod, type TopicStatement, type TopicView, topicViews } from "../methods/topics";
+import type { MethodResult } from "../methods/types";
+import { cnNum, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement } from "./components";
 import { countUp, h, reveal, sleep, svg, typewrite, WX_COLOR } from "./dom";
 import { birthLine } from "./hub";
-import { getState } from "./state";
+import { getForecasts, getState } from "./state";
 
 const f = (n: number) => n.toFixed(1);
+
+const periodName = (p: TopicPeriod["period"]) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
+
+/** Up to `n` statements: the most distinctive one, then one from the other side of the mean, then the next most distinctive. */
+function pickStatements(v: TopicView, n: number): TopicStatement[] {
+  const [first, ...rest] = v.statements;
+  if (!first) return [];
+  const opposite = rest.find((s) => s.score < v.avg !== first.score < v.avg);
+  const picked = opposite ? [first, opposite] : [first];
+  for (const s of rest) if (picked.length < n && !picked.includes(s)) picked.push(s);
+  return picked.slice(0, n);
+}
+
+/** "较顺：2027 年 3 月 · 需留意：2026 年 12 月", only for months that have signals and lean one way. */
+function monthsLine(v: TopicView): string {
+  const withSignals = v.months.filter((m) => m.signals.length > 0);
+  if (withSignals.length === 0) return "";
+  const best = withSignals.reduce((a, b) => (b.score > a.score ? b : a));
+  const worst = withSignals.reduce((a, b) => (b.score < a.score ? b : a));
+  return [best.score > 50 ? `较顺：${periodName(best.period)}` : "", worst.score < 50 ? `需留意：${periodName(worst.period)}` : ""].filter(Boolean).join(" · ");
+}
+
+function topicCard(v: TopicView, total: number, hidden: boolean): HTMLElement {
+  const picks = v.thisYear ? strongestSignals(v.thisYear, 2) : [];
+  const line = monthsLine(v);
+  return h(
+    "section",
+    { class: "glass topic-card", role: "tabpanel", hidden },
+    h("div", { class: "tp-head" }, h("h3", null, v.name), h("span", { class: "tp-avg" }, h("b", null, String(Math.round(v.avg))), " 分")),
+    h("p", { class: "tp-consensus" }, consensusText(v, total)),
+    h(
+      "ul",
+      { class: "tp-stmts" },
+      ...pickStatements(v, 3).map((s) =>
+        h("li", { class: "tp-stmt" }, onlyPlain(h("p", null, s.text)), onlyPro(h("p", { class: s.pro ? "tp-pro" : "" }, s.pro || s.text)), h("small", { class: "stmt-src" }, `${s.name} · ${s.score} 分`)),
+      ),
+    ),
+    v.thisYear && (picks.length > 0 || line)
+      ? h(
+          "div",
+          { class: "tp-now" },
+          h("small", { class: "tp-now-title" }, `现在 · ${v.thisYear.period.year} 年`),
+          picks.length > 0 ? h("ul", { class: "stmts" }, ...picks.map((p, i) => statement(p.signal, p.name, i))) : "",
+          line ? h("p", { class: "tp-months" }, line) : "",
+        )
+      : "",
+    h("div", { class: "tp-links" }, h("a", { class: "tp-link", href: "#/timeline" }, "逐月看完整时间线 →"), h("a", { class: "tp-link", href: `#/ask/t/${v.dim}` }, "就这个话题提问 →")),
+  );
+}
+
+/** One switcher, one card per topic. The forecasts are computed after the first paint. */
+function topicSection(results: MethodResult[]): HTMLElement {
+  const slot = h("div", { class: "topic-slot" });
+  setTimeout(() => {
+    const views = topicViews(results, getForecasts());
+    const cards = views.map((v, i) => topicCard(v, results.length, i !== 0));
+    const tabs = views.map((v, i) =>
+      h(
+        "button",
+        {
+          type: "button",
+          role: "tab",
+          class: `dim-chip${i === 0 ? " on" : ""}`,
+          "aria-selected": String(i === 0),
+          onclick: () =>
+            tabs.forEach((t, j) => {
+              t.classList.toggle("on", i === j);
+              t.setAttribute("aria-selected", String(i === j));
+              cards[j]!.hidden = i !== j;
+            }),
+        },
+        `${v.name} ${Math.round(v.avg)}`,
+      ),
+    );
+    slot.append(reveal(h("div", { class: "dim-filter", role: "tablist", "aria-label": "话题" }, ...tabs)), reveal(h("div", { class: "topic-cards" }, ...cards)));
+  }, 0);
+  return slot;
+}
 
 export function renderSummary(view: HTMLElement) {
   const { results, fusion } = getState();
@@ -28,6 +108,8 @@ export function renderSummary(view: HTMLElement) {
       h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]} · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}`),
     ),
     reveal(h("section", { class: "glass oracle-card" }, h("span", { class: "oracle-mark" }, "❝"), oracle)),
+    sectionTitle("按话题看：共识与分歧", "同一个话题，各体系各说了什么；以及今年和未来 12 个月的信号"),
+    topicSection(results),
   );
   setTimeout(() => countUp(score, fusion.overall, 1800), 300);
   (async () => {
@@ -133,7 +215,7 @@ export function renderSummary(view: HTMLElement) {
         h("p", null, "命理与占星是流传千年的文化传统，不是经过验证的科学。没有可靠研究表明出生时刻能预测性格或命运；许多描述之所以“很准”，部分来自巴纳姆效应——笼统的描述人人都觉得像自己。"),
         h("p", null, `${n}种体系彼此独立，结论常常互相矛盾。“融合分数”只是把各体系的结果按同等权重取平均，是一种娱乐化的启发式算法，不代表任何真实的概率。`),
         h("p", null, "不同流派在细节上也有分歧：年界取立春还是春节、子时如何换日、玛雅历用 GMT 还是 Dreamspell 算法等。本站在每个页面的“推算说明”中注明了所用规则。"),
-        h("p", null, "请把它当作一面有趣的镜子，而不是人生决策的依据。全部计算都在你的浏览器内完成，不上传任何数据。"),
+        h("p", null, "请把它当作一面有趣的镜子，而不是人生决策的依据。全部计算都在你的浏览器内完成；只有你点击 AI 解读（塔罗解读、问事）时，相关内容才会直接发送给 DeepSeek，其中不含出生日期、地点和姓名。"),
       ),
     ),
     h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: "#/hub" }, "← 回到星盘"), h("a", { class: "btn btn-primary", href: "#/new" }, "为另一个人推演 ✦")),
