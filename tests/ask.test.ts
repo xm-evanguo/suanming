@@ -44,27 +44,38 @@ describe("ask evidence", () => {
     expect(askEvidence(results, forecasts, "career").profile).toBeUndefined();
   });
 
-  test("has topic data and the unknown-time note only when the time is unknown", () => {
+  test("lists each system's own content, without the site's scores", () => {
     const e = askEvidence(results, forecasts, "love");
     expect(e.topic).toBe("感情");
-    expect(e.consensus).toContain("14 个体系");
-    expect(e.statements.length).toBeGreaterThan(0);
-    expect(e.statements.length).toBeLessThanOrEqual(8);
-    expect(e.thisYear?.year).toBe(2026);
-    expect(e.thisYear!.signals.length).toBeLessThanOrEqual(6);
-    expect(e.months).toHaveLength(12);
-    expect(e.months[0]!.month).toBe("2026-10");
-    expect(e.bestMonths.length).toBeLessThanOrEqual(2);
-    expect(e.worstMonths.length).toBeLessThanOrEqual(2);
+    expect(e.systems.length + e.silent.length).toBe(results.length);
+    expect(e.systems.some((s) => s.reading)).toBe(true);
+    const timed = e.systems.filter((s) => s.months.length > 0);
+    expect(timed.length).toBeGreaterThan(0);
+    for (const s of timed) for (const m of s.months) {
+      expect(m.period).toMatch(/^20\d{2}-\d{2}$/);
+      expect(m.signals.length).toBeGreaterThan(0);
+      for (const x of m.signals) expect(["有利", "不利", "好坏参半"]).toContain(x.tone);
+    }
+    expect(e.systems.flatMap((s) => s.years).every((y) => /^20\d{2}$/.test(y.period))).toBe(true);
+    // No averages, consensus lines or per-system scores.
+    const json = JSON.stringify(e);
+    for (const k of ['"score"', '"consensus"', '"higher"', '"lower"', '"weight"', "评价偏高", "明显偏低"]) expect(json).not.toContain(k);
     expect(e.focus).toBeUndefined();
     expect(e.caveats).toHaveLength(0);
     expect(askEvidence(unknown.results, unknown.forecasts, "love").caveats[0]).toContain("12:00");
     expect(askEvidence(results, forecasts, "wisdom").topic).toContain("学业与成长");
   });
 
+  test("marks systems without period rules", () => {
+    const e = askEvidence(results, forecasts, "career");
+    expect(e.systems.some((s) => s.noTiming)).toBe(true);
+    for (const s of e.systems) if (s.noTiming) expect(s.years.length + s.months.length).toBe(0);
+  });
+
   test("includes the focus system when given", () => {
     const e = askEvidence(results, forecasts, "career", "bazi");
     expect(e.focus?.system).toBe("生辰八字");
+    expect(e.systems[0]!.system).toBe("生辰八字");
     expect(e.focus!.headline.length).toBeGreaterThan(0);
     expect(e.focus!.summary.length).toBeGreaterThan(0);
     expect(e.focus!.facts.length).toBeGreaterThan(0);

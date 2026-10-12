@@ -23,7 +23,7 @@ function pickStatements(v: TopicView, n: number): TopicStatement[] {
 }
 
 /** "较顺：2027 年 3 月 · 需留意：2026 年 12 月", only for months that have signals and lean one way. */
-function monthsLine(v: TopicView): string {
+export function monthsLine(v: TopicView): string {
   const withSignals = v.months.filter((m) => m.signals.length > 0);
   if (withSignals.length === 0) return "";
   const best = withSignals.reduce((a, b) => (b.score > a.score ? b : a));

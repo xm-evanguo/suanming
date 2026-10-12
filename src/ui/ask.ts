@@ -1,24 +1,15 @@
 import type { Dim } from "../data/types";
 import { ASK_CONTEXT_LIMIT, ASK_QUESTION_LIMIT, type AskEvidence, type AskInput, type AskTurn, askDeepSeek, askEvidence, askPreviewText, MAX_FOLLOW_UPS, QUESTION_TEMPLATES, SITUATIONS, TOPIC_LABEL } from "../llm/ask";
 import { DIMS } from "../methods/fusion";
+import { consensusText, type TopicView, topicViews } from "../methods/topics";
 import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
 import { h } from "./dom";
 import { jiaoPanel } from "./jiao";
 import { keyField } from "./llm-key";
 import { getForecasts, getState } from "./state";
+import { monthsLine } from "./summary";
 import { tarotDraw } from "./tarot-draw";
-
-/** "2027-04" to "2027 年 4 月". */
-const monthName = (key: string) => `${key.slice(0, 4)} 年 ${Number(key.slice(5))} 月`;
-
-function monthsLine(e: AskEvidence): string {
-  if (e.months.length === 0) return "这个话题没有逐月数据，只能看整体倾向。";
-  const best = e.bestMonths[0];
-  const worst = e.worstMonths[0];
-  const parts = [best ? `较顺：${monthName(best.month)}` : "", worst ? `需留意：${monthName(worst.month)}` : ""].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : "未来 12 个月没有明显偏顺或偏紧的月份。";
-}
 
 /**
  * The AI ask flow. `arg` is `t/<dim>` (preselect a topic) or `m/<methodId>` (focus one system).
@@ -37,6 +28,8 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   let history: AskTurn[] = [];
   const situation = new Set<string>();
   const cache = new Map<Dim, AskEvidence>();
+  let views: TopicView[] | undefined;
+  const view = () => (views ??= topicViews(results, getForecasts())).find((v) => v.dim === topic)!;
   const evidence = () => {
     let e = cache.get(topic);
     if (!e) cache.set(topic, (e = askEvidence(results, getForecasts(), topic, focusId, getState().input)));
@@ -77,12 +70,13 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   }
 
   function renderPreview() {
-    const e = evidence();
+    const v = view();
     preview.replaceChildren(
       h("p", { class: "eyebrow" }, "本地摘要 · 不联网"),
-      h("div", { class: "tp-head" }, h("h3", null, TOPIC_LABEL[topic]), h("span", { class: "tp-avg" }, h("b", null, String(e.score)), " 分")),
-      h("p", { class: "tp-consensus" }, e.consensus),
-      h("p", { class: "tp-months" }, monthsLine(e)),
+      h("div", { class: "tp-head" }, h("h3", null, TOPIC_LABEL[topic]), h("span", { class: "tp-avg" }, h("b", null, String(Math.round(v.avg))), " 分")),
+      h("p", { class: "tp-consensus" }, consensusText(v, results.length)),
+      h("p", { class: "tp-months" }, monthsLine(v) || "这个话题没有明显偏顺或偏紧的月份。"),
+      h("p", { class: "v-caption" }, "分数只是本站为了方便阅读做的换算，不会发送给 AI。"),
     );
   }
 
@@ -192,8 +186,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     h("div", { class: "ask-block" }, h("h3", null, "3 · 你现在的处境（可多选）"), situationChips, h("label", null, "补充情况（可选）", context)),
     h("p", { class: "v-caption" }, "服务商：DeepSeek · 模型：deepseek-flash。点击后才会发送请求，由你的 DeepSeek 账户按 API 用量付费。"),
     key.element,
-    h("details", { class: "ask-details" }, h("summary", null, "将发送给 DeepSeek 的内容"), sent),
-    h("p", { class: "v-caption ask-privacy", role: "note" }, "⚠ 风险提示：使用 AI 问事会把你的个人信息（出生日期与时间、出生地、性别、年龄、各体系推算结果）连同问题和补充情况直接发送给第三方服务 DeepSeek。请不要填写你不想让第三方知道的内容。费用由你的 DeepSeek 账户承担。"),
+    h("details", { class: "ask-details" }, h("summary", null, "将发送给 AI 的内容"), sent),
     h("div", { class: "draw-actions" }, submit, cancel),
     status,
   );
