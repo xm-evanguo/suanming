@@ -1,6 +1,8 @@
 import type { Chart } from "../core/chart";
-import { DIGNITY_NAME, HOUSES, TRAD_INFO, type Trad } from "../data/hellenistic";
+import { DIGNITY_NAME, TRAD_INFO, type Trad } from "../data/hellenistic";
 import {
+  houseAction,
+  houseInfo,
   monthsElapsed,
   type Natal,
   natalOf,
@@ -16,8 +18,6 @@ import {
 import { type Forecast, type ForecastFn, forecastPeriods, type PeriodReading, periodInstant, type Signal } from "./types";
 
 type Scope = "year" | "month";
-
-const houseOf = (h: number) => HOUSES[h - 1]!;
 
 const LEAD: Record<Scope, ((topic: string, zh: string, kw: string) => string)[]> = {
   year: [
@@ -38,14 +38,6 @@ const STATE_LINE: Record<StrengthTone, (p: Trad) => string> = {
   mixed: (p) => `它的状态有好有坏：${stateText(p, "mixed")}。`,
 };
 
-/** A fitting action for a house, chosen by tone. Mixed tone gives one of each. */
-function action(house: number, tone: StrengthTone, seed: number): string {
-  const H = houseOf(house);
-  if (tone === "good") return pick(H.good, seed);
-  if (tone === "bad") return pick(H.care, seed);
-  return `${pick(H.good, seed)}同时，${pick(H.care, seed + 1)}`;
-}
-
 const dignityNote = (p: Trad, n: Natal) => DIGNITY_NAME[n.planets[p].dignity];
 
 export interface ProfectionReading {
@@ -56,7 +48,7 @@ export interface ProfectionReading {
 /** Read one profected sign. `steps` is the age (year) or age plus elapsed months (month). */
 export function readProfection(n: Natal, steps: number, scope: Scope, seed: number, yearLord?: Trad, unknownTime = false): ProfectionReading {
   const prof = profection(n.ascSign, steps);
-  const H = houseOf(prof.house);
+  const H = houseInfo(prof.house);
   const lord = prof.lord;
   const L = TRAD_INFO[lord];
   const score = placeScore(lord, n);
@@ -73,7 +65,7 @@ export function readProfection(n: Natal, steps: number, scope: Scope, seed: numb
     tone,
     weight: w,
     pro: `${scope === "year" ? "年度" : "月度"}小限第${prof.house}宫（${H.topic}）：${name}${L.zh}，本命${dignityNote(lord, n)}，位于第${lordPos.house}宫${lordPos.retro ? "且逆行" : ""}${scope === "year" ? "；自本年生日起生效" : ""}${cap}`,
-    plain: `${pick(LEAD[scope], seed)(H.plainTopic, L.zh, L.plainKw)}${STATE_LINE[tone](lord)}${action(prof.house, tone, seed)}`,
+    plain: `${pick(LEAD[scope], seed)(H.plainTopic, L.zh, L.plainKw)}${STATE_LINE[tone](lord)}${houseAction(prof.house, tone, seed)}`,
   });
 
   // Natal planets sitting in the profected house are activated.
@@ -86,19 +78,19 @@ export function readProfection(n: Natal, steps: number, scope: Scope, seed: numb
       tone: t,
       weight: Math.min(2, weightOfScore(s)) as 1 | 2,
       pro: `${scope === "year" ? "小限宫内" : "月小限宫内"}有本命${TRAD_INFO[p].zh}（${dignityNote(p, n)}）：占据被激活的宫位，其议题被唤醒`,
-      plain: `你出生时${TRAD_INFO[p].zh}（管${TRAD_INFO[p].plainKw}）就落在这个领域，${when}它被唤醒了。它${stateText(p, t)}。${action(prof.house, t, seed + 2)}`,
+      plain: `你出生时${TRAD_INFO[p].zh}（管${TRAD_INFO[p].plainKw}）就落在这个领域，${when}它被唤醒了。它${stateText(p, t)}。${houseAction(prof.house, t, seed + 2)}`,
     });
   }
 
   // Where the time lord sits in the natal chart colours a second area.
   if (lordPos.house !== prof.house) {
-    const H2 = houseOf(lordPos.house);
+    const H2 = houseInfo(lordPos.house);
     signals.push({
       dim: H2.dim,
       tone,
       weight: Math.max(1, w - 1) as 1 | 2 | 3,
       pro: `${name}${L.zh}本命位于第${lordPos.house}宫（${H2.topic}）：时间主星把该宫议题一并带入`,
-      plain: `带头的${L.zh}在你出生时待在「${H2.plainTopic}」这个领域，所以${when}这方面也会被带动。${action(lordPos.house, tone, seed + 4)}`,
+      plain: `带头的${L.zh}在你出生时待在「${H2.plainTopic}」这个领域，所以${when}这方面也会被带动。${houseAction(lordPos.house, tone, seed + 4)}`,
     });
   }
 
@@ -151,7 +143,7 @@ export function readProfection(n: Natal, steps: number, scope: Scope, seed: numb
       tone,
       weight: 2,
       pro: `月主星${L.zh}与年主星相同：本年主题在本月集中显现`,
-      plain: `这个月的带头星和今年的相同，今年的主题在这个月特别集中。趁这个月把相关的事推进一步。${action(prof.house, tone, seed + 7)}`,
+      plain: `这个月的带头星和今年的相同，今年的主题在这个月特别集中。趁这个月把相关的事推进一步。${houseAction(prof.house, tone, seed + 7)}`,
     });
   }
 

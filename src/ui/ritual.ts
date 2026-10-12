@@ -1,4 +1,5 @@
-import { fmtOffset, fmtTime } from "../core/chart";
+import { rad } from "./svg-geom";
+import { fmtOffset, fmtTime, inputTime } from "../core/chart";
 import { GAN, ZHI, ganWuXing } from "../core/ganzhi";
 import { ZODIAC } from "../data/zodiac";
 import { PLANETS } from "../data/planets";
@@ -13,7 +14,6 @@ const JIEQI = ["春分", "清明", "谷雨", "立夏", "小满", "芒种", "夏�
 const PHASE_NAMES = ["新月", "娥眉月", "上弦月", "盈凸月", "满月", "亏凸月", "下弦月", "残月"];
 const signOf = (lon: number) => ZODIAC[Math.floor(lon / 30)]!;
 const deg = (lon: number) => `${Math.floor(lon % 30)}°${String(Math.floor(((lon % 30) % 1) * 60)).padStart(2, "0")}′`;
-const rad = (d: number) => (d * Math.PI) / 180;
 
 /** The "calculating" ceremony: every number shown is the real computed value. Returns a cleanup function. */
 export function renderRitual(view: HTMLElement, setWarp: (on: boolean) => void): () => void {
@@ -92,7 +92,7 @@ export function renderRitual(view: HTMLElement, setWarp: (on: boolean) => void):
     // 2. True solar time
     const clock = clockVisual(input.hour, input.minute, chart.trueSolarTime.h, chart.trueSolarTime.mi);
     await phase(1, "校正真太阳时", "钟表的时间属于时区，太阳的时间属于你出生的地方", clock);
-    await line("钟表时间", `${String(input.hour).padStart(2, "0")}:${String(input.minute).padStart(2, "0")}${input.timeKnown ? "" : "（时间不详）"}`);
+    await line("钟表时间", `${inputTime(input)}${input.timeKnown ? "" : "（时间不详）"}`);
     await line("时区经度差", `${chart.lonCorrection >= 0 ? "+" : ""}${chart.lonCorrection.toFixed(1)} 分钟`);
     await line("均时差 EoT", `${chart.eot >= 0 ? "+" : ""}${chart.eot.toFixed(1)} 分钟`);
     await line("真太阳时", fmtTime(chart.trueSolarTime));

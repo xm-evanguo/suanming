@@ -1,6 +1,7 @@
+import { YEAR_MS } from "../core/chart";
 import type { Dim } from "../data/types";
 import { type FirPlanet, NODE_INFO, TASK } from "../data/firdaria";
-import { HOUSES, TRAD_INFO, type Trad } from "../data/hellenistic";
+import { TRAD_INFO, type Trad } from "../data/hellenistic";
 import {
   firCond,
   firdariaAt,
@@ -12,23 +13,13 @@ import {
   subPlain,
   weightOf,
 } from "../methods/firdaria";
-import { pick, type StrengthTone, stateText } from "../methods/hellenistic";
+import { houseAction, houseInfo, pick, stateText } from "../methods/hellenistic";
 import { type Forecast, type ForecastFn, forecastPeriods, periodInstant, type Signal, type Tone } from "./types";
 
 /** The life area each period ruler speaks about first. */
 const PRIMARY_DIM: Record<FirPlanet, Dim> = {
   sun: "career", moon: "health", mercury: "wisdom", venus: "love", mars: "career", jupiter: "wealth", saturn: "career", northNode: "career", southNode: "wisdom",
 };
-
-const houseOf = (h: number) => HOUSES[h - 1]!;
-const toneOf = (t: StrengthTone): Tone => t;
-
-function houseAction(house: number, tone: StrengthTone, seed: number): string {
-  const H = houseOf(house);
-  if (tone === "good") return pick(H.good, seed);
-  if (tone === "bad") return pick(H.care, seed);
-  return `${pick(H.good, seed)}同时，${pick(H.care, seed + 1)}`;
-}
 
 const NATURE_GROUP = (p: Trad): "soft" | "hard" | "mid" => (p === "jupiter" || p === "venus" ? "soft" : p === "saturn" || p === "mars" ? "hard" : "mid");
 
@@ -46,12 +37,12 @@ export const firdariaForecast: ForecastFn = (chart, now): Forecast => {
     const M = firInfo(major.planet);
     const S = sub ? firInfo(sub.planet) : null;
     const seed = p.year + major.startAge;
-    const yearNo = Math.min(major.years, Math.max(1, Math.floor((mid.getTime() - major.start.getTime()) / (365.2425 * 86400000)) + 1));
+    const yearNo = Math.min(major.years, Math.max(1, Math.floor((mid.getTime() - major.start.getTime()) / YEAR_MS) + 1));
     const progress = yearNo === 1 ? "这一年刚进入这个阶段，" : yearNo >= major.years ? "这一年已走到这个阶段的尾声，" : `这一年是这个阶段的第 ${yearNo} 年（共 ${major.years} 年），`;
     const signals: Signal[] = [];
 
     // 1. The major ruler.
-    const mTone = toneOf(mc.tone);
+    const mTone = mc.tone;
     const rulerLine = isNode(major.planet)
       ? pick(NODE_INFO[major.planet].actions, seed)
       : `${TRAD_INFO[major.planet as Trad].zh}（管${TRAD_INFO[major.planet as Trad].plainKw}）。它${stateText(major.planet as Trad, mc.tone)}。`;
@@ -64,7 +55,7 @@ export const firdariaForecast: ForecastFn = (chart, now): Forecast => {
     });
 
     // 2. The area where the major ruler sits natally.
-    const H = houseOf(mc.house);
+    const H = houseInfo(mc.house);
     signals.push({
       dim: H.dim,
       tone: mTone,
@@ -75,7 +66,7 @@ export const firdariaForecast: ForecastFn = (chart, now): Forecast => {
 
     // 3. The sub ruler.
     if (sub && sc && S) {
-      const sTone = toneOf(sc.tone);
+      const sTone = sc.tone;
       signals.push({
         dim: PRIMARY_DIM[sub.planet],
         tone: sTone,

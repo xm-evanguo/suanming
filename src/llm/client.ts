@@ -1,6 +1,8 @@
 /** Shared DeepSeek transport for the AI features (tarot reading, 问事). */
 export const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions";
 export const KEY_STORAGE = "suanming.deepseek.api-key";
+/** Abort on the caller's controller or after 90 seconds. */
+export const requestSignal = (controller: AbortController) => AbortSignal.any([controller.signal, AbortSignal.timeout(90_000)]);
 export type ApiRequest = (url: string, options: RequestInit) => Promise<Response>;
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 

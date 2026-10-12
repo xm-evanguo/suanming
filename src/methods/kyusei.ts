@@ -1,3 +1,4 @@
+import type { Chart } from "../core/chart";
 import { Solar } from "lunar-javascript";
 import { zhiIndex } from "../core/ganzhi";
 import { MONTH_STAR_TEXT, NINE_STARS } from "../data/kyusei";
@@ -31,6 +32,15 @@ export function liChunYear(y: number, m: number, monthZhi: string): number {
   return m <= 2 && (monthZhi === "子" || monthZhi === "丑") ? y - 1 : y;
 }
 
+/** 本命星 and 月命星 of a natal chart. */
+export function natalStars(c: Chart): { lcYear: number; star: number; month: number } {
+  const t = c.cnTime;
+  const monthZhi: string = c.eightChar.getMonthZhi();
+  const lcYear = liChunYear(t.y, t.m, monthZhi);
+  const star = yearStar(lcYear);
+  return { lcYear, star, month: monthStar(star, (zhiIndex(monthZhi) - 2 + 12) % 12) };
+}
+
 const PALACE_YEAR_TEXT: Record<string, { text: string; delta: number }> = {
   中宫: { text: "本命星回到中宫，是九年一遇的“八方塞”之年：万事处在转折点，宜整顿、宜沉淀，不宜冒进。", delta: -4 },
   北: { text: "落坎宫，是蛰伏与蓄力之年。适合学习与规划，为下一轮上升打地基。", delta: -3 },
@@ -54,11 +64,7 @@ export interface KyuseiVisual {
 }
 
 export const kyusei: MethodFn<KyuseiVisual> = (chart) => {
-  const t = chart.cnTime;
-  const monthZhi: string = chart.eightChar.getMonthZhi();
-  const lcYear = liChunYear(t.y, t.m, monthZhi);
-  const star = yearStar(lcYear);
-  const month = monthStar(star, (zhiIndex(monthZhi) - 2 + 12) % 12);
+  const { lcYear, star, month } = natalStars(chart);
   const s = NINE_STARS[star - 1]!;
   const ms = NINE_STARS[month - 1]!;
 

@@ -1,16 +1,15 @@
+import { f } from "./svg-geom";
 import { WU_XING } from "../data/bazi";
+import { periodName } from "../forecast/types";
 import type { WuXing } from "../data/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
-import { consensusText, strongestSignals, type TopicPeriod, type TopicStatement, type TopicView, topicViews } from "../methods/topics";
+import { consensusText, strongestSignals, type TopicStatement, type TopicView, topicViews } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
-import { cnNum, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement } from "./components";
+import { cnNum, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement, topbar } from "./components";
 import { countUp, h, reveal, sleep, svg, typewrite, WX_COLOR } from "./dom";
 import { birthLine } from "./hub";
 import { getForecasts, getState } from "./state";
 
-const f = (n: number) => n.toFixed(1);
-
-const periodName = (p: TopicPeriod["period"]) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
 
 /** Up to `n` statements: the most distinctive one, then one from the other side of the mean, then the next most distinctive. */
 function pickStatements(v: TopicView, n: number): TopicStatement[] {
@@ -93,11 +92,12 @@ export function renderSummary(view: HTMLElement) {
   if (!results || !fusion) return;
   const year = new Date().getFullYear();
   const n = cnNum(results.length);
+  const hasElements = Object.values(fusion.elements).some((v) => v > 0);
 
   const score = h("b", null, "0");
   const oracle = h("div", { class: "oracle" }, ...fusion.oracle.map(() => h("p")));
   view.append(
-    h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "FUSION"), h("a", { href: "#/new", class: "btn btn-ghost" }, "↺ 重新输入")),
+    topbar(["#/hub", "← 星盘总览"], "FUSION", ["#/new", "↺ 重新输入"]),
     h(
       "header",
       { class: "page-head" },
@@ -105,7 +105,7 @@ export function renderSummary(view: HTMLElement) {
       h("h1", { class: "title-glow small" }, "命运全息图"),
       h("p", { class: "birth-line" }, birthLine()),
       h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, "出生画像")),
-      h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]}${Object.values(fusion.elements).some((v) => v > 0) ? ` · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}` : " · 所选体系没有五行资料"}`),
+      h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]}${hasElements ? ` · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}` : " · 所选体系没有五行资料"}`),
     ),
     reveal(h("section", { class: "glass oracle-card" }, h("span", { class: "oracle-mark" }, "❝"), oracle)),
     sectionTitle("按话题看：共识与分歧", "画像分数综合已启用体系；年运只用年度信号，月运只用月度信号，均不加入画像分数"),
@@ -156,7 +156,6 @@ export function renderSummary(view: HTMLElement) {
       return s;
     })
     .join("");
-  const hasElements = Object.values(fusion.elements).some((v) => v > 0);
   const donut = svg("0 0 240 240", `<g transform="rotate(-90 120 120)">${segs}</g><text x="120" y="118" text-anchor="middle" class="donut-big">${hasElements ? fusion.dominantElement : "—"}</text><text x="120" y="145" text-anchor="middle" class="donut-small">${hasElements ? "主导五行" : "暂无五行资料"}</text>`, "donut");
   const votes = DIMS.filter((d) => fusion.topVotes[d] > 0).sort((a, b) => fusion.topVotes[b] - fusion.topVotes[a]);
   view.append(

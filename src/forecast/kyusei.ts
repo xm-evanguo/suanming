@@ -3,7 +3,7 @@ import { zhiIndex } from "../core/ganzhi";
 import { buildSignal, limitSignals, type Scope } from "../data/forecast-common";
 import { CENTER_RULE, DIRECTION_RULES, HAZARD_RULES } from "../data/forecast-kyusei";
 import { NINE_STARS } from "../data/kyusei";
-import { boardFor, liChunYear, LOSHU_DIRS, monthStar, yearStar } from "../methods/kyusei";
+import { boardFor, liChunYear, LOSHU_DIRS, monthStar, natalStars, yearStar } from "../methods/kyusei";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, type Signal } from "./types";
 
 /** Direction of each earthly branch (子 北, 丑寅 东北, ...), in the names used by LOSHU_DIRS. */
@@ -57,7 +57,7 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
       key: key("inner"),
       scope,
       dim: innerRule?.dim ?? "wisdom",
-      tone: innerRule && innerRule.tone !== "good" ? "mixed" : innerRule ? "good" : "mixed",
+      tone: innerRule?.tone === "good" ? "good" : "mixed",
       weight: 1,
       pro: `${head}：月命星${innerName}落${innerPos === 4 ? "中宫" : LOSHU_DIRS[innerPos]}（内在情绪层面）`,
       phrase: { ...innerPhrase, what: innerPhrase.what.map((w) => w.replace("{T}", "{T}在内心层面，")) },
@@ -87,10 +87,7 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
 }
 
 export const kyuseiForecast: ForecastFn = (chart, now): Forecast => {
-  const t = chart.cnTime;
-  const natalZhi: string = chart.eightChar.getMonthZhi();
-  const star = yearStar(liChunYear(t.y, t.m, natalZhi));
-  const innerStar = monthStar(star, (zhiIndex(natalZhi) - 2 + 12) % 12);
+  const { star, month: innerStar } = natalStars(chart);
   const { years, months } = forecastPeriods(now);
   return {
     years: years.map((p) => {

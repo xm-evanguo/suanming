@@ -1,7 +1,6 @@
 import { MAJOR_ARCANA } from "../data/tarot";
 import { type ApiRequest, type ChatMessage, chatCompletion } from "./client";
 
-export { type ApiRequest, DEEPSEEK_ENDPOINT, KEY_STORAGE } from "./client";
 export const QUESTION_LIMIT = 1000;
 export const CONTEXT_LIMIT = 2000;
 export type DrawnCard = { num: number; reversed: boolean };

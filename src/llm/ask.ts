@@ -1,5 +1,5 @@
-import type { BirthInput } from "../core/chart";
-import type { Forecast, Period, PeriodReading } from "../forecast/types";
+import { type BirthInput, inputDate, inputTime, pad } from "../core/chart";
+import { byWeight, type Forecast, type Period, type PeriodReading } from "../forecast/types";
 import type { Dim } from "../data/types";
 import { DIM_NAMES } from "../methods/fusion";
 import { topicViews } from "../methods/topics";
@@ -79,15 +79,14 @@ export interface AskEvidence {
 }
 
 const tone = { good: "有利", bad: "不利", mixed: "好坏参半" } as const;
-const pad = (n: number) => String(n).padStart(2, "0");
 const periodKey = (p: Period) => (p.month ? `${p.year}-${pad(p.month)}` : String(p.year));
 
 /** Birth data as the user entered it. The age is in full years on `today`. */
 export function askProfile(input: BirthInput, today = new Date()): NonNullable<AskEvidence["profile"]> {
-  const date = `${input.year}-${pad(input.month)}-${pad(input.day)}`;
+  const date = inputDate(input);
   const birthday = today.getMonth() + 1 > input.month || (today.getMonth() + 1 === input.month && today.getDate() >= input.day);
   return {
-    birth: input.timeKnown ? `${date} ${pad(input.hour)}:${pad(input.minute)}` : `${date}（出生时间不详）`,
+    birth: input.timeKnown ? `${date} ${inputTime(input)}` : `${date}（出生时间不详）`,
     place: input.city.region && input.city.region !== input.city.name ? `${input.city.name}（${input.city.region}）` : input.city.name,
     gender: input.gender === "female" ? "女" : "男",
     age: today.getFullYear() - input.year - (birthday ? 0 : 1),
@@ -97,7 +96,7 @@ export function askProfile(input: BirthInput, today = new Date()): NonNullable<A
 /** The readings of one system for the topic, strongest signal first. */
 function periods(readings: PeriodReading[], dim: Dim): AskPeriod[] {
   return readings.flatMap((r) => {
-    const signals = r.signals.filter((s) => s.dim === dim).sort((a, b) => b.weight - a.weight);
+    const signals = r.signals.filter((s) => s.dim === dim).sort(byWeight);
     return signals.length > 0 ? [{ period: periodKey(r.period), label: r.label, signals: signals.map((s) => ({ tone: tone[s.tone], text: s.plain, rule: s.pro })) }] : [];
   });
 }

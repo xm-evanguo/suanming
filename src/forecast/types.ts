@@ -20,11 +20,17 @@ export interface Signal {
   plain: string;
 }
 
+/** Strongest signal first. */
+export const byWeight = (a: Signal, b: Signal) => b.weight - a.weight;
+
 /** A Gregorian year, or a Gregorian month when `month` is set (1-12). */
 export interface Period {
   year: number;
   month?: number;
 }
+
+/** "2026 年" or "2026 年 3 月". */
+export const periodName = (p: Period) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
 
 export interface PeriodReading {
   period: Period;

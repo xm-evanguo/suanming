@@ -1,8 +1,18 @@
-import type { Scores } from "../data/types";
+import type { Dim, Scores } from "../data/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
 import { colorHex, countUp, h, reveal } from "./dom";
 
 const DIM_ICON = { career: "⚔", wealth: "◈", love: "❦", health: "✚", wisdom: "✧" } as const;
+/** Mark `btn` as the one pressed choice among its siblings. */
+export function pressOnly(btn: Element) {
+  for (const b of btn.parentElement!.children) {
+    b.classList.toggle("on", b === btn);
+    b.setAttribute("aria-pressed", String(b === btn));
+  }
+}
+
+/** "⚔ 事业": the icon and name of a life dimension. */
+export const dimLabel = (d: Dim) => `${DIM_ICON[d]} ${DIM_NAMES[d]}`;
 
 /** Animated horizontal bars for the five life dimensions. */
 export function scoreBars(scores: Scores): HTMLElement {
@@ -14,7 +24,7 @@ export function scoreBars(scores: Scores): HTMLElement {
       const row = h(
         "div",
         { class: `bar dim-${d}`, style: { "--v": `${scores[d]}%`, "--i": i } as never },
-        h("span", null, `${DIM_ICON[d]} ${DIM_NAMES[d]}`),
+        h("span", null, dimLabel(d)),
         h("div", { class: "track" }, h("i")),
         num,
       );
@@ -46,6 +56,14 @@ export function luckyRow(l: { colors: string[]; numbers: number[]; directions: s
     l.numbers.length > 0 && item("幸运数字", ...l.numbers.map((n) => h("span", { class: "lucky-num" }, String(n)))),
     l.directions.length > 0 && item("吉方位", ...l.directions.map((d) => h("span", { class: "lucky-dir" }, `🧭 ${d}`))),
   );
+}
+
+type NavLink = [href: string, label: string];
+
+/** Page top bar: a back link, a page label, and an optional forward link. */
+export function topbar(back: NavLink, label: string, next?: NavLink): HTMLElement {
+  const link = ([href, text]: NavLink) => h("a", { href, class: "btn btn-ghost" }, text);
+  return h("nav", { class: "topbar" }, link(back), h("span", { class: "topbar-count" }, label), next && link(next));
 }
 
 export function sectionTitle(text: string, sub?: string): HTMLElement {

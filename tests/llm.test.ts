@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { DEEPSEEK_ENDPOINT, interpretTarot, tarotMessages, type ApiRequest, type TarotQuestion } from "../src/llm/tarot";
+import { type ApiRequest, DEEPSEEK_ENDPOINT } from "../src/llm/client";
+import { interpretTarot, tarotMessages, type TarotQuestion } from "../src/llm/tarot";
 
 const input: TarotQuestion = {
   question: "我拿到了需要搬家的工作机会，该先核实哪些条件？",

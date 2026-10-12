@@ -1,21 +1,8 @@
-import type { Chart } from "../core/chart";
-import { wxRelation, type WxRelation, zhiIndex } from "../core/ganzhi";
+import { wxRelation, type WxRelation } from "../core/ganzhi";
 import { Acc, bareWord, groupOf, pickText, REL_WORD, type ByGroup, withCareer, withWord } from "../data/compat-util";
 import { NINE_STARS } from "../data/kyusei";
-import type { WuXing } from "../data/types";
-import { liChunYear, monthStar, yearStar } from "../methods/kyusei";
+import { natalStars } from "../methods/kyusei";
 import type { CompatFn, CompatTag } from "./types";
-
-/** Element of each of the nine stars (index = star number - 1): 一白水 二黒土 三碧木 四緑木 五黄土 六白金 七赤金 八白土 九紫火. */
-export const STAR_ELEMENT: WuXing[] = ["水", "土", "木", "木", "土", "金", "金", "土", "火"];
-
-export function stars(c: Chart): { star: number; month: number } {
-  const t = c.cnTime;
-  const monthZhi: string = c.eightChar.getMonthZhi();
-  const star = yearStar(liChunYear(t.y, t.m, monthZhi));
-  const month = monthStar(star, (zhiIndex(monthZhi) - 2 + 12) % 12);
-  return { star, month };
-}
 
 const REL_LABEL: Record<WxRelation, string> = { 同: "比和", 生我: "TA 生你（相生）", 我生: "你生 TA（相生）", 我克: "你克 TA（相克）", 克我: "TA 克你（相克）" };
 
@@ -89,12 +76,12 @@ export const kyuseiCompat: CompatFn = (me, other, relation) => {
   const wd = withWord(relation);
   const romance = g === "romance";
   const acc = new Acc(relation);
-  const a = stars(me);
-  const b = stars(other);
+  const a = natalStars(me);
+  const b = natalStars(other);
   const na = NINE_STARS[a.star - 1]!;
   const nb = NINE_STARS[b.star - 1]!;
-  const ea = STAR_ELEMENT[a.star - 1]!;
-  const eb = STAR_ELEMENT[b.star - 1]!;
+  const ea = na.element!;
+  const eb = nb.element!;
   const rel = wxRelation(ea, eb);
   const m = MAIN[rel];
 
@@ -113,8 +100,8 @@ export const kyuseiCompat: CompatFn = (me, other, relation) => {
   // 月命星: the inner, emotional side.
   const ma = NINE_STARS[a.month - 1]!;
   const mb = NINE_STARS[b.month - 1]!;
-  const mea = STAR_ELEMENT[a.month - 1]!;
-  const meb = STAR_ELEMENT[b.month - 1]!;
+  const mea = ma.element!;
+  const meb = mb.element!;
   const mrel = wxRelation(mea, meb);
   const mgood = mrel === "生我" || mrel === "我生" || mrel === "同";
   acc.add(

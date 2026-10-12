@@ -69,7 +69,10 @@ export interface Chart {
   julianDay: number;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
+export const pad = (n: number) => String(n).padStart(2, "0");
+/** "1990-05-15" and "14:30" for date and time inputs and birth lines. */
+export const inputDate = (i: BirthInput) => `${i.year}-${pad(i.month)}-${pad(i.day)}`;
+export const inputTime = (i: BirthInput) => `${pad(i.hour)}:${pad(i.minute)}`;
 
 /** Offset (minutes) of a time zone from UTC at a given instant, read from the platform's tz database. */
 export function tzOffsetMinutes(utcMs: number, tz: string): number {
@@ -107,6 +110,8 @@ function fromMs(ms: number): YMDHM {
   return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), mi: d.getUTCMinutes() };
 }
 
+export const DAY_MS = 86_400_000;
+export const YEAR_MS = 365.2425 * DAY_MS;
 export const norm360 = (x: number) => ((x % 360) + 360) % 360;
 const rad = Math.PI / 180;
 
@@ -171,7 +176,7 @@ export function computeChart(input: BirthInput): Chart {
   const prev = lunar.getPrevJieQi(true);
   const next = lunar.getNextJieQi(true);
 
-  const dayLater = new Date(utc.getTime() + 86400000);
+  const dayLater = new Date(utc.getTime() + DAY_MS);
   const planets = {} as Record<PlanetKey, PlanetPos>;
   for (const key of PLANET_KEYS) {
     const lon = eclipticLon(BODY[key], utc);

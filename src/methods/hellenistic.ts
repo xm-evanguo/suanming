@@ -137,6 +137,16 @@ export const weightOfScore = (s: number): 1 | 2 | 3 => (Math.abs(s) >= 3 ? 3 : M
 /** Plain description of how a planet behaves in a given tone. Fits after "它". */
 export const stateText = (p: Trad, tone: StrengthTone) => TRAD_INFO[p][tone === "good" ? "strong" : tone === "bad" ? "weak" : "mixed"];
 
+export const houseInfo = (h: number) => HOUSES[h - 1]!;
+
+/** A fitting action for a house, chosen by tone. Mixed tone gives one of each. */
+export function houseAction(house: number, tone: StrengthTone, seed: number): string {
+  const H = houseInfo(house);
+  if (tone === "good") return pick(H.good, seed);
+  if (tone === "bad") return pick(H.care, seed);
+  return `${pick(H.good, seed)}同时，${pick(H.care, seed + 1)}`;
+}
+
 const signName = (i: number) => ZODIAC[i]!.name;
 
 /** One-line technical description of a planet's natal condition. */

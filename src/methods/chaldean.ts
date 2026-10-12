@@ -1,5 +1,5 @@
 import * as Astro from "astronomy-engine";
-import { type Chart, norm360, tzOffsetMinutes } from "../core/chart";
+import { type Chart, DAY_MS, norm360, tzOffsetMinutes } from "../core/chart";
 import { DECAN_FLAVOR, FACE_START, FACE_TECH, TRIO_TEXT, WEEK_HISTORY } from "../data/chaldean";
 import { CHALDEAN_ORDER, TRAD_INFO, type Trad, WEEKDAY_RULER, WEEKDAY_ZH } from "../data/hellenistic";
 import { ZODIAC } from "../data/zodiac";
@@ -43,7 +43,6 @@ export interface SunTimes {
 }
 
 const MIN = 60000;
-const DAY = 86400000;
 
 /** The planetary day containing the birth instant: last sunrise at or before birth, the following sunset and sunrise. */
 export function sunTimes(chart: Chart): SunTimes {
@@ -67,9 +66,9 @@ export function sunTimes(chart: Chart): SunTimes {
   const lmtShift = chart.input.city.lon * 4 * MIN;
   const day0 = Date.UTC(chart.utc.getUTCFullYear(), chart.utc.getUTCMonth(), chart.utc.getUTCDate(), 6) - lmtShift;
   let r = day0;
-  while (r > t) r -= DAY;
-  while (r + DAY <= t) r += DAY;
-  return { sunrise: new Date(r), sunset: new Date(r + 12 * 3600000), nextSunrise: new Date(r + DAY), estimated: true };
+  while (r > t) r -= DAY_MS;
+  while (r + DAY_MS <= t) r += DAY_MS;
+  return { sunrise: new Date(r), sunset: new Date(r + 12 * 3600000), nextSunrise: new Date(r + DAY_MS), estimated: true };
 }
 
 /** Local clock label HH:MM in an IANA zone. */

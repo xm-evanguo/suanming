@@ -1,5 +1,5 @@
 import * as Astro from "astronomy-engine";
-import { norm360, type PlanetKey } from "../core/chart";
+import { DAY_MS, norm360, type PlanetKey } from "../core/chart";
 import {
   HOUSES,
   JUPITER_STRONG_HOUSES,
@@ -16,6 +16,7 @@ import {
 import { buildSignal, limitSignals, type Phrase, type Scope } from "../data/forecast-common";
 import { ZODIAC } from "../data/zodiac";
 import { signOf } from "../methods/astrology";
+import { wholeSignHouse } from "../methods/hellenistic";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
 
 const BODY: Record<string, Astro.Body> = {
@@ -33,7 +34,6 @@ function lonAt(key: string, t: Date): number {
   return Astro.Ecliptic(Astro.GeoVector(BODY[key]!, t, true)).elon;
 }
 
-const DAY = 86400000;
 const signed = (d: number) => ((norm360(d) + 180) % 360) - 180;
 
 /** Dates at which `lons` (sampled at `dates`) cross `target`. */
@@ -53,7 +53,7 @@ function crossings(lons: number[], dates: Date[], target: number): Date[] {
 
 function sample(key: string, from: number, to: number, stepDays: number): { dates: Date[]; lons: number[] } {
   const dates: Date[] = [];
-  for (let t = from; t <= to; t += stepDays * DAY) dates.push(new Date(t));
+  for (let t = from; t <= to; t += stepDays * DAY_MS) dates.push(new Date(t));
   return { dates, lons: dates.map((d) => lonAt(key, d)) };
 }
 
@@ -64,7 +64,7 @@ interface Natal {
   mc: number;
 }
 
-const houseOf = (n: Natal, lon: number) => ((signOf(lon) - n.ascSign + 12) % 12) + 1;
+const houseOf = (n: Natal, lon: number) => wholeSignHouse(lon, n.ascSign);
 const signName = (lon: number) => ZODIAC[signOf(lon)]!.name;
 
 /** Fill a template with the topic and one scene of house `h`. */
@@ -113,7 +113,7 @@ function transitSignal(n: Natal, planet: "jupiter" | "saturn" | TransitPlanet, l
 const PLANET_ZH: Record<string, string> = { sun: "太阳", mercury: "水星", venus: "金星", mars: "火星", jupiter: "木星", saturn: "土星" };
 
 function isRetro(key: string, t: Date): boolean {
-  let d = lonAt(key, new Date(t.getTime() + DAY)) - lonAt(key, t);
+  let d = lonAt(key, new Date(t.getTime() + DAY_MS)) - lonAt(key, t);
   d = signed(d);
   return d < 0;
 }
@@ -200,9 +200,9 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
 
   // Daily scan of the calendar month for exact conjunctions and oppositions to natal points.
   const days = dayCount(p.year, p.month!);
-  const start = Date.UTC(p.year, p.month! - 1, 1, 12) - DAY;
+  const start = Date.UTC(p.year, p.month! - 1, 1, 12) - DAY_MS;
   const fast: Record<string, { dates: Date[]; lons: number[] }> = {};
-  for (const k of ["sun", "venus", "mars", "mercury"]) fast[k] = sample(k, start, start + (days + 1) * DAY, 1);
+  for (const k of ["sun", "venus", "mars", "mercury"]) fast[k] = sample(k, start, start + (days + 1) * DAY_MS, 1);
   const targets: Record<string, number | undefined> = { sun: n.lon.sun, venus: n.lon.venus, moon: n.known ? n.lon.moon : undefined, mc: n.known ? n.mc : undefined };
   const inMonth = (d: Date) => d.getUTCMonth() === p.month! - 1;
   const events: { id: string; day: number }[] = [];

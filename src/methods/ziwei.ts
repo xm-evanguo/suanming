@@ -1,4 +1,5 @@
 import { astro } from "iztro";
+import type { Chart } from "../core/chart";
 import { WU_XING } from "../data/bazi";
 import { PLAIN_EMPTY_SOUL, PLAIN_MUTAGEN_EFFECT, PLAIN_PALACE_AREA, PLAIN_STARS, type PlainStar } from "../data/plain-ziwei";
 import { EMPTY_SOUL_TEXT, MAJOR_STARS, MUTAGEN, PALACE_INFO } from "../data/ziwei";
@@ -24,9 +25,21 @@ export interface ZiweiVisual {
 /** iztro time index: 0 = early 子 (00-01), 1 = 丑 ... 11 = 亥, 12 = late 子 (23-24). */
 export const ziweiTimeIndex = (h: number) => (h === 23 ? 12 : Math.floor((h + 1) / 2));
 
+export type ZiweiAstrolabe = ReturnType<typeof astro.bySolar>;
+const astrolabes = new WeakMap<Chart, ZiweiAstrolabe>();
+/** The iztro chart for `chart`. The natal reading, the forecast and compatibility share it. */
+export function ziweiAstrolabe(chart: Chart): ZiweiAstrolabe {
+  let a = astrolabes.get(chart);
+  if (!a) {
+    const t = chart.cnTime;
+    a = astro.bySolar(`${t.y}-${t.m}-${t.d}`, ziweiTimeIndex(t.h), chart.input.gender === "male" ? "男" : "女", true, "zh-CN");
+    astrolabes.set(chart, a);
+  }
+  return a;
+}
+
 export const ziwei: MethodFn<ZiweiVisual> = (chart) => {
-  const t = chart.cnTime;
-  const a = astro.bySolar(`${t.y}-${t.m}-${t.d}`, ziweiTimeIndex(t.h), chart.input.gender === "male" ? "男" : "女", true, "zh-CN");
+  const a = ziweiAstrolabe(chart);
 
   const palaces: ZiweiPalace[] = a.palaces.map((p) => ({
     name: p.name,

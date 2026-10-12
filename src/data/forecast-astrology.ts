@@ -281,6 +281,3 @@ export const MERCURY_DIRECT_SOON: Phrase = {
   ],
   act: ["把之前搁置的事重新拿出来推进，沟通上的结也可以趁现在解开。"],
 };
-
-/** Without a birth time, planet-by-sign readings use these. */
-export const NO_TIME_NOTE = "出生时间未知，宫位无法确定，这里只使用木星、土星所在的星座和它们与本命太阳、金星的关系。";

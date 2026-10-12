@@ -1,8 +1,9 @@
-import type { BirthInput, Gender } from "../core/chart";
+import { topbar } from "./components";
+import { type BirthInput, type Gender, inputDate, inputTime } from "../core/chart";
 import { CITIES, type City, TIMEZONES } from "../core/cities";
 import { METHOD_NAMES, METHOD_ORDER } from "../methods";
 import { h } from "./dom";
-import { keyField } from "./llm-key";
+import { apiSettings, currentKey } from "./llm-key";
 import { compute, getEnabledMethods, getState, setEnabledMethods } from "./state";
 
 /** Validate profile edits before replacing the saved chart. */
@@ -23,9 +24,8 @@ export function profileBirthInput(date: string, time: string, timeKnown: boolean
 
 export function renderProfile(view: HTMLElement, section?: string) {
   const saved = getState().input;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const date = h("input", { type: "date", class: "field", required: true, min: "1901-01-01", max: new Date().toISOString().slice(0, 10), "aria-label": "出生日期", value: saved ? `${saved.year}-${pad(saved.month)}-${pad(saved.day)}` : "" });
-  const time = h("input", { type: "time", class: "field", "aria-label": "出生时间", value: saved ? `${pad(saved.hour)}:${pad(saved.minute)}` : "" });
+  const date = h("input", { type: "date", class: "field", required: true, min: "1901-01-01", max: new Date().toISOString().slice(0, 10), "aria-label": "出生日期", value: saved ? inputDate(saved) : "" });
+  const time = h("input", { type: "time", class: "field", "aria-label": "出生时间", value: saved ? inputTime(saved) : "" });
   const unknown = h("input", { type: "checkbox", checked: saved ? !saved.timeKnown : false });
   const syncTime = () => { time.disabled = unknown.checked; time.required = !unknown.checked; };
   unknown.addEventListener("change", syncTime);
@@ -66,12 +66,12 @@ export function renderProfile(view: HTMLElement, section?: string) {
     h("div", { class: "draw-actions" }, h("button", { type: "submit", class: "btn btn-primary" }, "保存出生信息"), h("a", { href: "#/hub", class: "btn btn-ghost" }, "查看命盘")), birthStatus,
   );
 
-  const apiStatus = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
-  const key = keyField((message) => { apiStatus.textContent = message; });
-  const api = h("section", { class: "glass profile-card", id: "profile-api" }, h("h2", null, "DeepSeek API 配置"), h("p", { class: "v-caption" }, "AI 问事和塔罗 AI 解读使用这里的 Key。未配置时，AI 部分默认折叠。"), key.element, apiStatus, h("a", { href: "#/ask", class: "btn btn-ghost" }, "前往问事 →"));
+  const api = apiSettings();
+  api.append(h("a", { href: "#/ask", class: "btn btn-ghost" }, "前往问事 →"));
 
   const selected = new Set(getEnabledMethods());
   const filterStatus = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
+  const enabledCount = () => `已启用 ${selected.size} / ${METHOD_ORDER.length} 个体系。`;
   const boxes = METHOD_ORDER.map((id) => {
     const box = h("input", { type: "checkbox", checked: selected.has(id), "data-method": id });
     box.addEventListener("change", () => { if (box.checked) selected.add(id); else selected.delete(id); saveSelection(); });
@@ -79,7 +79,7 @@ export function renderProfile(view: HTMLElement, section?: string) {
   });
   function saveSelection() {
     setEnabledMethods([...selected]);
-    filterStatus.textContent = selected.size ? `已启用 ${selected.size} / 14 个体系。页面和 AI 问事只使用这些体系。` : "已取消全部体系。出生画像和运程暂无结果；奇门、抽塔罗和掷圣杯仍可使用。";
+    filterStatus.textContent = selected.size ? `${enabledCount()}页面和 AI 问事只使用这些体系。` : "已取消全部体系。出生画像和运程暂无结果；奇门、抽塔罗和掷圣杯仍可使用。";
   }
   const selectAll = (on: boolean) => {
     selected.clear();
@@ -88,13 +88,13 @@ export function renderProfile(view: HTMLElement, section?: string) {
     saveSelection();
   };
   view.append(
-    h("nav", { class: "topbar" }, h("a", { href: getState().results ? "#/hub" : "#/", class: "btn btn-ghost" }, "← 返回"), h("span", { class: "topbar-count" }, "PROFILE")),
+    topbar([getState().results ? "#/hub" : "#/", "← 返回"], "PROFILE"),
     h("header", { class: "page-head" }, h("h1", { class: "title-glow small" }, "个人资料与设置"), h("p", { class: "hub-guide" }, "管理出生信息、AI 配置和你想使用的体系。设置保存在当前浏览器。")),
     h("section", { class: "glass profile-card" }, h("h2", null, "出生信息"), form), api,
     h("section", { class: "glass profile-card" }, h("h2", null, "体系过滤"), h("p", { class: "v-caption" }, "默认全部启用。取消勾选后，该体系不再参与页面展示、综合评价、运程、关系合盘或发送给 DeepSeek 的问事资料。"),
       h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: () => selectAll(true) }, "全部勾选"), h("button", { type: "button", class: "btn btn-ghost", onclick: () => selectAll(false) }, "全部取消")),
       h("div", { class: "profile-methods" }, ...boxes), filterStatus),
   );
-  filterStatus.textContent = `已启用 ${selected.size} / 14 个体系。修改立即生效。`;
-  if (section === "api") requestAnimationFrame(() => { api.scrollIntoView({ block: "start" }); if (!key.value()) api.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true }); });
+  filterStatus.textContent = `${enabledCount()}修改立即生效。`;
+  if (section === "api") requestAnimationFrame(() => { api.scrollIntoView({ block: "start" }); if (!currentKey()) api.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true }); });
 }

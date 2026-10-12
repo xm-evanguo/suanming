@@ -1,9 +1,9 @@
 import type { Dim } from "../data/types";
-import { forecastPeriods, type Period, type PeriodReading, type Signal } from "../forecast/types";
+import { forecastPeriods, type Period, periodName, type PeriodReading, type Signal } from "../forecast/types";
 import { DIM_NAMES, DIMS } from "../methods/fusion";
 import { periodScore } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
-import { cnNum, onlyPro, sectionTitle, statement } from "./components";
+import { cnNum, dimLabel, onlyPro, sectionTitle, statement, topbar } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
 import { getForecasts, getState } from "./state";
@@ -16,13 +16,11 @@ interface Row {
   reading: PeriodReading;
 }
 
-const DIM_ICON: Record<Dim, string> = { career: "⚔", wealth: "◈", love: "❦", health: "✚", wisdom: "✧" };
 const FILTER_KEY = "tianji.timeline.dim";
 
 const key = (p: Period) => `${p.year}-${p.month ?? 0}`;
-const periodName = (p: Period) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
 
-const byStrength = (a: Signal, b: Signal) => b.weight - a.weight;
+const byStrength = (a: { s: Signal }, b: { s: Signal }) => b.s.weight - a.s.weight;
 
 export function renderTimeline(view: HTMLElement) {
   const { results } = getState();
@@ -60,17 +58,14 @@ export function renderTimeline(view: HTMLElement) {
   } catch {
     // Storage unavailable: use the default.
   }
-  let sel: { kind: Kind; idx: number } = { kind: "months", idx: 0 };
+  const hasYears = yearly.length > 0;
+  const hasMonths = monthly.length > 0;
+  const hasAny = hasYears || hasMonths;
+  let sel: { kind: Kind; idx: number } = { kind: hasMonths ? "months" : "years", idx: 0 };
 
   const guide = h("p", { class: "hub-guide" });
   view.append(
-    h(
-      "nav",
-      { class: "topbar" },
-      h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"),
-      h("span", { class: "topbar-count" }, "TIMELINE"),
-      h("a", { href: "#/people", class: "btn btn-ghost" }, "关系合盘 ❦"),
-    ),
+    topbar(["#/hub", "← 星盘总览"], "TIMELINE", ["#/people", "关系合盘 ❦"]),
     h(
       "header",
       { class: "page-head" },
@@ -92,12 +87,12 @@ export function renderTimeline(view: HTMLElement) {
   const detailEl = h("section", { class: "period-detail glass", "aria-live": "polite" });
 
   view.append(
-    reveal(chipsEl),
-    sectionTitle("三年大势", `${yearly.length} 个体系提供年运。点击一年查看详情`),
-    reveal(yearsEl),
-    sectionTitle("未来十二个月", `${monthly.length} 个体系提供月运，不加入年度信号。点击月份查看详情`),
-    reveal(h("div", { class: "glass curve-card" }, curveEl)),
-    detailEl,
+    hasAny ? reveal(chipsEl) : "",
+    sectionTitle("三年大势", hasYears ? `${yearly.length} 个体系提供年运。点击一年查看详情` : "所选体系没有年运资料。"),
+    hasYears ? reveal(yearsEl) : "",
+    sectionTitle("未来十二个月", hasMonths ? `${monthly.length} 个体系提供月运，不加入年度信号。点击月份查看详情` : "所选体系没有月运资料。"),
+    hasMonths ? reveal(h("div", { class: "glass curve-card" }, curveEl)) : "",
+    hasAny ? detailEl : "",
   );
   if (natalOnly.length)
     view.append(
@@ -128,7 +123,7 @@ export function renderTimeline(view: HTMLElement) {
   );
 
   function renderChips() {
-    const opts: [Filter, string][] = [["all", "全部领域"], ...DIMS.map((d) => [d, `${DIM_ICON[d]} ${DIM_NAMES[d]}`] as [Filter, string])];
+    const opts: [Filter, string][] = [["all", "全部领域"], ...DIMS.map((d) => [d, dimLabel(d)] as [Filter, string])];
     chipsEl.replaceChildren(
       ...opts.map(([f, label]) =>
         h(
@@ -159,15 +154,16 @@ export function renderTimeline(view: HTMLElement) {
       ...periods.years.map((p, i) => {
         const sigs = signalsOf(p, filter);
         const v = periodScore(sigs.map((x) => x.s));
-        const best = sigs.filter((x) => x.s.tone === "good").sort((a, b) => byStrength(a.s, b.s))[0];
+        const best = sigs.filter((x) => x.s.tone === "good").sort(byStrength)[0];
         const dims = DIMS.map((d) => periodScore(signalsOf(p, d).map((x) => x.s)));
+        const on = sel.kind === "years" && sel.idx === i;
         return h(
           "button",
           {
             type: "button",
-            class: `year-card glass${sel.kind === "years" && sel.idx === i ? " on" : ""}`,
+            class: `year-card glass${on ? " on" : ""}`,
             style: { "--i": i, "--v": v } as never,
-            "aria-pressed": String(sel.kind === "years" && sel.idx === i),
+            "aria-pressed": String(on),
             onclick: () => select("years", i),
           },
           h("span", { class: "yc-year" }, String(p.year)),
@@ -228,8 +224,8 @@ export function renderTimeline(view: HTMLElement) {
     const p = sel.kind === "years" ? periods.years[sel.idx]! : periods.months[sel.idx]!;
     const sigs = signalsOf(p, filter);
     const v = periodScore(sigs.map((x) => x.s));
-    const good = sigs.filter((x) => x.s.tone === "good").sort((a, b) => byStrength(a.s, b.s));
-    const bad = sigs.filter((x) => x.s.tone === "bad").sort((a, b) => byStrength(a.s, b.s));
+    const good = sigs.filter((x) => x.s.tone === "good").sort(byStrength);
+    const bad = sigs.filter((x) => x.s.tone === "bad").sort(byStrength);
     const systems = (list: typeof sigs) => new Set(list.map((x) => x.row.result.id)).size;
     const isNow = sel.idx === 0;
     const rel = sel.kind === "months" ? (sel.idx === 0 ? "本月" : sel.idx === 1 ? "下个月" : "") : sel.idx === 0 ? "今年" : sel.idx === 1 ? "明年" : "后年";
@@ -246,8 +242,8 @@ export function renderTimeline(view: HTMLElement) {
 
     const groups: [Dim, typeof sigs][] =
       filter === "all"
-        ? DIMS.map((d) => [d, sigs.filter((x) => x.s.dim === d).sort((a, b) => byStrength(a.s, b.s))] as [Dim, typeof sigs]).filter(([, l]) => l.length > 0)
-        : [[filter, [...sigs].sort((a, b) => byStrength(a.s, b.s))]];
+        ? DIMS.map((d) => [d, sigs.filter((x) => x.s.dim === d).sort(byStrength)] as [Dim, typeof sigs]).filter(([, l]) => l.length > 0)
+        : [[filter, [...sigs].sort(byStrength)]];
 
     detailEl.replaceChildren(
       h(
@@ -264,7 +260,7 @@ export function renderTimeline(view: HTMLElement) {
       good[0] ? h("div", { class: "pd-key good" }, h("small", null, "✦ 最值得把握"), h("p", null, good[0].s.plain), h("small", { class: "stmt-src" }, src(good[0].row))) : "",
       bad[0] ? h("div", { class: "pd-key bad" }, h("small", null, "☾ 最需要留意"), h("p", null, bad[0].s.plain), h("small", { class: "stmt-src" }, src(bad[0].row))) : "",
       ...groups.flatMap(([d, items]) => [
-        h("h3", { class: "pd-dim" }, `${DIM_ICON[d]} ${DIM_NAMES[d]}`, h("span", { class: "pd-dim-score" }, String(periodScore(items.map((x) => x.s))))),
+        h("h3", { class: "pd-dim" }, dimLabel(d), h("span", { class: "pd-dim-score" }, String(periodScore(items.map((x) => x.s))))),
         ...list(items, filter === "all" ? 3 : 8),
       ]),
       onlyPro(
@@ -299,6 +295,7 @@ export function renderTimeline(view: HTMLElement) {
   }
 
   function update() {
+    if (!hasAny) return;
     renderChips();
     renderYears();
     renderCurve();

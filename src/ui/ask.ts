@@ -1,11 +1,13 @@
+import { topbar } from "./components";
 import type { Dim } from "../data/types";
 import { ASK_CONTEXT_LIMIT, ASK_QUESTION_LIMIT, type AskEvidence, type AskInput, type AskTurn, askDeepSeek, askEvidence, askPreviewText, MAX_FOLLOW_UPS, QUESTION_TEMPLATES, SITUATIONS, TOPIC_LABEL } from "../llm/ask";
 import { DIMS } from "../methods/fusion";
+import { requestSignal } from "../llm/client";
 import { consensusText, type TopicView, topicViews } from "../methods/topics";
 import type { MethodId } from "../methods/types";
 import { h } from "./dom";
 import { jiaoPanel } from "./jiao";
-import { deepseekPanel, keyAccess } from "./llm-key";
+import { currentKey, deepseekPanel, profileApiLink } from "./llm-key";
 import { qimenPanel } from "./qimen";
 import { getEnabledMethods, getForecasts, getState } from "./state";
 import { monthsLine } from "./summary";
@@ -43,7 +45,6 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const situationChips = h("div", { class: "rel-chips" });
   const question = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_QUESTION_LIMIT), "aria-label": "你的问题", placeholder: "写下一个具体的问题，或点上面的例子。" });
   const context = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_CONTEXT_LIMIT), "aria-label": "补充情况（可选）", placeholder: "补充情况（可选）：现在的处境、正在比较的选择、时间上的限制。" });
-  const key = keyAccess();
   const sent = h("pre", { class: "ask-sent" });
   const thread = h("div", { class: "llm-output ask-thread", hidden: true });
   const followInput = h("textarea", { class: "field", rows: "2", maxlength: String(ASK_QUESTION_LIMIT), "aria-label": "接着问", placeholder: "接着问一句，例如：如果我选择等到明年呢？" });
@@ -129,25 +130,23 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   /** One request: the first question (`followUp` undefined) or a follow-up. The result replaces the state only on success. */
   async function run(followUp?: string) {
     if (controller) return;
-    if (!key.value()) { status.replaceChildren(keyAccess().element); return; }
+    if (!currentKey()) { status.replaceChildren(profileApiLink()); return; }
     if (!results.length) { status.textContent = "请先到 Profile 勾选至少一个体系，再使用 AI 问事。"; return; }
     controller = new AbortController();
-    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(90_000)]);
-    const leave = () => controller?.abort();
-    addEventListener("hashchange", leave, { once: true });
+    const signal = requestSignal(controller);
     setBusy(true);
     status.textContent = followUp === undefined ? "正在结合你的问题和推算摘要回答……" : "正在回答追问……";
     try {
       if (followUp === undefined) {
         const next = { ask: currentAsk(), evidence: evidence() };
-        const answer = await askDeepSeek(key.value(), next.evidence, next.ask, [], signal);
+        const answer = await askDeepSeek(currentKey(), next.evidence, next.ask, [], signal);
         if (signal.aborted || !root.isConnected) return;
         session = next;
         history = [{ role: "assistant", content: answer }];
         thread.replaceChildren(bubble("q", next.ask.question.trim()), bubble("a", answer));
       } else {
         const turn: AskTurn = { role: "user", content: followUp };
-        const answer = await askDeepSeek(key.value(), session!.evidence, session!.ask, [...history, turn], signal);
+        const answer = await askDeepSeek(currentKey(), session!.evidence, session!.ask, [...history, turn], signal);
         if (signal.aborted || !root.isConnected) return;
         history = [...history, turn, { role: "assistant", content: answer }];
         thread.append(bubble("q", followUp), bubble("a", answer));
@@ -159,7 +158,6 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : "请求失败，请重试。";
     } finally {
-      removeEventListener("hashchange", leave);
       controller = undefined;
       setBusy(false);
     }
@@ -186,7 +184,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     h("div", { class: "ask-block" }, h("h3", null, "2 · 你想问什么"), templateChips, question),
     h("div", { class: "ask-block" }, h("h3", null, "3 · 你现在的处境（可多选）"), situationChips, h("label", null, "补充情况（可选）", context)),
     h("p", { class: "v-caption" }, "DeepSeek · deepseek-flash，按你的 API 用量计费。"),
-    key.element,
+    profileApiLink(),
     h("details", { class: "ask-details" }, h("summary", null, "将发送给 AI 的内容"), sent),
     h("div", { class: "draw-actions" }, submit, cancel),
     status,
@@ -228,7 +226,7 @@ const TABS: { id: Tab; label: string }[] = [
  * Returns a cleanup that cancels every running request and animation.
  */
 export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
-  const start: Tab = arg[0] === "tarot" ? "tarot" : arg[0] === "jiao" ? "jiao" : arg[0] === "qimen" ? "qimen" : "ask";
+  const start: Tab = TABS.find((t) => t.id === arg[0])?.id ?? "ask";
   // The hash of the ask section keeps its own arguments (topic or focus system).
   const askHash = start === "ask" && arg.length > 0 ? `#/ask/${arg.join("/")}` : "#/ask";
   const hashOf = (tab: Tab) => (tab === "ask" ? askHash : `#/ask/${tab}`);
@@ -289,7 +287,7 @@ export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
   }
 
   view.append(
-    h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "QUAESTIO"), h("a", { href: "#/summary", class: "btn btn-ghost" }, "融合总结 ✦")),
+    topbar(["#/hub", "← 星盘总览"], "QUAESTIO", ["#/summary", "融合总结 ✦"]),
     h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "QUAESTIO · 问事"), h("h1", { class: "title-glow small" }, "问事"), h("p", { class: "hub-guide" }, "带着一个具体的问题来：起一局奇门、抽三张塔罗、心中默念掷圣杯，或让 AI 结合各体系回答。")),
     h("div", { class: "ask-tabs", role: "tablist", "aria-label": "问事方式" }, ...tabs.values()),
     ...panels.values(),

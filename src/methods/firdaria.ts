@@ -1,5 +1,5 @@
 import type { Chart } from "../core/chart";
-import { norm360 } from "../core/chart";
+import { norm360, YEAR_MS } from "../core/chart";
 import {
   FIR_CYCLE,
   FIR_DAY,
@@ -10,11 +10,12 @@ import {
   SUB_SCENE,
   TASK,
 } from "../data/firdaria";
-import { CHALDEAN_ORDER, DIGNITY_NAME, HOUSES, TRAD_INFO, type Dignity, type Trad } from "../data/hellenistic";
+import { CHALDEAN_ORDER, DIGNITY_NAME, TRAD_INFO, type Dignity, type Trad } from "../data/hellenistic";
 import { ZODIAC } from "../data/zodiac";
 import { degInSign, signOf } from "./astrology";
 import {
   conditionLine,
+  houseInfo,
   type Natal,
   natalOf,
   pick,
@@ -27,7 +28,6 @@ import {
 } from "./hellenistic";
 import { type MethodFn, mixScores, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
 
-const YEAR_MS = 365.2425 * 86400000;
 
 /** Mean lunar ascending node, tropical longitude in degrees (Meeus), from a Julian day. */
 export function meanNodeLon(jd: number): number {
@@ -150,7 +150,7 @@ export function firCond(p: FirPlanet, fn: FirNatal): FirCond {
       tone: p === "northNode" ? "good" : "mixed",
       score: p === "northNode" ? 1.5 : 0,
       retro: true,
-      line: `${NODE_INFO[p].zh}落${ZODIAC[pos.sign]!.name}${degInSign(pos.lon)}，位于第${pos.house}宫「${HOUSES[pos.house - 1]!.topic.replace(/，.*$/, "")}」（平均交点，无庙旺陷弱）`,
+      line: `${NODE_INFO[p].zh}落${ZODIAC[pos.sign]!.name}${degInSign(pos.lon)}，位于第${pos.house}宫「${houseInfo(pos.house).topic.replace(/，.*$/, "")}」（平均交点，无庙旺陷弱）`,
     };
   }
   const pos = fn.natal.planets[p];
@@ -162,12 +162,10 @@ export const weightOf = (c: FirCond): 1 | 2 | 3 => (isNode(c.planet) ? 2 : weigh
 
 // ───────────────────────── Plain text
 
-const houseOf = (h: number) => HOUSES[h - 1]!;
-
 /** Plain reading of a major period. */
 export function majorPlain(c: FirCond, seed: number): string {
   const info = firInfo(c.planet);
-  const H = houseOf(c.house);
+  const H = houseInfo(c.house);
   if (isNode(c.planet)) {
     const N = NODE_INFO[c.planet];
     return `这是一个${info.stage}。它在你出生时落在「${H.plainTopic}」这个领域，所以这方面的变化会特别明显。${pick(N.actions, seed)}${pick(N.care, seed + 1)}`;
@@ -273,8 +271,8 @@ export function buildFirdaria(chart: Chart, now: Date): ReturnType<MethodFn<Fird
       {
         title: "需要留意",
         body: mc.tone === "bad" || (sc && sc.tone === "bad")
-          ? `当前阶段里有一颗星状态偏弱，容易在“${houseOf(mc.tone === "bad" ? mc.house : sc!.house).plainTopic}”这方面多费力。${pick(houseOf(mc.tone === "bad" ? mc.house : sc!.house).care, ageNow)}`
-          : `整体没有特别需要提防的地方，只要别把节奏排得太满。${pick(houseOf(mc.house).care, ageNow + 2)}`,
+          ? `当前阶段里有一颗星状态偏弱，容易在“${houseInfo(mc.tone === "bad" ? mc.house : sc!.house).plainTopic}”这方面多费力。${pick(houseInfo(mc.tone === "bad" ? mc.house : sc!.house).care, ageNow)}`
+          : `整体没有特别需要提防的地方，只要别把节奏排得太满。${pick(houseInfo(mc.house).care, ageNow + 2)}`,
       },
       {
         title: "下一站",

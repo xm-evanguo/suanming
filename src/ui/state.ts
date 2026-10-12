@@ -1,7 +1,7 @@
 import { type BirthInput, type Chart, computeChart } from "../core/chart";
 import type { Compat, Person } from "../compat/types";
 import { runCompat } from "../compat";
-import { runForecasts } from "../forecast";
+import { FORECASTS } from "../forecast";
 import type { Forecast } from "../forecast/types";
 import { METHOD_ORDER, runAll } from "../methods";
 import { type Fusion, fuse } from "../methods/fusion";
@@ -24,6 +24,8 @@ const PEOPLE_KEY = "tianji.people.v1";
 const METHODS_KEY = "tianji.methods.v1";
 const state: AppState = {};
 let allResults: MethodResult[] | undefined;
+/** Forecasts per system, for every system. The method selection filters them on read, so it never recomputes them. */
+let forecastCache: { now: Date; byId: Map<MethodId, Forecast | undefined> } | undefined;
 
 export const getState = () => state;
 
@@ -55,7 +57,6 @@ function applyMethods() {
   state.results = allResults?.filter((r) => isMethodEnabled(r.id));
   state.fusion = state.results?.length ? fuse(state.results) : undefined;
   state.forecasts = undefined;
-  compatCache.clear();
 }
 
 /** Apply the same selection to display, forecasts, compatibility and AI evidence. */
@@ -71,6 +72,8 @@ export function compute(input: BirthInput) {
   state.input = input;
   state.chart = chart;
   allResults = results;
+  forecastCache = undefined;
+  compatCache.clear();
   applyMethods();
   save(KEY, input);
 }
@@ -93,15 +96,25 @@ export function clearState() {
   state.results = undefined;
   state.fusion = undefined;
   state.forecasts = undefined;
+  forecastCache = undefined;
+  compatCache.clear();
 }
 
 export function result<V>(id: MethodId): MethodResult<V> {
   return state.results!.find((r) => r.id === id) as MethodResult<V>;
 }
 
-/** Period forecasts for this year + 2 and the next 12 months. Computed on first use. */
+/** One system's period forecast, computed on first use. Undefined for a natal-only system. */
+export function getForecast(id: MethodId): Forecast | undefined {
+  forecastCache ??= { now: new Date(), byId: new Map() };
+  const { now, byId } = forecastCache;
+  if (!byId.has(id)) byId.set(id, FORECASTS[id]?.(state.chart!, now));
+  return byId.get(id);
+}
+
+/** Period forecasts of the enabled systems for this year + 2 and the next 12 months. */
 export function getForecasts(): Partial<Record<MethodId, Forecast>> {
-  state.forecasts ??= Object.fromEntries(Object.entries(runForecasts(state.chart!, new Date())).filter(([id]) => isMethodEnabled(id as MethodId)));
+  state.forecasts ??= Object.fromEntries((Object.keys(FORECASTS) as MethodId[]).filter(isMethodEnabled).map((id) => [id, getForecast(id)]));
   return state.forecasts;
 }
 
@@ -118,6 +131,7 @@ export function setMode(m: Mode) {
 // ───────── other people
 
 let people: Person[] = load<Person[]>(PEOPLE_KEY) ?? [];
+/** Every system's compatibility per person. The method selection filters it on read. */
 const compatCache = new Map<string, { chart: Chart; compats: Compat[] }>();
 
 export const listPeople = () => people;
@@ -141,8 +155,8 @@ export function compatWith(p: Person): { chart: Chart; compats: Compat[] } {
   let hit = compatCache.get(p.id);
   if (!hit) {
     const chart = computeChart(p.input);
-    hit = { chart, compats: runCompat(state.chart!, chart, p.relation).filter((c) => isMethodEnabled(c.methodId)) };
+    hit = { chart, compats: runCompat(state.chart!, chart, p.relation) };
     compatCache.set(p.id, hit);
   }
-  return hit;
+  return { chart: hit.chart, compats: hit.compats.filter((c) => isMethodEnabled(c.methodId)) };
 }

@@ -1,8 +1,7 @@
-import { astro } from "iztro";
 import { buildSignal, limitSignals, type Phrase, type Scope } from "../data/forecast-common";
 import { AREAS, FOCUS_TEMPLATES, HELPER_PHRASES, MUTAGEN_TEMPLATES } from "../data/forecast-ziwei";
 import type { Dim } from "../data/types";
-import { ziweiTimeIndex } from "../methods/ziwei";
+import { ziweiAstrolabe, type ZiweiAstrolabe as Natal } from "../methods/ziwei";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, type Signal, type Tone } from "./types";
 
 type Mutagen = "禄" | "权" | "科" | "忌";
@@ -11,8 +10,7 @@ const MUTAGEN_TONE: Record<Mutagen, Tone> = { 禄: "good", 权: "good", 科: "go
 /** Natal palaces where a strong 化禄 or 化忌 weighs most. */
 const KEY_AREAS = new Set(["命宫", "官禄", "财帛"]);
 
-type Horoscope = ReturnType<ReturnType<typeof astro.bySolar>["horoscope"]>;
-type Natal = ReturnType<typeof astro.bySolar>;
+type Horoscope = ReturnType<Natal["horoscope"]>;
 type Layer = Horoscope["monthly"];
 
 const palaceName = (area: string) => (area === "命宫" ? area : `${area}宫`);
@@ -111,8 +109,7 @@ function readPeriod(natal: Natal, layer: Layer, p: Period, scope: Scope): Period
 }
 
 export const ziweiForecast: ForecastFn = (chart, now): Forecast => {
-  const t = chart.cnTime;
-  const natal = astro.bySolar(`${t.y}-${t.m}-${t.d}`, ziweiTimeIndex(t.h), chart.input.gender === "male" ? "男" : "女", true, "zh-CN");
+  const natal = ziweiAstrolabe(chart);
   const { years, months } = forecastPeriods(now);
   return {
     years: years.map((p) => readPeriod(natal, natal.horoscope(`${p.year}-7-1`).yearly as Layer, p, "year")),

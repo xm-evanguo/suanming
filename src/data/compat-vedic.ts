@@ -3,16 +3,11 @@
  * (sidereal). Several cells differ between almanacs (Vashya, Gana); this file follows the commonly printed tables.
  */
 
-/** Koota names with maximum points. Total 36. */
-export const KOOTA_MAX = { varna: 1, vashya: 2, tara: 3, yoni: 4, maitri: 5, gana: 6, bhakoot: 7, nadi: 8 } as const;
-
 // ---- Varna (1): rank of the Moon rashi's class; the boy's rank must be >= the girl's. ----
 /** Rank 4 Brahmin (Cancer, Scorpio, Pisces), 3 Kshatriya (Aries, Leo, Sagittarius), 2 Vaishya (Taurus, Virgo, Capricorn), 1 Shudra (Gemini, Libra, Aquarius). */
 export const VARNA_RANK = [3, 2, 1, 4, 3, 2, 1, 4, 3, 2, 1, 4];
-export const VARNA_NAME = ["", "Shudra", "Vaishya", "Kshatriya", "Brahmin"];
 
 // ---- Vashya (2): groups 0 Chatushpada (quadruped), 1 Manava (human), 2 Jalachara (water), 3 Vanachara (wild), 4 Keeta (insect). ----
-export const VASHYA_NAME = ["Chatushpada", "Manava", "Jalachara", "Vanachara", "Keeta"];
 /** Group by rashi; Sagittarius and Capricorn change group at 15 degrees (see vashyaGroup). */
 const VASHYA_BY_RASHI = [0, 0, 1, 2, 3, 1, 1, 4, 1, 0, 1, 2];
 export function vashyaGroup(rashi: number, degInRashi: number): number {

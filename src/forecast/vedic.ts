@@ -1,12 +1,11 @@
 import * as Astro from "astronomy-engine";
-import { norm360 } from "../core/chart";
+import { DAY_MS, norm360 } from "../core/chart";
 import { buildSignal, limitSignals, type Scope } from "../data/forecast-common";
 import { GRAHA, JUPITER_GOCHARA, SADE_SATI, SUN_GOCHARA } from "../data/forecast-vedic";
 import { DASHA, lahiri, vedic } from "../methods/vedic";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
 
-const DAY = 86400000;
-const YEAR = 365.25 * DAY;
+const YEAR = 365.25 * DAY_MS;
 const NAK_SPAN = 360 / 27;
 
 interface Span {
@@ -107,7 +106,7 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
     }
 
     // 七年半土星期: Saturn in the 12th, 1st or 2nd sign from the natal Moon sign.
-    const houses = [from, mid, to - DAY].map((t) => fromMoon(sidLon(Astro.Body.Saturn, new Date(t)), moonSign));
+    const houses = [from, mid, to - DAY_MS].map((t) => fromMoon(sidLon(Astro.Body.Saturn, new Date(t)), moonSign));
     const stage = houses.includes(1) ? "peak" : houses.includes(12) ? "rising" : houses.includes(2) ? "setting" : undefined;
     if (stage) {
       const s = SADE_SATI[stage];
@@ -134,7 +133,7 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
     // Antardasha: a change inside the month is a stronger signal.
     const changeAt = [a.start, a.end].find((t) => t > from && t < to);
     const ag = GRAHA[a.lord]!;
-    const next = changeAt && changeAt === a.end ? levels(a.end + DAY).a : undefined;
+    const next = changeAt && changeAt === a.end ? levels(a.end + DAY_MS).a : undefined;
     const target = next ?? a;
     const tg = GRAHA[target.lord]!;
     const when = changeAt ? `约在 ${new Date(changeAt).getUTCDate()} 日，` : "";
@@ -160,7 +159,7 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
         dim: pg.dim,
         tone: pg.tone,
         weight: 1,
-        pro: `${m.lord}大运·${a.lord}小运·${pr.lord}细运（${fmt(pr.start)} 起约 ${Math.max(1, Math.round((pr.end - pr.start) / DAY))} 天）`,
+        pro: `${m.lord}大运·${a.lord}小运·${pr.lord}细运（${fmt(pr.start)} 起约 ${Math.max(1, Math.round((pr.end - pr.start) / DAY_MS))} 天）`,
         phrase: { what: pg.praty },
       }),
     );

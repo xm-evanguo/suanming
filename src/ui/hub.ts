@@ -1,4 +1,4 @@
-import { fmtTime } from "../core/chart";
+import { fmtTime, inputDate, inputTime } from "../core/chart";
 import { DIMS } from "../methods/fusion";
 import type { MethodResult, Origin } from "../methods/types";
 import { cnNum } from "./components";
@@ -19,8 +19,8 @@ const ORIGIN_TITLE: Record<Origin, string> = {
 export function birthLine(): string {
   const { input, chart } = getState();
   if (!input || !chart) return "";
-  const date = `${input.year}-${String(input.month).padStart(2, "0")}-${String(input.day).padStart(2, "0")}`;
-  const time = input.timeKnown ? `${String(input.hour).padStart(2, "0")}:${String(input.minute).padStart(2, "0")}` : "时间不详";
+  const date = inputDate(input);
+  const time = input.timeKnown ? inputTime(input) : "时间不详";
   const solar = input.trueSolar && input.timeKnown ? ` · 真太阳时 ${fmtTime(chart.trueSolarTime).slice(11)}` : "";
   return `${date} ${time} · ${input.city.name}${solar} · ${input.gender === "male" ? "乾造" : "坤造"}`;
 }

@@ -1,6 +1,7 @@
 import { drawSeed, type SeededCard } from "../core/draw-seed";
 import { MAJOR_ARCANA, type TarotCard } from "../data/tarot";
 import { QUESTION_LIMIT } from "../llm/tarot";
+import { pressOnly } from "./components";
 import { h, reducedMotion, reveal, sleep } from "./dom";
 import { tarotLlm } from "./tarot-llm";
 
@@ -127,10 +128,7 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
             "aria-pressed": String(t === topic),
             onclick: (e: Event) => {
               topic = t;
-              for (const b of chips.children) {
-                b.classList.toggle("on", b === e.currentTarget);
-                b.setAttribute("aria-pressed", String(b === e.currentTarget));
-              }
+              pressOnly(e.currentTarget as Element);
             },
           },
           label,

@@ -1,13 +1,12 @@
-import type { Gender } from "../core/chart";
+import { type Gender, inputDate, inputTime } from "../core/chart";
 import { CITIES, type City } from "../core/cities";
 import { type Compat, type CompatItem, type CompatTag, type Person, RELATION_NAMES, type RelationKind } from "../compat/types";
-import { onlyPro, sectionTitle, statement } from "./components";
+import { groupOf } from "../data/compat-util";
+import { onlyPro, pressOnly, sectionTitle, statement, topbar } from "./components";
 import { countUp, h, reveal, typewrite } from "./dom";
 import { compatWith, getPerson, getState, listPeople, removePerson, savePerson } from "./state";
 
 const RELATIONS = Object.keys(RELATION_NAMES) as RelationKind[];
-const LOVE: RelationKind[] = ["partner", "crush", "spouse"];
-const ELDER: RelationKind[] = ["father", "mother", "boss"];
 const REL_ICON: Record<RelationKind, string> = {
   partner: "❦",
   crush: "✧",
@@ -20,7 +19,6 @@ const REL_ICON: Record<RelationKind, string> = {
   colleague: "⚙",
   boss: "♔",
 };
-const pad = (n: number) => String(n).padStart(2, "0");
 
 interface Question {
   q: string;
@@ -31,14 +29,15 @@ interface Question {
 
 /** The questions a user typically asks about this kind of relation, answered from tagged items. */
 function questionsFor(rel: RelationKind, who: string): Question[] {
-  if (LOVE.includes(rel))
+  const group = groupOf(rel);
+  if (group === "romance")
     return [
       { q: `${who}是不是你命中注定的人？`, tags: ["fate"], scale: ["缘分要靠经营", "缘分一般", "有缘", "宿缘深厚"] },
       { q: "你们之间有多来电？", tags: ["attraction"], scale: ["吸引力偏弱", "时冷时热", "互相吸引", "强烈吸引"] },
       { q: "日常相处顺不顺？", tags: ["harmony", "conflict"], scale: ["摩擦较多", "有好有坏", "大体顺利", "非常合拍"] },
       { q: `${who}能不能帮到你？`, tags: ["support"], scale: ["各自独立", "偶有助力", "能帮到你", "是你的贵人"] },
     ];
-  if (ELDER.includes(rel))
+  if (group === "elder")
     return [
       { q: `${who}能不能在事业上帮你？`, tags: ["career", "support"], scale: ["帮助有限", "间接帮助", "能帮上忙", "事业贵人"] },
       { q: `你和${who}相处顺不顺？`, tags: ["harmony", "conflict"], scale: ["摩擦较多", "有好有坏", "大体顺利", "非常合拍"] },
@@ -74,7 +73,7 @@ export function renderPeople(view: HTMLElement) {
   const guide = h("p", { class: "hub-guide" });
   const formSlot = h("div");
   view.append(
-    h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "SYNASTRY"), h("a", { href: "#/timeline", class: "btn btn-ghost" }, "未来运程 ☽")),
+    topbar(["#/hub", "← 星盘总览"], "SYNASTRY", ["#/timeline", "未来运程 ☽"]),
     h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "CONIUNCTIO · 关系合盘"), h("h1", { class: "title-glow small" }, "你与身边的人"), guide),
   );
   typewrite(guide, "加入伴侣、父母、朋友或同事的出生信息，看各个体系怎样解读你们的缘分、相处，以及谁能在哪些事上帮到你。", 28);
@@ -90,7 +89,7 @@ export function renderPeople(view: HTMLElement) {
           "a",
           { class: "person-card glass", href: `#/people/${p.id}` },
           h("span", { class: "pc-icon" }, REL_ICON[p.relation]),
-          h("div", null, h("b", null, p.name), h("small", null, `${RELATION_NAMES[p.relation]} · ${p.input.year}-${pad(p.input.month)}-${pad(p.input.day)}`)),
+          h("div", null, h("b", null, p.name), h("small", null, `${RELATION_NAMES[p.relation]} · ${inputDate(p.input)}`)),
           h("span", { class: "pc-score" }, compats.length ? String(avg) : "—", h("small", null, compats.length ? "契合" : "暂无体系")),
         ),
         (i % 3) * 80,
@@ -128,8 +127,8 @@ function personForm(existing?: Person): HTMLElement {
   let city: City = src?.city ?? me.city;
 
   const name = h("input", { class: "field", placeholder: "称呼，例如：小林、妈妈", maxlength: "16", value: existing?.name ?? "" });
-  const date = h("input", { class: "field", type: "date", min: "1901-01-01", max: new Date().toISOString().slice(0, 10), value: src ? `${src.year}-${pad(src.month)}-${pad(src.day)}` : "" });
-  const time = h("input", { class: "field", type: "time", value: src?.timeKnown ? `${pad(src.hour)}:${pad(src.minute)}` : "" });
+  const date = h("input", { class: "field", type: "date", min: "1901-01-01", max: new Date().toISOString().slice(0, 10), value: src ? inputDate(src) : "" });
+  const time = h("input", { class: "field", type: "time", value: src?.timeKnown ? inputTime(src) : "" });
   const unknown = h("input", { type: "checkbox", checked: src ? !src.timeKnown : false });
   unknown.addEventListener("change", () => (time.disabled = unknown.checked));
   time.disabled = unknown.checked;
@@ -150,10 +149,7 @@ function personForm(existing?: Person): HTMLElement {
           "aria-pressed": String(r === relation),
           onclick: (e: Event) => {
             relation = r;
-            for (const b of relChips.children) {
-              b.classList.toggle("on", b === e.currentTarget);
-              b.setAttribute("aria-pressed", String(b === e.currentTarget));
-            }
+            pressOnly(e.currentTarget as Element);
           },
         },
         `${REL_ICON[r]} ${RELATION_NAMES[r]}`,
@@ -169,10 +165,7 @@ function personForm(existing?: Person): HTMLElement {
         "aria-pressed": String(gender === g),
         onclick: (e: Event) => {
           gender = g;
-          for (const b of (e.currentTarget as HTMLElement).parentElement!.children) {
-            b.classList.toggle("on", b === e.currentTarget);
-            b.setAttribute("aria-pressed", String(b === e.currentTarget));
-          }
+          pressOnly(e.currentTarget as Element);
         },
       },
       label,
@@ -228,13 +221,13 @@ export function renderPerson(view: HTMLElement, id: string) {
 
   const score = h("b", null, compats.length ? "0" : "—");
   view.append(
-    h("nav", { class: "topbar" }, h("a", { href: "#/people", class: "btn btn-ghost" }, "← 全部关系"), h("span", { class: "topbar-count" }, RELATION_NAMES[p.relation]), h("a", { href: "#/hub", class: "btn btn-ghost" }, "星盘总览")),
+    topbar(["#/people", "← 全部关系"], RELATION_NAMES[p.relation], ["#/hub", "星盘总览"]),
     h(
       "header",
       { class: "page-head" },
       h("p", { class: "eyebrow" }, `YOU & ${REL_ICON[p.relation]}`),
       h("h1", { class: "title-glow small" }, `你与${p.name}`),
-      h("p", { class: "birth-line" }, `${RELATION_NAMES[p.relation]} · ${p.input.year}-${pad(p.input.month)}-${pad(p.input.day)} ${p.input.timeKnown ? `${pad(p.input.hour)}:${pad(p.input.minute)}` : "时间不详"} · ${p.input.city.name}`),
+      h("p", { class: "birth-line" }, `${RELATION_NAMES[p.relation]} · ${inputDate(p.input)} ${p.input.timeKnown ? inputTime(p.input) : "时间不详"} · ${p.input.city.name}`),
       h("div", { class: "ring big", style: { "--p": avg } as never }, score, h("small", null, `${compats.length} 个体系平均`)),
     ),
   );

@@ -1,13 +1,12 @@
 import { Solar } from "lunar-javascript";
-import type { BirthInput, Gender } from "../core/chart";
+import { type BirthInput, type Gender, inputDate, inputTime, pad } from "../core/chart";
 import { CITIES, type City, TIMEZONES } from "../core/cities";
 import { METHOD_NAMES } from "../methods";
-import { cnNum } from "./components";
+import { cnNum, pressOnly } from "./components";
 import { h, typewrite } from "./dom";
 import { compute, getEnabledMethods, getState } from "./state";
 
 const SHICHEN = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
-const pad = (n: number) => String(n).padStart(2, "0");
 
 interface Draft {
   date: string;
@@ -22,8 +21,8 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
   const methodLabels = getEnabledMethods().map((id) => METHOD_NAMES[id]);
   const draft: Draft = saved
     ? {
-        date: `${saved.year}-${pad(saved.month)}-${pad(saved.day)}`,
-        time: `${pad(saved.hour)}:${pad(saved.minute)}`,
+        date: inputDate(saved),
+        time: inputTime(saved),
         timeKnown: saved.timeKnown,
         city: saved.city,
         gender: saved.gender,
@@ -263,10 +262,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
           "aria-pressed": String(draft.gender === g),
           onclick: (e: Event) => {
             draft.gender = g;
-            for (const b of (e.currentTarget as HTMLElement).parentElement!.children) {
-              b.classList.toggle("on", b === e.currentTarget);
-              b.setAttribute("aria-pressed", String(b === e.currentTarget));
-            }
+            pressOnly(e.currentTarget as Element);
           },
         },
         h("i", { "aria-hidden": "true" }, glyph),
