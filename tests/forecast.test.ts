@@ -24,6 +24,13 @@ describe("period forecasts", () => {
     for (const id of ["chenggu", "meihua", "chaldean", "maya"]) expect(Object.keys(all)).not.toContain(id);
   });
 
+  test("year and month forecasts use only systems with rules for that period", () => {
+    const yearly = Object.entries(all).filter(([, f]) => f!.years.length > 0).map(([id]) => id).sort();
+    const monthly = Object.entries(all).filter(([, f]) => f!.months.length > 0).map(([id]) => id).sort();
+    expect(yearly).toEqual(["astrology", "bazi", "firdaria", "hellenistic", "kyusei", "numerology", "tarot", "vedic", "ziwei"]);
+    expect(monthly).toEqual(["astrology", "bazi", "hellenistic", "kyusei", "numerology", "vedic", "ziwei"]);
+  });
+
   for (const [id, f] of Object.entries(all)) {
     test(`${id}: periods match and every signal is well formed`, () => {
       f!.years.length ? expect(f!.years.map((r) => r.period)).toEqual(periods.years) : expect(NO_YEARS).toContain(id);

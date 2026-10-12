@@ -91,7 +91,7 @@ export function renderPeople(view: HTMLElement) {
           { class: "person-card glass", href: `#/people/${p.id}` },
           h("span", { class: "pc-icon" }, REL_ICON[p.relation]),
           h("div", null, h("b", null, p.name), h("small", null, `${RELATION_NAMES[p.relation]} · ${p.input.year}-${pad(p.input.month)}-${pad(p.input.day)}`)),
-          h("span", { class: "pc-score" }, String(avg), h("small", null, "契合")),
+          h("span", { class: "pc-score" }, compats.length ? String(avg) : "—", h("small", null, compats.length ? "契合" : "暂无体系")),
         ),
         (i % 3) * 80,
       );
@@ -226,7 +226,7 @@ export function renderPerson(view: HTMLElement, id: string) {
   const avg = compats.length ? Math.round(compats.reduce((s, c) => s + c.score, 0) / compats.length) : 0;
   const all = compats.flatMap((c) => c.items.map((it) => ({ it, c })));
 
-  const score = h("b", null, "0");
+  const score = h("b", null, compats.length ? "0" : "—");
   view.append(
     h("nav", { class: "topbar" }, h("a", { href: "#/people", class: "btn btn-ghost" }, "← 全部关系"), h("span", { class: "topbar-count" }, RELATION_NAMES[p.relation]), h("a", { href: "#/hub", class: "btn btn-ghost" }, "星盘总览")),
     h(
@@ -238,7 +238,7 @@ export function renderPerson(view: HTMLElement, id: string) {
       h("div", { class: "ring big", style: { "--p": avg } as never }, score, h("small", null, `${compats.length} 个体系平均`)),
     ),
   );
-  setTimeout(() => countUp(score, avg, 1500), 300);
+  if (compats.length) setTimeout(() => countUp(score, avg, 1500), 300);
 
   view.append(sectionTitle("你最关心的问题", "把各体系的结论按问题归类，信号越一致，判断越明确"));
   const qs = questionsFor(p.relation, p.name);

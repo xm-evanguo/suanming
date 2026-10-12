@@ -1,9 +1,7 @@
-import { minuteStamp, normalizeQuestion } from "../core/draw-seed";
+import { minuteStamp } from "../core/draw-seed";
 import { type Face, type JiaoResult, type JiaoThrow, jiaoVerdict, MAX_THROWS, RESULT_MEANING, throwJiao } from "../core/jiao";
 import { h, reducedMotion, sleep } from "./dom";
 
-const EXAMPLES = ["这个月适合提离职吗？", "我该接受这份新工作吗？", "今年适合搬家吗？"];
-const QUESTION_LIMIT = 80;
 const TONE: Record<JiaoResult, string> = { 圣杯: "holy", 笑杯: "laugh", 阴杯: "yin" };
 const FACES_TEXT: Record<Face, string> = { flat: "平面", round: "圆面" };
 
@@ -101,18 +99,17 @@ function place(c: Cup, face: Face) {
 }
 
 /**
- * 掷圣杯: an optional yes/no question and up to three throws of two crescent blocks. The faces come from the question
- * and the local minute (src/core/jiao.ts). It is a ritual: it does not use the birth data, does not call
- * any API, and the question is not stored or sent anywhere.
+ * Up to three throws for a question held in mind. Each run uses a fresh random seed.
+ * This panel uses no birth data and makes no API request.
  */
 export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
   let thrown: JiaoThrow[] = [];
   let at: Date | undefined;
+  let seed: string | undefined;
   let busy = false;
   let disposed = false;
   const live: Animation[] = [];
 
-  const input = h("input", { type: "text", class: "field", maxlength: String(QUESTION_LIMIT), "aria-label": "要问的是非题", placeholder: "可以不写，在心里默念也行", autocomplete: "off" });
   const status = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
   const seedLine = h("p", { class: "seed-line", hidden: true });
   const cups = [makeCup("flat", false), makeCup("round", true)] as const;
@@ -121,13 +118,10 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
   const verdict = h("section", { class: "jiao-verdict", hidden: true, "aria-live": "polite" });
   const throwBtn = h("button", { type: "submit", class: "btn btn-primary" }, "掷筊 ✦");
   const resetBtn = h("button", { type: "button", class: "btn btn-ghost", hidden: true, onclick: reset }, "重新问");
-  const chips = h("div", { class: "rel-chips" }, ...EXAMPLES.map((t) => h("button", { type: "button", class: "dim-chip", onclick: () => { if (busy || thrown.length > 0) return; input.value = t; input.focus(); } }, t)));
 
   function sync() {
     const v = jiaoVerdict(thrown.map((t) => t.result));
     const started = thrown.length > 0;
-    input.readOnly = started || busy;
-    for (const b of chips.children) (b as HTMLButtonElement).disabled = started || busy;
     throwBtn.disabled = busy || (started && v.done);
     throwBtn.hidden = started && v.done;
     throwBtn.textContent = started ? `再掷一次（第 ${thrown.length + 1}/${MAX_THROWS} 掷）` : "掷筊 ✦";
@@ -150,12 +144,12 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
 
   async function run() {
     if (busy || disposed) return;
-    const q = normalizeQuestion(input.value);
     const v = jiaoVerdict(thrown.map((t) => t.result));
     if (thrown.length >= MAX_THROWS || (thrown.length > 0 && v.done)) return;
     busy = true;
     at ??= new Date();
-    const t = throwJiao(q, at, thrown.length);
+    seed ??= crypto.randomUUID();
+    const t = throwJiao(seed, at, thrown.length);
     sync();
     stage.dataset.result = "";
     status.textContent = "掷出……";
@@ -186,7 +180,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     if (busy) return;
     thrown = [];
     at = undefined;
-    input.value = "";
+    seed = undefined;
     stage.dataset.result = "";
     stage.setAttribute("aria-label", "两个筊杯");
     slots.forEach((s, i) => {
@@ -196,7 +190,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     });
     status.textContent = "已清空，可以再问。";
     sync();
-    input.focus();
+    throwBtn.focus();
   }
 
   const legend = h(
@@ -213,15 +207,13 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     { class: "jiao glass" },
     markup(GRADIENTS),
     h("h3", null, "掷圣杯"),
-    h("p", { class: "v-caption" }, "心里想好一件是非题，掷出两块月牙形的筊杯。"),
+    h("p", { class: "v-caption" }, "请在心中默念一件是非题，再掷出两块月牙形的筊杯。"),
     h(
       "form",
       { class: "jiao-form", onsubmit: (event: Event) => {
         event.preventDefault();
         void run();
       } },
-      h("label", null, "你要问的是非题（可不写）", input),
-      chips,
       stage,
       h("div", { class: "tarot-row jiao-slots" }, ...slots),
       seedLine,

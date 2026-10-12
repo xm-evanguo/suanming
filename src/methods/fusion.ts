@@ -52,7 +52,7 @@ export function fuse(results: MethodResult[]): Fusion {
   }
   for (const r of results) if (r.element) elements[r.element] += 1;
   const sum = Object.values(elements).reduce((a, b) => a + b, 0);
-  for (const w of Object.keys(elements) as WuXing[]) elements[w] = Math.round((elements[w] / sum) * 100);
+  for (const w of Object.keys(elements) as WuXing[]) elements[w] = sum ? Math.round((elements[w] / sum) * 100) : 0;
   const wxKeys = Object.keys(elements) as WuXing[];
   const dominantElement = wxKeys.reduce((a, b) => (elements[a] >= elements[b] ? a : b));
   const weakElement = wxKeys.reduce((a, b) => (elements[a] <= elements[b] ? a : b));
@@ -68,18 +68,15 @@ export function fuse(results: MethodResult[]): Fusion {
       }
 
   const lucky = {
-    colors: topByCount([...WU_XING[weakElement].colors, ...results.flatMap((r) => r.lucky.colors)].map((c) => c.replace(/色$/, "")), 4),
+    colors: topByCount([...(sum ? WU_XING[weakElement].colors : []), ...results.flatMap((r) => r.lucky.colors)].map((c) => c.replace(/色$/, "")), 4),
     numbers: topByCount(results.flatMap((r) => r.lucky.numbers).filter((n) => n > 0 && n < 100), 4),
     directions: topByCount(results.flatMap((r) => r.lucky.directions).filter((d) => d !== "中宫"), 2),
   };
 
-  const t = (id: string) => by[id]?.tagline ?? "";
-  const h = (id: string) => by[id]?.headline ?? "";
+  const groups = [results.filter((r) => r.origin === "中国"), results.filter((r) => ["西方", "古希腊", "古罗马", "波斯"].includes(r.origin)), results.filter((r) => ["日本", "印度", "玛雅"].includes(r.origin))];
   const oracle = [
-    `在东方的命盘里，你是「${h("bazi")}」——${t("bazi")}；紫微星盘说你${h("ziwei")}，梅花易数为你起出${h("meihua")}。`,
-    `在西方的星空下，你是${h("astrology")}，${t("astrology")}；数字称你为「${t("numerology")}」，塔罗为你翻开${h("tarot")}。`,
-    `日本的星宿认你为${h("sukuyo")}、${h("kyusei")}；恒河畔的占星师看见你的${h("vedic")}，玛雅祭司则唤你「${t("maya")}」。`,
-    `${results.length} 种体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是此生最值得经营的课题。五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}`,
+    ...groups.filter((group) => group.length).map((group) => group.map((r) => `${r.name}：${r.headline}，${r.tagline}`).join("；") + "。"),
+    `${results.length} 种已启用体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是最值得经营的课题。${sum ? `五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}` : "所选体系没有五行资料。"}`,
   ];
 
   const outlook: Fusion["outlook"] = [];

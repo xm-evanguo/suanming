@@ -1,11 +1,11 @@
 import { Solar } from "lunar-javascript";
 import type { BirthInput, Gender } from "../core/chart";
 import { CITIES, type City, TIMEZONES } from "../core/cities";
+import { METHOD_NAMES } from "../methods";
 import { cnNum } from "./components";
 import { h, typewrite } from "./dom";
-import { compute, getState } from "./state";
+import { compute, getEnabledMethods, getState } from "./state";
 
-const METHOD_LABELS = ["生辰八字", "紫微斗数", "袁天罡称骨", "梅花易数", "九星気学", "宿曜占星", "西洋占星", "希腊化占星", "迦勒底七曜", "波斯法达", "塔罗牌", "生命灵数", "吠陀占星", "玛雅历"];
 const SHICHEN = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -19,6 +19,7 @@ interface Draft {
 }
 
 export function renderWizard(view: HTMLElement, saved?: BirthInput) {
+  const methodLabels = getEnabledMethods().map((id) => METHOD_NAMES[id]);
   const draft: Draft = saved
     ? {
         date: `${saved.year}-${pad(saved.month)}-${pad(saved.day)}`,
@@ -39,7 +40,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
     h("div", { class: "orbit-deco", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("b")),
     h("p", { class: "eyebrow" }, "ASTRA · FATUM · 天机"),
     h("h1", { class: "title-glow" }, ...[..."天机星图"].map((c, i) => h("span", { style: { "--i": i } as never }, c))),
-    h("p", { class: "hero-sub" }, `${cnNum(METHOD_LABELS.length)}种古老体系 · 流年流月 · 关系合盘`),
+    h("p", { class: "hero-sub" }, `${cnNum(methodLabels.length)}种已启用体系 · 流年流月 · 关系合盘`),
     guide,
     h(
       "div",
@@ -50,12 +51,12 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
     h(
       "div",
       { class: "marquee", "aria-label": "包含的体系" },
-      h("div", { class: "marquee-track" }, ...[...METHOD_LABELS, ...METHOD_LABELS].map((m) => h("span", null, m, h("i", null, "✦")))),
+      h("div", { class: "marquee-track" }, ...[...methodLabels, ...methodLabels].map((m) => h("span", null, m, h("i", null, "✦")))),
     ),
     h("p", { class: "privacy" }, "🔒 所有推演都在你的浏览器内完成。只有你点击 AI 解读（塔罗解读、问事）时，相关内容才会直接发送给 DeepSeek。"),
   );
   view.append(hero);
-  typewrite(guide, "在你出生的那一刻，日月五星排成了只属于你的图案。东方的干支、西方的星座、东瀛的宿曜、玛雅的神圣历——今夜，它们将同时为你一人而转动。");
+  typewrite(guide, "从你出生的那一刻开始，用你选中的体系汇集画像。你可以在 Profile 中随时修改出生信息和体系选择。");
 
   const wizard = h("section", { class: "wizard", hidden: true });
   view.append(wizard);
@@ -73,7 +74,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
     { star: "日", guide: "第一颗星：你降临人间的日子。", hint: "公历（阳历）日期。若只知道农历生日，请先换算为公历。", body: stepDate },
     { star: "时", guide: "第二颗星：那一刻的时辰。", hint: "时间越准确，命宫、上升星座与时柱越清晰。精确到分钟最佳。", body: stepTime },
     { star: "地", guide: "第三颗星：你出生的地方。", hint: "经度用来校正真太阳时，纬度决定上升星座与宫位。", body: stepPlace },
-    { star: "人", guide: "第四颗星：乾造，还是坤造？", hint: "传统八字大运的顺逆与紫微斗数的排盘依此而定。", body: stepGender },
+    { star: "人", guide: "第四颗星：乾造，还是坤造？", hint: "部分传统体系的排盘与运程规则依此而定。", body: stepGender },
     { star: "✦", guide: "四颗星已经就位。", hint: "确认无误后，星盘将开始转动。", body: stepConfirm },
   ];
 

@@ -37,7 +37,7 @@ function topicCard(v: TopicView, total: number, hidden: boolean): HTMLElement {
   return h(
     "section",
     { class: "glass topic-card", role: "tabpanel", hidden },
-    h("div", { class: "tp-head" }, h("h3", null, v.name), h("span", { class: "tp-avg" }, h("b", null, String(Math.round(v.avg))), " 分")),
+    h("div", { class: "tp-head" }, h("h3", null, v.name), h("span", { class: "tp-avg" }, "出生画像 · ", h("b", null, String(Math.round(v.avg))), " 分")),
     h("p", { class: "tp-consensus" }, consensusText(v, total)),
     h(
       "ul",
@@ -104,11 +104,11 @@ export function renderSummary(view: HTMLElement) {
       h("p", { class: "eyebrow" }, `${results.length} SYSTEMS · ONE CHART`),
       h("h1", { class: "title-glow small" }, "命运全息图"),
       h("p", { class: "birth-line" }, birthLine()),
-      h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, "综合星运")),
-      h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]} · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}`),
+      h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, "出生画像")),
+      h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]}${Object.values(fusion.elements).some((v) => v > 0) ? ` · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}` : " · 所选体系没有五行资料"}`),
     ),
     reveal(h("section", { class: "glass oracle-card" }, h("span", { class: "oracle-mark" }, "❝"), oracle)),
-    sectionTitle("按话题看：共识与分歧", "同一个话题，各体系各说了什么；以及今年和未来 12 个月的信号"),
+    sectionTitle("按话题看：共识与分歧", "画像分数综合已启用体系；年运只用年度信号，月运只用月度信号，均不加入画像分数"),
     topicSection(results),
   );
   setTimeout(() => countUp(score, fusion.overall, 1800), 300);
@@ -140,7 +140,7 @@ export function renderSummary(view: HTMLElement) {
   }).sort((a, b) => b.sd - a.sd)[0]!;
 
   view.append(
-    sectionTitle("五维星图", `金色为${n}体系的平均值，淡色线为每一种体系各自的判断`),
+    sectionTitle("五维星图 · 出生画像", `金色为${n}体系的画像平均值，淡色线为各体系的画像分数；这些分数不参与年运和月运`),
     reveal(h("div", { class: "glass v-row radar-row" }, radar, h("div", null, scoreBars(fusion.scores), h("p", { class: "v-caption" }, `体系之间分歧最大的是「${DIM_NAMES[spread.d]}」（标准差 ${spread.sd.toFixed(1)} 分）——不同文明对它的看法并不一致。`)))),
   );
 
@@ -156,7 +156,8 @@ export function renderSummary(view: HTMLElement) {
       return s;
     })
     .join("");
-  const donut = svg("0 0 240 240", `<g transform="rotate(-90 120 120)">${segs}</g><text x="120" y="118" text-anchor="middle" class="donut-big">${fusion.dominantElement}</text><text x="120" y="145" text-anchor="middle" class="donut-small">主导五行</text>`, "donut");
+  const hasElements = Object.values(fusion.elements).some((v) => v > 0);
+  const donut = svg("0 0 240 240", `<g transform="rotate(-90 120 120)">${segs}</g><text x="120" y="118" text-anchor="middle" class="donut-big">${hasElements ? fusion.dominantElement : "—"}</text><text x="120" y="145" text-anchor="middle" class="donut-small">${hasElements ? "主导五行" : "暂无五行资料"}</text>`, "donut");
   const votes = DIMS.filter((d) => fusion.topVotes[d] > 0).sort((a, b) => fusion.topVotes[b] - fusion.topVotes[a]);
   view.append(
     sectionTitle("五行与共识", "东西方元素折算为五行后投票；以及各体系眼中你最强的天赋"),
@@ -169,7 +170,7 @@ export function renderSummary(view: HTMLElement) {
           { class: "glass pad" },
           donut,
           h("ul", { class: "legend" }, ...wx.map((w) => h("li", { style: { "--c": WX_COLOR[w] } as never }, `${w} ${fusion.elements[w]}%`))),
-          h("p", { class: "v-caption" }, `补${fusion.weakElement}之道：${WU_XING[fusion.weakElement].lackText}`),
+          h("p", { class: "v-caption" }, hasElements ? `补${fusion.weakElement}之道：${WU_XING[fusion.weakElement].lackText}` : "所选体系没有提供五行资料。"),
         ),
         h(
           "div",

@@ -2,12 +2,12 @@ import type { Dim } from "../data/types";
 import { ASK_CONTEXT_LIMIT, ASK_QUESTION_LIMIT, type AskEvidence, type AskInput, type AskTurn, askDeepSeek, askEvidence, askPreviewText, MAX_FOLLOW_UPS, QUESTION_TEMPLATES, SITUATIONS, TOPIC_LABEL } from "../llm/ask";
 import { DIMS } from "../methods/fusion";
 import { consensusText, type TopicView, topicViews } from "../methods/topics";
-import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
 import { h } from "./dom";
 import { jiaoPanel } from "./jiao";
-import { keyField } from "./llm-key";
-import { getForecasts, getState } from "./state";
+import { deepseekPanel, keyAccess } from "./llm-key";
+import { qimenPanel } from "./qimen";
+import { getEnabledMethods, getForecasts, getState } from "./state";
 import { monthsLine } from "./summary";
 import { tarotDraw } from "./tarot-draw";
 
@@ -17,7 +17,7 @@ import { tarotDraw } from "./tarot-draw";
  */
 function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const results = getState().results!;
-  const focusId = arg[0] === "m" && METHOD_ORDER.includes(arg[1] as MethodId) ? (arg[1] as MethodId) : undefined;
+  const focusId = arg[0] === "m" && getEnabledMethods().includes(arg[1] as MethodId) ? (arg[1] as MethodId) : undefined;
   const focusName = focusId ? results.find((r) => r.id === focusId)?.name : undefined;
   let topic: Dim = arg[0] === "t" && DIMS.includes(arg[1] as Dim) ? (arg[1] as Dim) : "career";
 
@@ -43,7 +43,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const situationChips = h("div", { class: "rel-chips" });
   const question = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_QUESTION_LIMIT), "aria-label": "你的问题", placeholder: "写下一个具体的问题，或点上面的例子。" });
   const context = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_CONTEXT_LIMIT), "aria-label": "补充情况（可选）", placeholder: "补充情况（可选）：现在的处境、正在比较的选择、时间上的限制。" });
-  const key = keyField((message) => { status.textContent = message; });
+  const key = keyAccess();
   const sent = h("pre", { class: "ask-sent" });
   const thread = h("div", { class: "llm-output ask-thread", hidden: true });
   const followInput = h("textarea", { class: "field", rows: "2", maxlength: String(ASK_QUESTION_LIMIT), "aria-label": "接着问", placeholder: "接着问一句，例如：如果我选择等到明年呢？" });
@@ -73,7 +73,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     const v = view();
     preview.replaceChildren(
       h("p", { class: "eyebrow" }, "本地摘要"),
-      h("div", { class: "tp-head" }, h("h3", null, TOPIC_LABEL[topic]), h("span", { class: "tp-avg" }, h("b", null, String(Math.round(v.avg))), " 分")),
+      h("div", { class: "tp-head" }, h("h3", null, TOPIC_LABEL[topic]), h("span", { class: "tp-avg" }, results.length ? `出生画像 · ${Math.round(v.avg)} 分` : "尚未启用体系")),
       h("p", { class: "tp-consensus" }, consensusText(v, results.length)),
       h("p", { class: "tp-months" }, monthsLine(v) || "这个话题没有明显偏顺或偏紧的月份。"),
     );
@@ -129,6 +129,8 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   /** One request: the first question (`followUp` undefined) or a follow-up. The result replaces the state only on success. */
   async function run(followUp?: string) {
     if (controller) return;
+    if (!key.value()) { status.replaceChildren(keyAccess().element); return; }
+    if (!results.length) { status.textContent = "请先到 Profile 勾选至少一个体系，再使用 AI 问事。"; return; }
     controller = new AbortController();
     const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(90_000)]);
     const leave = () => controller?.abort();
@@ -190,7 +192,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     status,
   );
 
-  const root = h("section", { class: "llm-reading glass ask-card" }, form, thread, follow);
+  const root = deepseekPanel("DeepSeek · AI 问事", h("section", { class: "llm-reading ask-card" }, form, thread, follow));
   question.addEventListener("input", updateSent);
   context.addEventListener("input", updateSent);
 
@@ -210,28 +212,30 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   return { element, dispose: () => controller?.abort() };
 }
 
-type Tab = "ask" | "tarot" | "jiao";
+type Tab = "ask" | "tarot" | "jiao" | "qimen";
 const TABS: { id: Tab; label: string }[] = [
   { id: "ask", label: "AI 问事" },
   { id: "tarot", label: "抽塔罗" },
   { id: "jiao", label: "掷圣杯" },
+  { id: "qimen", label: "奇门遁甲" },
 ];
 
 /**
- * `#/ask` with three sections: AI 问事, 抽塔罗 and 掷圣杯.
- * Deep links: `#/ask/t/<dim>`, `#/ask/m/<methodId>`, `#/ask/tarot` and `#/ask/jiao`.
+ * The question page has AI, tarot, jiao and Qimen tabs.
+ * Qimen has the deep link `#/ask/qimen`.
  * A section is built the first time it is shown and then kept, so a drawn spread survives a tab switch.
  * Switching tabs rewrites the hash with `replaceState`, which fires no hashchange, so the view is not rendered again.
  * Returns a cleanup that cancels every running request and animation.
  */
 export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
-  const start: Tab = arg[0] === "tarot" ? "tarot" : arg[0] === "jiao" ? "jiao" : "ask";
+  const start: Tab = arg[0] === "tarot" ? "tarot" : arg[0] === "jiao" ? "jiao" : arg[0] === "qimen" ? "qimen" : "ask";
   // The hash of the ask section keeps its own arguments (topic or focus system).
   const askHash = start === "ask" && arg.length > 0 ? `#/ask/${arg.join("/")}` : "#/ask";
   const hashOf = (tab: Tab) => (tab === "ask" ? askHash : `#/ask/${tab}`);
 
   const cleanups: (() => void)[] = [];
   const builders: Record<Tab, () => HTMLElement> = {
+    qimen: qimenPanel,
     ask: () => {
       const flow = askFlow(start === "ask" ? arg : []);
       cleanups.push(flow.dispose);
@@ -286,7 +290,7 @@ export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
 
   view.append(
     h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "QUAESTIO"), h("a", { href: "#/summary", class: "btn btn-ghost" }, "融合总结 ✦")),
-    h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "QUAESTIO · 问事"), h("h1", { class: "title-glow small" }, "问事"), h("p", { class: "hub-guide" }, "带着一个具体的问题来：让 AI 结合各体系回答，或亲手抽三张塔罗、掷一次圣杯。")),
+    h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "QUAESTIO · 问事"), h("h1", { class: "title-glow small" }, "问事"), h("p", { class: "hub-guide" }, "带着一个具体的问题来：起一局奇门、抽三张塔罗、心中默念掷圣杯，或让 AI 结合各体系回答。")),
     h("div", { class: "ask-tabs", role: "tablist", "aria-label": "问事方式" }, ...tabs.values()),
     ...panels.values(),
   );

@@ -36,6 +36,9 @@ export function renderTimeline(view: HTMLElement) {
     return f && (f.years.length > 0 || f.months.length > 0);
   });
   const natalOnly = results.filter((r) => !withRules.includes(r));
+  const yearly = withRules.filter((r) => forecasts[r.id]!.years.length > 0);
+  const monthly = withRules.filter((r) => forecasts[r.id]!.months.length > 0);
+  const yearOnly = yearly.filter((r) => forecasts[r.id]!.months.length === 0);
 
   // Readings per period key, per system.
   const index = new Map<string, Row[]>();
@@ -79,7 +82,7 @@ export function renderTimeline(view: HTMLElement) {
   );
   typewrite(
     guide,
-    `${cnNum(withRules.length)}种体系有逐年或逐月的推算规则。选一个领域，看看接下来三年和十二个月里，哪些体系看好、哪些体系提醒你放慢脚步。`,
+    `年运使用${cnNum(yearly.length)}种体系的年度信号，月运使用${cnNum(monthly.length)}种体系的月度信号。出生画像分数不参与运程计算。选一个领域，查看接下来三年和十二个月的变化。`,
     28,
   );
 
@@ -90,9 +93,9 @@ export function renderTimeline(view: HTMLElement) {
 
   view.append(
     reveal(chipsEl),
-    sectionTitle("三年大势", "今年与之后两年。点击一年查看详情"),
+    sectionTitle("三年大势", `${yearly.length} 个体系提供年运。点击一年查看详情`),
     reveal(yearsEl),
-    sectionTitle("未来十二个月", "曲线越高，看好的体系越多、信号越强。点击月份查看详情"),
+    sectionTitle("未来十二个月", `${monthly.length} 个体系提供月运，不加入年度信号。点击月份查看详情`),
     reveal(h("div", { class: "glass curve-card" }, curveEl)),
     detailEl,
   );
@@ -103,10 +106,14 @@ export function renderTimeline(view: HTMLElement) {
           "aside",
           { class: "caveats" },
           h("b", null, "ⓘ 只看本命的体系"),
-          h("p", null, `${natalOnly.map((r) => r.name).join("、")}没有公认的逐年逐月推算规则，本页不为它们编造运势。`),
+          h("p", null, `${natalOnly.map((r) => r.name).join("、")}在本站只提供出生画像，不参与年运、月运和运势指数。`),
           ...natalOnly.flatMap((r) => (forecasts[r.id]?.note ? [h("p", null, `${r.name}：${forecasts[r.id]!.note}`)] : [])),
         ),
       ),
+    );
+  if (yearOnly.length)
+    view.append(
+      reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 只提供年运的体系"), h("p", null, `${yearOnly.map((r) => r.name).join("、")}只参与年度预测，不参与每月曲线、月度详情和月度运势指数。`))),
     );
   view.append(
     reveal(

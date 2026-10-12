@@ -121,6 +121,35 @@ describe("topic digest", () => {
     }
   });
 
+  test("birth scores change the profile but do not change year or month forecasts", () => {
+    const chart = computeChart({ year: 1990, month: 5, day: 15, hour: 14, minute: 30, timeKnown: true, city: beijing, gender: "male", trueSolar: true });
+    const results = runAll(chart);
+    const forecasts = runForecasts(chart, now);
+    const before = topicViews(results, forecasts);
+    const after = topicViews(results.map((r) => ({ ...r, scores: { career: 0, wealth: 0, love: 0, health: 0, wisdom: 0 } })), forecasts);
+    for (const [i, v] of after.entries()) {
+      expect(v.avg).toBe(0);
+      expect(before[i]!.avg).toBeGreaterThan(0);
+      expect(v.thisYear).toEqual(before[i]!.thisYear);
+      expect(v.months).toEqual(before[i]!.months);
+      const fixed = ["chenggu", "meihua", "sukuyo", "chaldean", "maya"];
+      for (const s of v.thisYear!.signals) expect(fixed).not.toContain(s.id);
+      for (const m of v.months)
+        for (const s of m.signals) expect([...fixed, "firdaria", "tarot"]).not.toContain(s.id);
+    }
+  });
+
+  test("year signals change the year forecast but do not change month forecasts", () => {
+    const chart = computeChart({ year: 1990, month: 5, day: 15, hour: 14, minute: 30, timeKnown: true, city: beijing, gender: "male", trueSolar: true });
+    const results = runAll(chart);
+    const forecasts = runForecasts(chart, now);
+    const before = topicViews(results, forecasts);
+    const changed = { ...forecasts, tarot: { ...forecasts.tarot!, years: forecasts.tarot!.years.map((r) => ({ ...r, signals: [sig("bad", 3)] })) } };
+    const after = topicViews(results, changed);
+    expect(after[0]!.thisYear).not.toEqual(before[0]!.thisYear);
+    for (const [i, v] of after.entries()) expect(v.months).toEqual(before[i]!.months);
+  });
+
   test("consensus line", () => {
     const { views, results } = build(1990);
     const v = views[0]!;

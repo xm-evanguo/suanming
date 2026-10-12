@@ -3,7 +3,7 @@ import type { Compat, Person } from "../compat/types";
 import { runCompat } from "../compat";
 import { runForecasts } from "../forecast";
 import type { Forecast } from "../forecast/types";
-import { runAll } from "../methods";
+import { METHOD_ORDER, runAll } from "../methods";
 import { type Fusion, fuse } from "../methods/fusion";
 import type { MethodId, MethodResult } from "../methods/types";
 
@@ -21,7 +21,9 @@ export interface AppState {
 const KEY = "tianji.input.v1";
 const MODE_KEY = "tianji.mode.v1";
 const PEOPLE_KEY = "tianji.people.v1";
+const METHODS_KEY = "tianji.methods.v1";
 const state: AppState = {};
+let allResults: MethodResult[] | undefined;
 
 export const getState = () => state;
 
@@ -42,13 +44,34 @@ function save(key: string, value: unknown) {
   }
 }
 
-export function compute(input: BirthInput) {
-  state.input = input;
-  state.chart = computeChart(input);
-  state.results = runAll(state.chart);
-  state.fusion = fuse(state.results);
+const savedMethods = load<unknown>(METHODS_KEY);
+let enabledMethods = Array.isArray(savedMethods)
+  ? METHOD_ORDER.filter((id) => savedMethods.includes(id))
+  : [...METHOD_ORDER];
+export const getEnabledMethods = (): MethodId[] => [...enabledMethods];
+export const isMethodEnabled = (id: MethodId): boolean => enabledMethods.includes(id);
+
+function applyMethods() {
+  state.results = allResults?.filter((r) => isMethodEnabled(r.id));
+  state.fusion = state.results?.length ? fuse(state.results) : undefined;
   state.forecasts = undefined;
   compatCache.clear();
+}
+
+/** Apply the same selection to display, forecasts, compatibility and AI evidence. */
+export function setEnabledMethods(ids: MethodId[]) {
+  enabledMethods = METHOD_ORDER.filter((id) => ids.includes(id));
+  save(METHODS_KEY, enabledMethods);
+  applyMethods();
+}
+
+export function compute(input: BirthInput) {
+  const chart = computeChart(input);
+  const results = runAll(chart);
+  state.input = input;
+  state.chart = chart;
+  allResults = results;
+  applyMethods();
   save(KEY, input);
 }
 
@@ -65,6 +88,7 @@ export function loadSaved() {
 
 /** Forget the results (the last input stays as the wizard's defaults). */
 export function clearState() {
+  allResults = undefined;
   state.chart = undefined;
   state.results = undefined;
   state.fusion = undefined;
@@ -77,7 +101,7 @@ export function result<V>(id: MethodId): MethodResult<V> {
 
 /** Period forecasts for this year + 2 and the next 12 months. Computed on first use. */
 export function getForecasts(): Partial<Record<MethodId, Forecast>> {
-  state.forecasts ??= runForecasts(state.chart!, new Date());
+  state.forecasts ??= Object.fromEntries(Object.entries(runForecasts(state.chart!, new Date())).filter(([id]) => isMethodEnabled(id as MethodId)));
   return state.forecasts;
 }
 
@@ -117,7 +141,7 @@ export function compatWith(p: Person): { chart: Chart; compats: Compat[] } {
   let hit = compatCache.get(p.id);
   if (!hit) {
     const chart = computeChart(p.input);
-    hit = { chart, compats: runCompat(state.chart!, chart, p.relation) };
+    hit = { chart, compats: runCompat(state.chart!, chart, p.relation).filter((c) => isMethodEnabled(c.methodId)) };
     compatCache.set(p.id, hit);
   }
   return hit;

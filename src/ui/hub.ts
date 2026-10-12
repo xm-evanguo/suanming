@@ -44,7 +44,7 @@ export function renderHub(view: HTMLElement) {
   typewrite(guide, `${cnNum(results.length)}扇门已经为你打开。每一扇门后，都是一个古老文明看见的你。先逐一推开，或直接前往融合总结。`, 32);
 
   const score = h("b", null, "0");
-  const ring = h("div", { class: "ring", style: { "--p": fusion.overall } as never }, score, h("small", null, "综合星运"));
+  const ring = h("div", { class: "ring", style: { "--p": fusion.overall } as never }, score, h("small", null, "出生画像"));
   const card = h(
     "a",
     { class: "summary-card glass", href: "#/summary" },
@@ -54,7 +54,7 @@ export function renderHub(view: HTMLElement) {
       null,
       h("p", { class: "eyebrow" }, "FUSION · 融合总结"),
       h("h2", null, `${cnNum(results.length)}体系的命运全息图`),
-      h("p", null, fusion.oracle[3] ?? ""),
+      h("p", null, fusion.oracle.at(-1) ?? ""),
       h("span", { class: "btn btn-primary" }, "查看融合总结 ✦"),
     ),
   );
@@ -73,7 +73,7 @@ export function renderHub(view: HTMLElement) {
       h(
         "div",
         { class: "feature-row" },
-        feature("#/ask", "✦", "QUAESTIO · 问事", "问事", "带着一个具体问题来：AI 结合各体系回答，或亲手抽三张塔罗、掷一次圣杯。", "去提问 →"),
+        feature("#/ask", "✦", "QUAESTIO · 问事", "问事", "带着一个具体问题来：起奇门局、抽塔罗、心中默念掷圣杯，或让 AI 结合各体系回答。", "去提问 →"),
         feature("#/timeline", "☽", "TEMPUS · 流年流月", "未来运程", "今年起三年、未来十二个月。按事业、财富、感情等领域，看各体系说了什么。", "查看时间轴 →"),
         feature("#/people", "❦", "CONIUNCTIO · 关系合盘", "你与身边的人", people ? `已添加 ${people} 人。看缘分、相处，以及谁能在事业上帮你。` : "加入伴侣、父母或朋友的生日，看缘分、相处，以及谁能在事业上帮你。", people ? "查看合盘 →" : "添加一个人 →"),
       ),

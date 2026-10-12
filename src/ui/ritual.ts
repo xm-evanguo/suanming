@@ -4,6 +4,7 @@ import { ZODIAC } from "../data/zodiac";
 import { PLANETS } from "../data/planets";
 import type { BaziVisual } from "../methods/bazi";
 import type { MeihuaVisual } from "../methods/meihua";
+import { METHOD_ORDER } from "../methods";
 import { cnNum } from "./components";
 import { esc, h, reducedMotion, sleep } from "./dom";
 import { getState, result } from "./state";
@@ -29,7 +30,8 @@ export function renderRitual(view: HTMLElement, setWarp: (on: boolean) => void):
   const title = h("h2", { class: "ritual-title" });
   const sub = h("p", { class: "ritual-sub" });
   const log = h("ol", { class: "ritual-log", "aria-live": "polite" });
-  const steps = ["定位", "真太阳时", "太阳黄经", "四柱", "行星", "起卦", "融合"];
+  const filtered = results.length !== METHOD_ORDER.length;
+  const steps = filtered ? ["已启用体系"] : ["定位", "真太阳时", "太阳黄经", "四柱", "行星", "起卦", "融合"];
   const progress = h("ol", { class: "ritual-progress" }, ...steps.map((s) => h("li", null, h("i"), h("span", null, s))));
   const flash = h("div", { class: "flash" });
   view.classList.add("ritual");
@@ -64,6 +66,15 @@ export function renderRitual(view: HTMLElement, setWarp: (on: boolean) => void):
   };
 
   (async () => {
+    if (filtered) {
+      const visual = fusionVisual(results.map((r) => r.icon));
+      await phase(0, `${cnNum(results.length)}体系 · 汇集画像`, "只展示你在 Profile 中启用的体系", visual.el);
+      for (const r of results) await line(r.name, r.headline, 120);
+      visual.converge();
+      await sleep(1600);
+      go();
+      return;
+    }
     const { input } = chart;
     const city = input.city;
 

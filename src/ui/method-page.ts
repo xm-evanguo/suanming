@@ -1,9 +1,8 @@
-import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
 import { chips, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
-import { getForecasts, result } from "./state";
+import { getEnabledMethods, getForecasts, result } from "./state";
 import { VISUALS } from "./visuals";
 
 /** Plain sections that most systems share: the same four questions, answered 10 times. They go into a fold. */
@@ -30,9 +29,10 @@ function nowSlot(id: MethodId): HTMLElement {
 
 export function renderMethod(view: HTMLElement, id: MethodId) {
   const r = result(id);
-  const idx = METHOD_ORDER.indexOf(id);
-  const prev = result(METHOD_ORDER[(idx + METHOD_ORDER.length - 1) % METHOD_ORDER.length]!);
-  const next = result(METHOD_ORDER[(idx + 1) % METHOD_ORDER.length]!);
+  const order = getEnabledMethods();
+  const idx = order.indexOf(id);
+  const prev = result(order[(idx + order.length - 1) % order.length]!);
+  const next = result(order[(idx + 1) % order.length]!);
 
   const headline = h("h2", { class: "m-headline" });
   view.append(
@@ -40,7 +40,7 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
       "nav",
       { class: "topbar" },
       h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"),
-      h("span", { class: "topbar-count" }, `${String(idx + 1).padStart(2, "0")} / ${METHOD_ORDER.length}`),
+      h("span", { class: "topbar-count" }, `${String(idx + 1).padStart(2, "0")} / ${order.length}`),
       h("a", { href: "#/summary", class: "btn btn-ghost" }, "融合总结 ✦"),
     ),
     h(
