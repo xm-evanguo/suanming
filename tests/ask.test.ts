@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { computeChart } from "../src/core/chart";
+import { type BirthInput, computeChart } from "../src/core/chart";
 import { CITIES } from "../src/core/cities";
 import { runForecasts } from "../src/forecast";
-import { type AskInput, type AskTurn, askDeepSeek, askEvidence, askMessages, askPreviewText, EVIDENCE_LIMIT, MAX_FOLLOW_UPS, QUESTION_TEMPLATES, SITUATIONS } from "../src/llm/ask";
+import { type AskInput, type AskTurn, askDeepSeek, askEvidence, askMessages, askProfile, askPreviewText, EVIDENCE_LIMIT, MAX_FOLLOW_UPS, QUESTION_TEMPLATES, SITUATIONS } from "../src/llm/ask";
 import { type ApiRequest, DEEPSEEK_ENDPOINT } from "../src/llm/client";
 import { runAll } from "../src/methods";
 import { DIMS } from "../src/methods/fusion";
@@ -10,10 +10,11 @@ import { METHOD_ORDER } from "../src/methods";
 
 const chengdu = CITIES.find((c) => c.name === "成都")!;
 const now = new Date(2026, 9, 11);
+const inputOf = (timeKnown: boolean): BirthInput => ({ year: 1987, month: 8, day: 23, hour: 9, minute: 41, timeKnown, city: chengdu, gender: "female", trueSolar: true });
 const build = (timeKnown: boolean) => {
-  const chart = computeChart({ year: 1987, month: 8, day: 23, hour: 9, minute: 41, timeKnown, city: chengdu, gender: "female", trueSolar: true });
+  const chart = computeChart(inputOf(timeKnown));
   const results = runAll(chart);
-  return { results, forecasts: runForecasts(chart, now) };
+  return { results, forecasts: runForecasts(chart, now), input: inputOf(timeKnown) };
 };
 const { results, forecasts } = build(true);
 const unknown = build(false);
@@ -23,22 +24,25 @@ const reply = (content = "一、直接回答：先核实条件。") => Response.
 
 describe("ask evidence", () => {
   for (const dim of DIMS) {
-    test(`${dim}: no birth data, within the size limit`, () => {
+    test(`${dim}: within the size limit`, () => {
       for (const focus of [undefined, ...METHOD_ORDER]) {
-        for (const set of [{ results, forecasts }, unknown]) {
-          const evidence = askEvidence(set.results, set.forecasts, dim, focus);
-          const json = JSON.stringify(evidence);
-          expect(json.length).toBeLessThanOrEqual(EVIDENCE_LIMIT);
-          for (const secret of ["1987", "8-23", "08-23", "成都", "四川", "乾造", "坤造", "09:41", "9:41"]) expect(json).not.toContain(secret);
-          expect(askPreviewText(evidence, ask)).not.toContain("1987");
-          // No chart facts (pillars, positions) and no age, from which a birth date could be rebuilt.
-          expect(json).not.toMatch(/\d+\s*岁/);
-          expect(askPreviewText(evidence, ask)).not.toMatch(/\d+\s*岁/);
-          if (evidence.focus) expect(Object.keys(evidence.focus)).not.toContain("facts");
+        for (const set of [{ results, forecasts, input: inputOf(true) }, unknown]) {
+          const evidence = askEvidence(set.results, set.forecasts, dim, focus, set.input, now);
+          expect(JSON.stringify(evidence).length).toBeLessThanOrEqual(EVIDENCE_LIMIT);
+          expect(evidence.profile).toBeDefined();
         }
       }
     });
   }
+
+  test("includes the birth profile when the input is given", () => {
+    const e = askEvidence(results, forecasts, "career", undefined, inputOf(true), now);
+    expect(e.profile).toEqual({ birth: "1987-08-23 09:41", place: "成都（四川）", gender: "女", age: 39 });
+    expect(askPreviewText(e, ask)).toContain("1987-08-23 09:41");
+    expect(askProfile(inputOf(false), new Date(2026, 7, 22)).birth).toBe("1987-08-23（出生时间不详）");
+    expect(askProfile(inputOf(false), new Date(2026, 7, 22)).age).toBe(38);
+    expect(askEvidence(results, forecasts, "career").profile).toBeUndefined();
+  });
 
   test("has topic data and the unknown-time note only when the time is unknown", () => {
     const e = askEvidence(results, forecasts, "love");
@@ -63,10 +67,8 @@ describe("ask evidence", () => {
     expect(e.focus?.system).toBe("生辰八字");
     expect(e.focus!.headline.length).toBeGreaterThan(0);
     expect(e.focus!.summary.length).toBeGreaterThan(0);
-    // The chart facts are never sent: they hold pillars and positions.
-    expect("facts" in e.focus!).toBe(false);
-    expect(JSON.stringify(e)).not.toContain('"facts"');
-    for (const id of METHOD_ORDER) expect("facts" in (askEvidence(results, forecasts, "career", id).focus ?? {})).toBe(false);
+    expect(e.focus!.facts.length).toBeGreaterThan(0);
+    expect(askPreviewText(e, ask)).toContain(e.focus!.facts[0]!);
   });
 
   test("templates and situations exist for every topic", () => {

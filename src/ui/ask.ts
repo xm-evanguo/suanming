@@ -39,7 +39,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const cache = new Map<Dim, AskEvidence>();
   const evidence = () => {
     let e = cache.get(topic);
-    if (!e) cache.set(topic, (e = askEvidence(results, getForecasts(), topic, focusId)));
+    if (!e) cache.set(topic, (e = askEvidence(results, getForecasts(), topic, focusId, getState().input)));
     return e;
   };
 
@@ -49,7 +49,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const templateChips = h("div", { class: "rel-chips" });
   const situationChips = h("div", { class: "rel-chips" });
   const question = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_QUESTION_LIMIT), "aria-label": "你的问题", placeholder: "写下一个具体的问题，或点上面的例子。" });
-  const context = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_CONTEXT_LIMIT), "aria-label": "补充情况（可选）", placeholder: "补充情况（可选）：现在的处境、正在比较的选择、时间上的限制。请不要写姓名、证件号等身份信息。" });
+  const context = h("textarea", { class: "field", rows: "3", maxlength: String(ASK_CONTEXT_LIMIT), "aria-label": "补充情况（可选）", placeholder: "补充情况（可选）：现在的处境、正在比较的选择、时间上的限制。" });
   const key = keyField((message) => { status.textContent = message; });
   const sent = h("pre", { class: "ask-sent" });
   const thread = h("div", { class: "llm-output ask-thread", hidden: true });
@@ -193,7 +193,7 @@ function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
     h("p", { class: "v-caption" }, "服务商：DeepSeek · 模型：deepseek-flash。点击后才会发送请求，由你的 DeepSeek 账户按 API 用量付费。"),
     key.element,
     h("details", { class: "ask-details" }, h("summary", null, "将发送给 DeepSeek 的内容"), sent),
-    h("p", { class: "v-caption ask-privacy" }, "点击后，会把所选话题的推算摘要、你的问题和补充情况直接发送给 DeepSeek；不发送出生日期、时间、地点和姓名，也不发送命盘原始数据；推算摘要仍可能间接反映你的情况。费用由你的 DeepSeek 账户承担。"),
+    h("p", { class: "v-caption ask-privacy", role: "note" }, "⚠ 风险提示：使用 AI 问事会把你的个人信息（出生日期与时间、出生地、性别、年龄、各体系推算结果）连同问题和补充情况直接发送给第三方服务 DeepSeek。请不要填写你不想让第三方知道的内容。费用由你的 DeepSeek 账户承担。"),
     h("div", { class: "draw-actions" }, submit, cancel),
     status,
   );

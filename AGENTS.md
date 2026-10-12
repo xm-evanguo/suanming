@@ -37,5 +37,5 @@ Run all three checks (types, tests, build) before a commit.
 
 - Keep API keys out of Git, logs, URLs and site-server requests. Send DeepSeek keys directly to DeepSeek. Browser storage is not encrypted; say so in the UI.
 - Render AI output as text nodes. Never insert it as HTML.
-- Send only what the UI discloses. Do not send the birth date, birth place or names.
+- AI 问事 may send personal data (birth data, chart facts). Show everything that is sent in the preview, and show a risk notice before the send button.
 - Tests mock API calls. Do not use real keys or paid calls in tests.

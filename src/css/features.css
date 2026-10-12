@@ -270,7 +270,7 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 .ask-preview .tp-consensus { margin: 2px 0 0; }
 .ask-details > summary { cursor: pointer; color: var(--gold2); }
 .ask-sent { margin: 10px 0 0; padding: 12px 14px; max-height: 320px; overflow: auto; border-radius: 12px; border: 1px solid var(--line); background: rgba(5, 4, 20, 0.6); color: var(--muted); font: inherit; font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
-.ask-privacy { text-align: left; }
+.ask-privacy { text-align: left; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--rose) 55%, transparent); border-radius: 12px; color: var(--ink); background: color-mix(in srgb, var(--rose) 10%, transparent); }
 .ask-thread[hidden], .ask-follow[hidden] { display: none; }
 .ask-thread { display: grid; gap: 12px; margin-top: 20px; }
 .ask-msg { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); }
