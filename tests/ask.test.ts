@@ -31,6 +31,10 @@ describe("ask evidence", () => {
           expect(json.length).toBeLessThanOrEqual(EVIDENCE_LIMIT);
           for (const secret of ["1987", "8-23", "08-23", "成都", "四川", "乾造", "坤造", "09:41", "9:41"]) expect(json).not.toContain(secret);
           expect(askPreviewText(evidence, ask)).not.toContain("1987");
+          // No chart facts (pillars, positions) and no age, from which a birth date could be rebuilt.
+          expect(json).not.toMatch(/\d+\s*岁/);
+          expect(askPreviewText(evidence, ask)).not.toMatch(/\d+\s*岁/);
+          if (evidence.focus) expect(Object.keys(evidence.focus)).not.toContain("facts");
         }
       }
     });
@@ -59,11 +63,10 @@ describe("ask evidence", () => {
     expect(e.focus?.system).toBe("生辰八字");
     expect(e.focus!.headline.length).toBeGreaterThan(0);
     expect(e.focus!.summary.length).toBeGreaterThan(0);
-    expect(e.focus!.facts.length).toBeGreaterThan(0);
-    expect(e.focus!.facts.length).toBeLessThanOrEqual(6);
-    // Facts that encode the birth date are dropped.
-    const maya = askEvidence(results, forecasts, "career", "maya");
-    expect(maya.focus!.facts.map((f) => f.label).join()).not.toContain("长历法");
+    // The chart facts are never sent: they hold pillars and positions.
+    expect("facts" in e.focus!).toBe(false);
+    expect(JSON.stringify(e)).not.toContain('"facts"');
+    for (const id of METHOD_ORDER) expect("facts" in (askEvidence(results, forecasts, "career", id).focus ?? {})).toBe(false);
   });
 
   test("templates and situations exist for every topic", () => {

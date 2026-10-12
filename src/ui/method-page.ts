@@ -4,7 +4,6 @@ import { chips, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
 import { getForecasts, result } from "./state";
-import { tarotDraw } from "./tarot-draw";
 import { VISUALS } from "./visuals";
 
 /** Plain sections that most systems share: the same four questions, answered 10 times. They go into a fold. */
@@ -90,7 +89,7 @@ export function renderMethod(view: HTMLElement, id: MethodId) {
         )
       : "",
   );
-  if (id === "tarot") view.append(sectionTitle("亲手抽牌", "有具体问题时，用传统的方式问一问"), reveal(tarotDraw()));
+  if (id === "tarot") view.append(reveal(h("a", { class: "glass tarot-go", href: "#/ask/tarot" }, h("b", null, "去问事页亲手抽三张牌 →"), h("small", null, "有具体问题时，用传统的方式问一问：洗牌、凭直觉抽牌，还可以请 AI 结合问题解读。"))));
   view.append(reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: `#/ask/m/${id}` }, "就这一页提问 →"))));
   view.append(sectionTitle("开运指引"), reveal(luckyRow(r.lucky)));
   if (r.caveats.length) view.append(reveal(h("aside", { class: "caveats" }, h("b", null, "ⓘ 推算说明"), ...r.caveats.map((c) => h("p", null, c)))));

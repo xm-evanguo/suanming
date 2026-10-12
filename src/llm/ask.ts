@@ -48,27 +48,27 @@ export interface AskEvidence {
   months: { month: string; score: number }[];
   bestMonths: { month: string; score: number; system: string; text: string }[];
   worstMonths: { month: string; score: number; system: string; text: string }[];
-  /** Present when the question is about one system. */
-  focus?: { system: string; headline: string; summary: string; facts: { label: string; value: string }[]; statement?: string };
+  /** Present when the question is about one system. It holds no chart facts: positions and pillars could reveal the birth date. */
+  focus?: { system: string; headline: string; summary: string; statement?: string };
   caveats: string[];
 }
 
-/** Fact labels whose values encode the birth date, birth place or birth time. They are never sent. */
-const PRIVATE_FACT = /农历|生日|立春年|起卦数|化约|数字和|出生|日出|日落|长历法|真太阳/;
 const YEAR = /(?<!\d)(?:1[89]\d{2}|20\d{2})(?!\d)/g;
+/** An age with digits, such as "36 岁" or "24–34 岁". An age and the current year give the birth year. */
+const AGE = /\d+\s*岁/;
 
 const tone = { good: "有利", bad: "不利", mixed: "好坏参半" } as const;
 const monthKey = (p: { year: number; month?: number }) => `${p.year}-${String(p.month ?? 1).padStart(2, "0")}`;
 
-/** True when the text names a year outside the window around the forecast year, which could be a birth year. */
-function leaksYear(text: string, now: number): boolean {
-  return (text.match(YEAR) ?? []).some((y) => Number(y) < now - 1 || Number(y) > now + 3);
+/** True when the text names a year outside the window around the forecast year (a possible birth year), or states an age. */
+function leaksBirth(text: string, now: number): boolean {
+  return AGE.test(text) || (text.match(YEAR) ?? []).some((y) => Number(y) < now - 1 || Number(y) > now + 3);
 }
 
-/** Keep only the sentences that name no possible birth year. */
+/** Keep only the sentences that name no possible birth year and no age. */
 function cleanText(text: string, now: number): string {
   const parts = text.match(/[^。！？]*[。！？]+[”’」』）)]*|[^。！？]+$/g) ?? [text];
-  return parts.filter((s) => !leaksYear(s, now)).join("").trim();
+  return parts.filter((s) => !leaksBirth(s, now)).join("").trim();
 }
 
 function monthPick(m: TopicPeriod, now: number) {
@@ -77,12 +77,10 @@ function monthPick(m: TopicPeriod, now: number) {
 }
 
 function focusOf(r: MethodResult, v: TopicView, now: number): NonNullable<AskEvidence["focus"]> {
-  const facts = r.facts.filter((f) => !PRIVATE_FACT.test(f.label) && !leaksYear(`${f.label}${f.value}`, now)).slice(0, 6);
   return {
     system: r.name,
     headline: cleanText(r.headline, now),
     summary: cleanText(r.plain.summary, now),
-    facts,
     statement: cleanText(v.statements.find((s) => s.id === r.id)?.text ?? "", now) || undefined,
   };
 }
@@ -94,7 +92,6 @@ function trim(e: AskEvidence): AskEvidence {
   const steps: ((e: AskEvidence) => void)[] = [
     (x) => x.statements.length > 4 && x.statements.pop(),
     (x) => x.thisYear && x.thisYear.signals.length > 3 && x.thisYear.signals.pop(),
-    (x) => x.focus && x.focus.facts.length > 2 && x.focus.facts.pop(),
     (x) => x.statements.length > 2 && x.statements.pop(),
     (x) => x.focus && (x.focus.summary = x.focus.summary.slice(0, 120)),
     (x) => x.caveats.length > 1 && x.caveats.pop(),
@@ -127,7 +124,7 @@ export function askEvidence(results: MethodResult[], forecasts: Partial<Record<M
 
   const caveats: string[] = [];
   if (results.some((r) => r.caveats.includes(UNKNOWN_TIME_NOTE))) caveats.push(UNKNOWN_TIME_NOTE);
-  if (focusResult) for (const c of focusResult.caveats) if (c !== UNKNOWN_TIME_NOTE && caveats.length < 3 && !leaksYear(c, now)) caveats.push(c);
+  if (focusResult) for (const c of focusResult.caveats) if (c !== UNKNOWN_TIME_NOTE && caveats.length < 3 && !leaksBirth(c, now)) caveats.push(c);
 
   const evidence: AskEvidence = {
     topic: dim === "wisdom" ? `${DIM_NAMES[dim]}（学业与成长）` : v.name,
@@ -218,7 +215,7 @@ export function askPreviewText(evidence: AskEvidence, ask: AskInput): string {
   const monthLine = (kind: string, list: AskEvidence["bestMonths"]) => list.map((m) => `${kind} ${m.month}（${m.score}）${m.system ? `${m.system}：${m.text}` : ""}`);
   lines.push(...monthLine("较顺", e.bestMonths), ...monthLine("需留意", e.worstMonths));
   if (e.focus) {
-    lines.push("", `重点体系：${e.focus.system}`, e.focus.headline, e.focus.summary, ...e.focus.facts.map((f) => `· ${f.label}：${f.value}`));
+    lines.push("", `重点体系：${e.focus.system}`, e.focus.headline, e.focus.summary);
     if (e.focus.statement) lines.push(`关于这个话题：${e.focus.statement}`);
   }
   if (e.caveats.length > 0) lines.push("", "推算说明", ...e.caveats.map((c) => `· ${c}`));

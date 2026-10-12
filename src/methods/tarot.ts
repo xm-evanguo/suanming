@@ -37,7 +37,7 @@ export const tarot: MethodFn<TarotVisual> = (chart) => {
   return {
     id: "tarot",
     name: "塔罗牌",
-    intro: "以生日数字求得一生相随的“生命牌”（Mary K. Greer 法）。若有具体问题，可以在本页亲手抽三张牌。",
+    intro: "以生日数字求得一生相随的“生命牌”（Mary K. Greer 法）。若有具体问题，可以去问事页亲手抽三张牌。",
     origin: "西方",
     icon: p.symbol,
     headline: same ? `生命牌 · ${p.name}` : `人格牌 ${p.name} · 灵魂牌 ${s.name}`,
@@ -73,7 +73,7 @@ export const tarot: MethodFn<TarotVisual> = (chart) => {
         },
       ],
     },
-    caveats: ["生命牌与年度牌由生日数字算出，不需要抽牌。页面下方的三张牌由你亲手抽取，与生辰无关，结果不计入综合评分。"],
+    caveats: ["生命牌与年度牌由生日数字算出，不需要抽牌。问事页里的三张牌由你亲手抽取，与生辰无关，结果不计入综合评分。"],
     visual: { personality, soul, yearCard, sum },
   };
 };

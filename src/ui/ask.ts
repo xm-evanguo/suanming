@@ -4,8 +4,10 @@ import { DIMS } from "../methods/fusion";
 import { METHOD_ORDER } from "../methods";
 import type { MethodId } from "../methods/types";
 import { h } from "./dom";
+import { jiaoPanel } from "./jiao";
 import { keyField } from "./llm-key";
 import { getForecasts, getState } from "./state";
+import { tarotDraw } from "./tarot-draw";
 
 /** "2027-04" to "2027 年 4 月". */
 const monthName = (key: string) => `${key.slice(0, 4)} 年 ${Number(key.slice(5))} 月`;
@@ -19,10 +21,10 @@ function monthsLine(e: AskEvidence): string {
 }
 
 /**
- * `#/ask`, `#/ask/t/<dim>` (preselect a topic) and `#/ask/m/<methodId>` (focus one system).
- * The conversation lives in this closure only. Returns a cleanup that cancels a running request.
+ * The AI ask flow. `arg` is `t/<dim>` (preselect a topic) or `m/<methodId>` (focus one system).
+ * The conversation lives in this closure only. `dispose` cancels a running request.
  */
-export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
+function askFlow(arg: string[]): { element: HTMLElement; dispose: () => void } {
   const results = getState().results!;
   const focusId = arg[0] === "m" && METHOD_ORDER.includes(arg[1] as MethodId) ? (arg[1] as MethodId) : undefined;
   const focusName = focusId ? results.find((r) => r.id === focusId)?.name : undefined;
@@ -191,7 +193,7 @@ export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
     h("p", { class: "v-caption" }, "服务商：DeepSeek · 模型：deepseek-flash。点击后才会发送请求，由你的 DeepSeek 账户按 API 用量付费。"),
     key.element,
     h("details", { class: "ask-details" }, h("summary", null, "将发送给 DeepSeek 的内容"), sent),
-    h("p", { class: "v-caption ask-privacy" }, "点击后，会把所选话题的推算摘要、你的问题和补充情况直接发送给 DeepSeek；不发送出生日期、地点和姓名。费用由你的 DeepSeek 账户承担。"),
+    h("p", { class: "v-caption ask-privacy" }, "点击后，会把所选话题的推算摘要、你的问题和补充情况直接发送给 DeepSeek；不发送出生日期、时间、地点和姓名，也不发送命盘原始数据；推算摘要仍可能间接反映你的情况。费用由你的 DeepSeek 账户承担。"),
     h("div", { class: "draw-actions" }, submit, cancel),
     status,
   );
@@ -200,9 +202,9 @@ export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
   question.addEventListener("input", updateSent);
   context.addEventListener("input", updateSent);
 
-  view.append(
-    h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "QUAESTIO"), h("a", { href: "#/summary", class: "btn btn-ghost" }, "融合总结 ✦")),
-    h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "QUAESTIO · 问事"), h("h1", { class: "title-glow small" }, "问事"), h("p", { class: "hub-guide" }, "选一个方向，写下具体的问题和你的处境。回答只用各体系已经算出的内容，不另外编造。")),
+  const element = h(
+    "div",
+    null,
     focusName ? h("p", { class: "ask-focus" }, "重点体系：", h("b", null, focusName), "。它的结论会和其他体系的摘要一起提供。", h("a", { href: "#/ask" }, "取消重点")) : "",
     root,
   );
@@ -213,5 +215,91 @@ export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
     renderPreview();
     updateSent();
   }, 0);
-  return () => controller?.abort();
+  return { element, dispose: () => controller?.abort() };
+}
+
+type Tab = "ask" | "tarot" | "jiao";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "ask", label: "AI 问事" },
+  { id: "tarot", label: "抽塔罗" },
+  { id: "jiao", label: "掷圣杯" },
+];
+
+/**
+ * `#/ask` with three sections: AI 问事, 抽塔罗 and 掷圣杯.
+ * Deep links: `#/ask/t/<dim>`, `#/ask/m/<methodId>`, `#/ask/tarot` and `#/ask/jiao`.
+ * A section is built the first time it is shown and then kept, so a drawn spread survives a tab switch.
+ * Switching tabs rewrites the hash with `replaceState`, which fires no hashchange, so the view is not rendered again.
+ * Returns a cleanup that cancels every running request and animation.
+ */
+export function renderAsk(view: HTMLElement, arg: string[] = []): () => void {
+  const start: Tab = arg[0] === "tarot" ? "tarot" : arg[0] === "jiao" ? "jiao" : "ask";
+  // The hash of the ask section keeps its own arguments (topic or focus system).
+  const askHash = start === "ask" && arg.length > 0 ? `#/ask/${arg.join("/")}` : "#/ask";
+  const hashOf = (tab: Tab) => (tab === "ask" ? askHash : `#/ask/${tab}`);
+
+  const cleanups: (() => void)[] = [];
+  const builders: Record<Tab, () => HTMLElement> = {
+    ask: () => {
+      const flow = askFlow(start === "ask" ? arg : []);
+      cleanups.push(flow.dispose);
+      return flow.element;
+    },
+    tarot: () => {
+      const draw = tarotDraw();
+      cleanups.push(draw.cancel);
+      return draw.element;
+    },
+    jiao: () => {
+      const panel = jiaoPanel();
+      cleanups.push(panel.cancel);
+      return panel.element;
+    },
+  };
+
+  const tabs = new Map<Tab, HTMLButtonElement>();
+  const panels = new Map<Tab, HTMLElement>();
+  const mounted = new Set<Tab>();
+
+  function show(tab: Tab, focus = false) {
+    for (const t of TABS) {
+      const on = t.id === tab;
+      const btn = tabs.get(t.id)!;
+      btn.setAttribute("aria-selected", String(on));
+      btn.tabIndex = on ? 0 : -1;
+      panels.get(t.id)!.hidden = !on;
+    }
+    if (!mounted.has(tab)) {
+      mounted.add(tab);
+      panels.get(tab)!.append(builders[tab]());
+    }
+    history.replaceState(null, "", hashOf(tab));
+    if (focus) tabs.get(tab)!.focus();
+  }
+
+  for (const t of TABS) {
+    tabs.set(t.id, h("button", {
+      type: "button", role: "tab", class: "ask-tab", id: `ask-tab-${t.id}`, "aria-controls": `ask-panel-${t.id}`, "aria-selected": "false", tabindex: "-1",
+      onclick: () => show(t.id),
+      onkeydown: (event: KeyboardEvent) => {
+        const at = TABS.findIndex((x) => x.id === t.id);
+        const to = event.key === "ArrowRight" ? at + 1 : event.key === "ArrowLeft" ? at - 1 : event.key === "Home" ? 0 : event.key === "End" ? TABS.length - 1 : -1;
+        if (to < 0) return;
+        event.preventDefault();
+        show(TABS[(to + TABS.length) % TABS.length]!.id, true);
+      },
+    }, t.label));
+    panels.set(t.id, h("div", { class: "ask-panel", role: "tabpanel", id: `ask-panel-${t.id}`, "aria-labelledby": `ask-tab-${t.id}`, hidden: true }));
+  }
+
+  view.append(
+    h("nav", { class: "topbar" }, h("a", { href: "#/hub", class: "btn btn-ghost" }, "← 星盘总览"), h("span", { class: "topbar-count" }, "QUAESTIO"), h("a", { href: "#/summary", class: "btn btn-ghost" }, "融合总结 ✦")),
+    h("header", { class: "page-head" }, h("p", { class: "eyebrow" }, "QUAESTIO · 问事"), h("h1", { class: "title-glow small" }, "问事"), h("p", { class: "hub-guide" }, "带着一个具体的问题来：让 AI 结合各体系回答，或亲手抽三张塔罗、掷一次圣杯。")),
+    h("div", { class: "ask-tabs", role: "tablist", "aria-label": "问事方式" }, ...tabs.values()),
+    ...panels.values(),
+  );
+  show(start);
+  return () => {
+    for (const c of cleanups) c();
+  };
 }

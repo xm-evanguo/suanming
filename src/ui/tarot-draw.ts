@@ -106,7 +106,7 @@ async function fly(root: HTMLElement, from: HTMLElement, to: HTMLElement) {
  * the question, the topic and the local minute (src/core/draw-seed.ts). The user's clicks choose the cards.
  * The draw does not use the birth data and does not change any score.
  */
-export function tarotDraw(): HTMLElement {
+export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
   let topic: Topic = "all";
   let cancelReading: (() => void) | undefined;
   const root = h("section", { class: "draw glass" });
@@ -231,5 +231,5 @@ export function tarotDraw(): HTMLElement {
   }
 
   start();
-  return root;
+  return { element: root, cancel: () => cancelReading?.() };
 }

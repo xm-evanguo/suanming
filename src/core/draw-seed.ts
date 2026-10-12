@@ -65,6 +65,13 @@ export function seededInt(next: () => number, n: number): number {
   return x % n;
 }
 
+/** A seeded stream of unsigned 32-bit integers for any key string. Other rituals use it with their own version prefix. */
+export function seededStream(key: string): () => number {
+  const next = sfc32(...cyrb128(key));
+  for (let i = 0; i < 12; i++) next();
+  return next;
+}
+
 export function drawSeed(question: string, topic: string, at: Date, size = 22): DrawSeed {
   const stamp = minuteStamp(at);
   const words = cyrb128([SEED_VERSION, normalizeQuestion(question), topic, stamp].join("\n"));

@@ -7,10 +7,13 @@ Other features:
 - **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The professional view is the default.
 - **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom).
 - **Relationships (`#/people`).** The user can add a partner, parents, friends or colleagues. The site compares the two charts and answers questions such as "is this person my fate" or "can my parents help my career".
-- **Hand-drawn tarot.** On the tarot page, the user shuffles and draws three cards. The deck order and the reversals come from a seed: the question, the topic and the local time to the minute (`src/core/draw-seed.ts`). The same question in the same minute gives the same deck. The cards that the user clicks then select the three cards. The animation shows the question characters move into the deck, a riffle shuffle, the cards fly to their positions, and the flip.
-- **AI tarot reading.** After the draw, the user can enter a specific question, add context, and use a personal DeepSeek API key. The model uses the three card positions and orientations to give actions and explain missing information.
+- **By topic.** The fusion page groups the readings by topic (career, wealth, love, health, wisdom). For each topic it shows which systems agree or disagree, a few statements from different systems, this year's strongest signals, and the best and worst months (`src/methods/topics.ts`). Method pages show this year first and fold the generic personality sections.
+- **问事 (`#/ask`).** One page with three sections:
+  - **AI 问事.** The user picks a topic, a question template or a free question, and their situation. Local code selects evidence from the topic digest (`src/llm/ask.ts`). DeepSeek answers with a direct answer, timing, which systems agree, actions and missing facts. Up to 3 follow-ups. Method pages and topic cards link here with that system or topic preselected.
+  - **抽塔罗.** The user shuffles and draws three cards. The deck order and the reversals come from a seed: the question, the topic and the local time to the minute (`src/core/draw-seed.ts`). The same question in the same minute gives the same deck. The cards that the user clicks select the three cards. An optional AI reading uses the three positions and orientations.
+  - **掷圣杯.** The user asks a yes/no question and throws two blocks up to three times: 圣杯 (yes), 笑杯 (unclear, ask again) or 阴杯 (no). The throws are seeded from the question and the minute (`src/core/jiao.ts`).
 
-All chart calculations run in the browser. The site has no backend. Google Fonts loads from an external service. The optional AI reading sends the question, context, topic and drawn cards directly from the browser to DeepSeek only when the user requests it. It does not send birth data. The API key goes only to DeepSeek for authentication. DeepSeek charges the user's API account for each request.
+All chart calculations run in the browser. The site has no backend. Google Fonts loads from an external service. The optional AI features send data directly from the browser to DeepSeek only when the user clicks. The tarot reading sends the question, context, topic and drawn cards. AI 问事 sends the question, the selected situation and context, and a summary of the selected topic (statements, scores, this year's signals and month scores). Neither sends the birth date, time, place, name or raw chart data, but the summary can still say something about the user. The API key goes only to DeepSeek for authentication. DeepSeek charges the user's API account for each request.
 
 The user can save or clear the API key in this browser's `localStorage`. The key is not encrypted. Do not save it on a shared device. Questions and AI answers stay in page memory and are not saved by this site. DeepSeek's own data policy applies to data sent to its API. AI output is shown as text, so it cannot add HTML or run scripts. Requests can be cancelled and have a 90-second timeout. A cancellation cannot undo data already sent or charges already incurred.
 
@@ -74,10 +77,11 @@ bunx wrangler@4 pages deploy dist --project-name suanming --branch main
 - `src/methods/` — one file per system. Each returns a `MethodResult` with professional text, plain text (`plain`), five scores (0–100) and visual data. `fusion.ts` combines the results.
 - `src/forecast/` — period forecasts. Each system gives `Signal`s (area, tone, weight, professional and plain text) for 3 years and 12 months. `index.ts` holds the registry and `runForecasts`.
 - `src/compat/` — relationship comparison. Each system gives tagged `CompatItem`s for a pair of charts. `index.ts` holds `runCompat`.
+- `src/llm/` — the shared DeepSeek client (`client.ts`), the tarot prompt (`tarot.ts`) and the 问事 evidence and prompt (`ask.ts`).
 - `src/data/` — static interpretation tables and text pools (`plain-*`, `forecast-*`, `compat-*`).
-- `src/ui/` — views (wizard, ritual, hub, method page, summary, timeline, people), the mode toggle, the tarot draw, SVG visuals and the `h()` DOM helper.
+- `src/ui/` — views (wizard, ritual, hub, method page, summary, timeline, people, 问事), the mode toggle, the tarot draw, the 圣杯 throw, the shared API key field, SVG visuals and the `h()` DOM helper.
 - `src/css/` — styles for the newer features (`features.css`) and the ancient-system visuals (`ancient.css`).
-- `tests/` — engine, plain-text, ancient-system, forecast and compatibility tests.
+- `tests/` — engine, plain-text, ancient-system, forecast, compatibility, topic, draw seed, 圣杯 and AI request tests (mocked, no network).
 
 ## Known limits
 
