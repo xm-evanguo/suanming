@@ -4,7 +4,12 @@ import { zhiIndex } from "../core/ganzhi";
 import { MONTH_STAR_TEXT, NINE_STARS } from "../data/kyusei";
 import { PLAIN_KYUSEI_THEME, PLAIN_KYUSEI_YEAR } from "../data/plain-kyusei";
 import { plainProfileSections, profileLucky, profileSections } from "./profile";
-import { type MethodFn, shiftScores } from "./types";
+import { type MethodFn, plainTitles, shiftScores } from "./types";
+import { isEn, t } from "../i18n";
+import { methodName } from "./names";
+import { MONTH_STAR_TEXT_EN, PALACE_YEAR_TEXT_EN } from "../data/en/kyusei";
+import { dirName } from "../data/en/terms";
+import { TRIGRAM_NAME_EN } from "../data/en/meihua";
 
 /** 後天定位盤 (Lo Shu): positions in reading order SE S SW / E C W / NE N NW. */
 export const LOSHU = [4, 9, 2, 3, 5, 7, 8, 1, 6];
@@ -74,7 +79,53 @@ export const kyusei: MethodFn<KyuseiVisual> = (chart) => {
   const thisYearCenter = yearStar(thisYear);
   const yearBoard = boardFor(thisYearCenter);
   const palace = LOSHU_DIRS[yearBoard.indexOf(star)]!;
-  const py = PALACE_YEAR_TEXT[palace]!;
+  const py = isEn() ? { ...PALACE_YEAR_TEXT[palace]!, text: PALACE_YEAR_TEXT_EN[palace]! } : PALACE_YEAR_TEXT[palace]!;
+
+  if (isEn()) {
+    const where = palace === "中宫" ? "the centre" : `the ${dirName(palace)}`;
+    const plainBase = plainProfileSections(s, `By your birth year, you belong to ${s.name} in Nine Star Ki, the \"${s.title.toLowerCase()}\" type (Nine Star Ki sorts people into nine types).`);
+    return {
+      id: "kyusei",
+      name: methodName("kyusei"),
+      intro: "Born from the Lo Shu nine palaces of China and developed in Japan as Nine Star Ki: the year and month stars are set from the Start of Spring, and each year's directions are read for good and bad.",
+      origin: "日本",
+      icon: "✺",
+      headline: `Year star · ${s.name}`,
+      tagline: `Month star ${ms.name} · ${s.title}`,
+      keywords: s.keywords,
+      scores: shiftScores(s.scores, { career: py.delta, wealth: py.delta }),
+      element: s.element,
+      lucky: profileLucky(s),
+      facts: [
+        { label: "Solar year", value: `${lcYear} (from Start of Spring)` },
+        { label: "Year star", value: `${s.name} (${s.jp})` },
+        { label: "Month star", value: ms.name },
+        { label: "Trigram", value: TRIGRAM_NAME_EN[s.trigram] ?? s.trigram },
+        { label: `${thisYear} Year chart`, value: `${NINE_STARS[thisYearCenter - 1]!.name} in the centre · you are in ${where}` },
+      ],
+      sections: [
+        ...profileSections(s),
+        { title: `Month star · ${ms.name}`, body: `Your month star is ${ms.name}: ${MONTH_STAR_TEXT_EN[month] ?? ""}` },
+        { title: `${thisYear} · your star in ${where}`, body: py.text },
+      ],
+      plain: {
+        summary: `You are the \"${s.title.toLowerCase()}\" type: ${s.summary} The keyword for ${thisYear} is \"${PLAIN_KYUSEI_THEME[palace]}\".`,
+        sections: [
+          { ...plainBase[0]!, body: `${plainBase[0]!.body} Your month star adds this: ${MONTH_STAR_TEXT_EN[month] ?? ""}` },
+          plainBase[1]!,
+          plainBase[2]!,
+          plainBase[3]!,
+          { title: `The rhythm of ${thisYear}`, body: PLAIN_KYUSEI_YEAR[palace]! },
+          {
+            title: plainTitles().how,
+            body: "Nine Star Ki pairs each of the numbers one to nine with a \"star\", nine types in all. Counting the year from the Start of Spring, it finds your type from your birth year and your inner type from your birth month, then looks at how the nine types move around the nine-square grid this year and which square you land in.",
+          },
+        ],
+      },
+      caveats: ["Nine Star Ki uses the Start of Spring and the start of each solar month as boundaries; if you were born near one, check the month star boundary."],
+      visual: { star, month, birthBoard: boardFor(star), yearBoard, thisYear, thisYearCenter, palace },
+    };
+  }
 
   // Month star text starts with "月命星为X，"; drop that prefix for the plain reading.
   const inner = (MONTH_STAR_TEXT[month] ?? "").replace(/^月命星为[^，]*，/, "");

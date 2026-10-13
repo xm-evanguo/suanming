@@ -1,10 +1,12 @@
+import { CENTER_RULE_EN, DIRECTION_RULES_EN, HAZARD_RULES_EN } from "./en/forecast-kyusei";
+import { live, pick } from "../i18n";
 /** Plain-language texts for the 九星気学 period forecast. */
 import type { Tone } from "../forecast/types";
 import type { Phrase } from "./forecast-common";
 import type { Dim } from "./types";
 
 /** Meaning of the palace (direction) where the natal star sits on the year or month board. */
-export const DIRECTION_RULES: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2; trigram: string; phrase: Phrase }> = {
+const DIRECTION_RULES_ZH: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2; trigram: string; phrase: Phrase }> = {
   东: {
     dim: "career",
     tone: "good",
@@ -111,7 +113,7 @@ export const DIRECTION_RULES: Record<string, { dim: Dim; tone: Tone; weight: 1 |
 };
 
 /** 八方塞 (natal star in the center palace). */
-export const CENTER_RULE: Phrase = {
+const CENTER_RULE_ZH: Phrase = {
   what: [
     "{T}是个停下来的节点，做什么都有点使不上劲，更适合整理而不是冲刺。",
     "{T}事情处在转折点，进退两难的感觉比较多。先把手头的事收拢，等风向明确再出发。",
@@ -125,7 +127,7 @@ export const CENTER_RULE: Phrase = {
 };
 
 /** Direction-based hazards. */
-export const HAZARD_RULES: Record<string, { weight: 1 | 2 | 3; label: string; phrase: Phrase }> = {
+const HAZARD_RULES_ZH: Record<string, { weight: 1 | 2 | 3; label: string; phrase: Phrase }> = {
   暗剣殺: {
     weight: 3,
     label: "暗剣殺：与五黄殺相对的方位，主突发的变动",
@@ -184,3 +186,8 @@ export const HAZARD_RULES: Record<string, { weight: 1 | 2 | 3; label: string; ph
     },
   },
 };
+
+export const DIRECTION_RULES = live(DIRECTION_RULES_ZH, DIRECTION_RULES_EN);
+export const HAZARD_RULES = live(HAZARD_RULES_ZH, HAZARD_RULES_EN);
+/** 八方塞 (natal star in the center palace), read in the current language. */
+export const centerRule = () => pick(CENTER_RULE_ZH, CENTER_RULE_EN);

@@ -1,5 +1,7 @@
+import { PLAIN_KYUSEI_YEAR_EN, PLAIN_KYUSEI_THEME_EN } from "./en/kyusei";
+import { live } from "../i18n";
 /** Plain-language yearly themes for 九星気学, keyed by the palace direction used in `kyusei.ts`. */
-export const PLAIN_KYUSEI_YEAR: Record<string, string> = {
+const PLAIN_KYUSEI_YEAR_ZH: Record<string, string> = {
   中宫: "今年像站在十字路口，万事处在转折点。适合整理、沉淀、做减法，不适合冲动做大决定。",
   北: "今年偏安静，是蓄力的一年。适合学习、规划、存钱，为下一轮上升打好基础。",
   西南: "今年是耕耘的一年。脚踏实地做事，现在的努力会在明年变成成果。",
@@ -12,7 +14,7 @@ export const PLAIN_KYUSEI_YEAR: Record<string, string> = {
 };
 
 /** One-phrase theme per palace, for the summary. */
-export const PLAIN_KYUSEI_THEME: Record<string, string> = {
+const PLAIN_KYUSEI_THEME_ZH: Record<string, string> = {
   中宫: "整理和沉淀",
   北: "蓄力和学习",
   西南: "耕耘",
@@ -23,3 +25,6 @@ export const PLAIN_KYUSEI_THEME: Record<string, string> = {
   东北: "变化和重整",
   南: "被看见",
 };
+
+export const PLAIN_KYUSEI_YEAR = live(PLAIN_KYUSEI_YEAR_ZH, PLAIN_KYUSEI_YEAR_EN);
+export const PLAIN_KYUSEI_THEME = live(PLAIN_KYUSEI_THEME_ZH, PLAIN_KYUSEI_THEME_EN);

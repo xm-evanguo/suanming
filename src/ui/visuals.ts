@@ -25,7 +25,7 @@ import { caption, EL_COLOR, f, polar, sector } from "./svg-geom";
 import { esc, h, svg, WX_COLOR } from "./dom";
 import { ANCIENT_VISUALS } from "./visuals-ancient";
 import { isEn, listJoin, t } from "../i18n";
-import { animalName, ganName, gzName, nayinName, shishenName, wxName, zhiName } from "../data/en/terms";
+import { animalName, dirName, ganName, gzName, nayinName, shishenName, wxName, zhiName } from "../data/en/terms";
 import { taiSuiName } from "../methods/shengxiao";
 import { brightName, mutagenName, palaceName, starName } from "../data/en/ziwei-terms";
 
@@ -207,6 +207,8 @@ function zodiacWheel(v: ShengxiaoVisual): HTMLElement {
 
 // ───────────────────────── 九星
 const STAR_COLOR = ["", "#f4f6ff", "#3a3a48", "#3aa0ff", "#3fcf7a", "#f5c84b", "#f4f6ff", "#ff5a5a", "#f4f6ff", "#b46bff"];
+const DIR_ABBR: Record<string, string> = { 东: "E", 南: "S", 西: "W", 北: "N", 东南: "SE", 西南: "SW", 东北: "NE", 西北: "NW" };
+const dirAbbr = (d: string) => DIR_ABBR[d] ?? d;
 function board(nums: number[], mine: number, title: string): HTMLElement {
   return h(
     "div",
@@ -219,9 +221,9 @@ function board(nums: number[], mine: number, title: string): HTMLElement {
         h(
           "div",
           { class: `ky-cell${n === mine ? " me" : ""}${i === 4 ? " center" : ""}`, style: { "--c": STAR_COLOR[n], "--i": i } as never },
-          h("small", null, LOSHU_DIRS[i]),
+          h("small", null, isEn() ? (i === 4 ? "Centre" : dirAbbr(LOSHU_DIRS[i]!)) : LOSHU_DIRS[i]),
           h("b", null, String(n)),
-          h("span", null, NINE_STARS[n - 1]!.name.slice(0, 2)),
+          h("span", null, isEn() ? NINE_STARS[n - 1]!.name.replace(/^\d /, "") : NINE_STARS[n - 1]!.name.slice(0, 2)),
         ),
       ),
     ),
@@ -232,8 +234,13 @@ function kyusei(r: MethodResult<KyuseiVisual>): HTMLElement {
   return h(
     "div",
     { class: "v-kyusei" },
-    h("div", { class: "v-row" }, board(v.birthBoard, v.star, "出生年 · 年盘"), board(v.yearBoard, v.star, `${v.thisYear} 年 · 年盘`)),
-    caption(`洛书九宫以南为上。你的本命星 ${NINE_STARS[v.star - 1]!.name} 在 ${v.thisYear} 年飞临「${v.palace === "中宫" ? "中宫" : `${v.palace}宫`}」（中宫为 ${NINE_STARS[v.thisYearCenter - 1]!.name}）。`),
+    h("div", { class: "v-row" }, board(v.birthBoard, v.star, t("出生年 · 年盘", "Birth year chart")), board(v.yearBoard, v.star, t(`${v.thisYear} 年 · 年盘`, `${v.thisYear} year chart`))),
+    caption(
+      t(
+        `洛书九宫以南为上。你的本命星 ${NINE_STARS[v.star - 1]!.name} 在 ${v.thisYear} 年飞临「${v.palace === "中宫" ? "中宫" : `${v.palace}宫`}」（中宫为 ${NINE_STARS[v.thisYearCenter - 1]!.name}）。`,
+        `The Lo Shu grid has south at the top. In ${v.thisYear} your natal star ${NINE_STARS[v.star - 1]!.name} flies to ${v.palace === "中宫" ? "the centre" : `the ${dirName(v.palace)}`} (${NINE_STARS[v.thisYearCenter - 1]!.name} is in the centre).`,
+      ),
+    ),
   );
 }
 

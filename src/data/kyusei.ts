@@ -1,3 +1,5 @@
+import { NINE_STARS_EN } from "./en/kyusei";
+import { live } from "../i18n";
 import type { Profile, Scores } from "./types";
 
 /** Nine Star Ki (九星気学) profile. `num` is 1-9, `trigram` is the matching bagua. */
@@ -15,7 +17,7 @@ const sc = (career: number, wealth: number, love: number, health: number, wisdom
   wisdom,
 });
 
-export const NINE_STARS: NineStar[] = [
+const NINE_STARS_ZH: NineStar[] = [
   {
     num: 1,
     jp: "いっぱくすいせい",
@@ -210,3 +212,5 @@ export const MONTH_STAR_TEXT: Record<number, string> = {
   8: "月命星为八白土星，你的内在沉稳而固执，心思深藏不露，一旦认定便不轻易改变，也格外珍惜安全感。",
   9: "月命星为九紫火星，你的内心热烈而敏感，灵感如火花闪现，情绪明亮又起伏，渴望自我表达与被理解。",
 };
+
+export const NINE_STARS = live(NINE_STARS_ZH, NINE_STARS_EN);

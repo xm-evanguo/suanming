@@ -1,7 +1,7 @@
 import { norm360, PLANET_KEYS, type PlanetKey } from "../core/chart";
 import { ASPECTS, type AspectKey, PLANET_IN_SIGN_HINT, PLANETS } from "../data/planets";
 import { PLAIN_ASPECT, PLAIN_PLANET, PLAIN_WEST_LACK } from "../data/plain-astrology";
-import { PLAIN_BODY, PLAIN_BODY_DEFAULT } from "../data/plain-common";
+import { PLAIN_BODY, plainBodyDefault } from "../data/plain-common";
 import { ZODIAC } from "../data/zodiac";
 import { profileLucky } from "./profile";
 import { type MethodFn, mixScores, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
@@ -138,7 +138,7 @@ export const astrology: MethodFn<AstrologyVisual> = (chart) => {
         { title: "感情里的你", body: `${sun.love}${signLine("venus")}` },
         {
           title: "给你的建议",
-          body: `${plainAspects}${PLAIN_WEST_LACK[weakest] ?? ""}${sun.advice}${sun.element ? PLAIN_BODY[sun.element] : PLAIN_BODY_DEFAULT}`,
+          body: `${plainAspects}${PLAIN_WEST_LACK[weakest] ?? ""}${sun.advice}${sun.element ? PLAIN_BODY[sun.element] : plainBodyDefault()}`,
         },
         {
           title: "这套方法怎么算的",
