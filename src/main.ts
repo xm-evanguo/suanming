@@ -19,6 +19,13 @@ import { getLang, switchLang, t } from "./i18n";
 const app = document.getElementById("app")!;
 const stars = startStarfield(document.getElementById("cosmos") as HTMLCanvasElement);
 
+if (getLang() === "en") {
+  document.title = "Tianji Star Map · Destiny across 14 systems";
+  document.querySelector('meta[name="description"]')?.setAttribute(
+    "content",
+    "Enter your birth date, time and place to read your chart in 14 systems, including BaZi, Zi Wei Dou Shu, Western and Hellenistic astrology, Chaldean hours, Persian firdaria, tarot, Nine Star Ki, Sukuyō, Vedic astrology and the Maya calendar, with year and month outlooks, relationship matching and one combined summary. Everything is calculated in your browser.",
+  );
+}
 loadSaved();
 const showModeToggle = mountModeToggle();
 
