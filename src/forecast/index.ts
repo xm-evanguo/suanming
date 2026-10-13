@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Chart } from "../core/chart";
 import type { MethodId } from "../methods/types";
 import { astrologyForecast } from "./astrology";
@@ -18,7 +19,10 @@ import { ziweiForecast } from "./ziwei";
 const sukuyoForecast: ForecastFn = () => ({
   years: [],
   months: [],
-  note: "本站的宿曜只按本命宿和每日运势来读，没有可靠的年运、月运推算规则，所以不给出年度和月度预测。",
+  note: t(
+    "本站的宿曜只按本命宿和每日运势来读，没有可靠的年运、月运推算规则，所以不给出年度和月度预测。",
+    "This site reads Sukuyō only by natal mansion and daily luck. There is no reliable rule for year or month forecasts, so none are given.",
+  ),
 });
 
 /** Systems that have a period forecast. 称骨, 梅花易数, 迦勒底七曜 and 玛雅历 are natal or moment readings only. */

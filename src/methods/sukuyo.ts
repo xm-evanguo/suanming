@@ -1,7 +1,10 @@
 import { RELATION, SHUKU } from "../data/sukuyo";
 import { PLAIN_SUKUYO_REL } from "../data/plain-sukuyo";
 import { plainProfileSections, profileLucky, profileSections } from "./profile";
-import type { MethodFn } from "./types";
+import { type MethodFn, plainTitles } from "./types";
+import { isEn, listJoin } from "../i18n";
+import { methodName } from "./names";
+import { lunarDate } from "../data/en/terms";
 
 /** Index (in SHUKU order 昴…胃) of the mansion on the 1st day of each lunar month. */
 const MONTH_START = [22, 24, 26, 1, 3, 5, 8, 11, 13, 15, 18, 20]; // 室 奎 胃 畢 参 鬼 張 角 氐 心 斗 虚
@@ -30,6 +33,52 @@ export const sukuyo: MethodFn<SukuyoVisual> = (chart) => {
     SHUKU.filter((_, i) => relations[i] === r)
       .map((x) => x.name)
       .join("、");
+
+  if (isEn()) {
+    const namesEn = (r: string) => listJoin(SHUKU.filter((_, i) => relations[i] === r).map((x) => x.name));
+    return {
+      id: "sukuyo",
+      name: methodName("sukuyo"),
+      intro: "The esoteric astrology of the Sukuyō Sutra, brought from Tang China to Japan by Kūkai: the lunar birthday falls into one of 27 mansions, your natal mansion for life.",
+      origin: "日本",
+      icon: "☾",
+      headline: `Natal mansion · ${s.name}`,
+      tagline: `${s.jp} · ${s.title}`,
+      keywords: s.keywords,
+      scores: s.scores,
+      element: s.element,
+      lucky: profileLucky(s),
+      facts: [
+        { label: "Lunar birthday", value: lunarDate(l.getMonthInChinese(), l.getDayInChinese()) },
+        { label: "Mansion on day 1 of the month", value: SHUKU[MONTH_START[Math.abs(l.getMonth()) - 1]!]!.name },
+        { label: "Natal mansion", value: `${s.name} (${s.jp})` },
+        { label: "Prosperity (best partners)", value: namesEn("荣亲") },
+      ],
+      sections: [
+        ...profileSections(s),
+        {
+          title: "Mansion compatibility · the Three-Nine method",
+          body: (["荣亲", "友衰", "安坏", "危成", "业胎"] as const).map((r) => `[${RELATION[r].name}] ${namesEn(r)}: ${RELATION[r].text}`).join(" "),
+        },
+      ],
+      plain: {
+        summary: `You are the \"${s.title.toLowerCase()}\" type: ${s.summary} Your best partners are: ${namesEn("荣亲") || "none"}.`,
+        sections: [
+          ...plainProfileSections(s, `By your lunar birthday, you belong to ${s.name}, one of 27 types, the \"${s.title.toLowerCase()}\" kind of person.`),
+          {
+            title: "Who you get along with",
+            body: (["荣亲", "友衰", "危成", "安坏"] as const).map((r) => `${PLAIN_SUKUYO_REL[r].label} (${namesEn(r)}): ${PLAIN_SUKUYO_REL[r].text}`).join(" "),
+          },
+          {
+            title: plainTitles().how,
+            body: "Sukuyō astrology is a method a Japanese monk brought back from Tang China. It matches each day of the lunar month to one of 27 \"mansions\" (27 types), finds your type from your lunar birthday, and then uses the distance between types to see whether two people get along.",
+          },
+        ],
+      },
+      caveats: ["Sukuyō follows the old Japanese calendar; in a few years the first day of a Chinese and a Japanese lunar month differ by a day, which can shift the natal mansion by one."],
+      visual: { index, relations },
+    };
+  }
 
   return {
     id: "sukuyo",

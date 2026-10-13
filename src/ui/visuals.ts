@@ -4,7 +4,7 @@ import { NAKSHATRAS } from "../data/nakshatra";
 import { NINE_STARS } from "../data/kyusei";
 import { ASPECTS, PLANETS } from "../data/planets";
 import { SHENG_XIAO } from "../data/shengxiao";
-import { SHUKU } from "../data/sukuyo";
+import { RELATION, SHUKU } from "../data/sukuyo";
 import { MAJOR_ARCANA } from "../data/tarot";
 import { TRIGRAMS } from "../data/hexagrams";
 import { ZODIAC } from "../data/zodiac";
@@ -266,13 +266,13 @@ function sukuyo(r: MethodResult<SukuyoVisual>): HTMLElement {
     "div",
     { class: "v-wheel" },
     wheel27(
-      SHUKU.map((s) => s.name.charAt(0)),
+      SHUKU.map((s) => (isEn() ? s.name.slice(0, 5) : s.name.charAt(0))),
       fills,
       v.index,
-      `<text x="200" y="196" text-anchor="middle" class="w-big">${esc(me.name)}</text><text x="200" y="224" text-anchor="middle" class="w-small">${esc(me.jp)}</text>`,
+      `<text x="200" y="196" text-anchor="middle" class="w-big${isEn() ? " en" : ""}">${esc(me.name)}</text><text x="200" y="224" text-anchor="middle" class="w-small">${esc(me.jp)}</text>`,
     ),
-    h("ul", { class: "legend" }, ...Object.entries(REL_COLOR).map(([k, c]) => h("li", { style: { "--c": c } as never }, k))),
-    caption("颜色表示其他二十六宿与你的“三九秘法”关系，可用来观察你与他人的缘分类型。"),
+    h("ul", { class: "legend" }, ...Object.entries(REL_COLOR).map(([k, c]) => h("li", { style: { "--c": c } as never }, RELATION[k as keyof typeof RELATION].name))),
+    caption(t("颜色表示其他二十六宿与你的“三九秘法”关系，可用来观察你与他人的缘分类型。", "Colours show how each of the other 26 mansions relates to yours in the Three-Nine method, a way to see what kind of bond you have with others.")),
   );
 }
 function vedic(r: MethodResult<VedicVisual>): HTMLElement {
@@ -286,7 +286,7 @@ function vedic(r: MethodResult<VedicVisual>): HTMLElement {
     NAKSHATRAS.map((n) => n.sanskrit.slice(0, 5)),
     fills,
     v.nakshatra,
-    `<line x1="200" y1="200" x2="${f(m.x)}" y2="${f(m.y)}" class="moon-ray"/><text x="${f(m.x)}" y="${f(m.y + 6)}" text-anchor="middle" class="moon">☽</text><text x="200" y="196" text-anchor="middle" class="w-big">${esc(NAKSHATRAS[v.nakshatra]!.sanskrit)}</text><text x="200" y="222" text-anchor="middle" class="w-small">第 ${v.pada} 足</text>`,
+    `<line x1="200" y1="200" x2="${f(m.x)}" y2="${f(m.y)}" class="moon-ray"/><text x="${f(m.x)}" y="${f(m.y + 6)}" text-anchor="middle" class="moon">☽</text><text x="200" y="196" text-anchor="middle" class="w-big">${esc(NAKSHATRAS[v.nakshatra]!.sanskrit)}</text><text x="200" y="222" text-anchor="middle" class="w-small">${t(`第 ${v.pada} 足`, `pada ${v.pada}`)}</text>`,
   );
   const span0 = v.dashas[0]!.start;
   const span1 = v.dashas[v.dashas.length - 1]!.end;

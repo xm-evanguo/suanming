@@ -415,3 +415,4 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 .pillar .gz-py { color: var(--muted); font-size: 11px; font-family: var(--latin); letter-spacing: 0.04em; }
 .yun b.gz-en { font-size: 13px; }
 .scale .fate.en { font-size: 18px; font-weight: 700; }
+.w-big.en { font-size: 19px; }
