@@ -67,6 +67,7 @@ export function renderWizard(view: HTMLElement, saved?: BirthInput) {
     setTimeout(() => {
       hero.hidden = true;
       wizard.hidden = false;
+      scrollTo(0, 0);
       showStep(0);
     }, 550);
   }
