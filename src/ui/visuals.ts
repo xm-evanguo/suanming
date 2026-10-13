@@ -298,7 +298,7 @@ function vedic(r: MethodResult<VedicVisual>): HTMLElement {
       h(
         "div",
         { class: `dasha-seg${now >= d.start && now < d.end ? " now" : ""}`, style: { flex: String(d.end - d.start), "--i": i } as never, title: `${lordName(d.lord)} ${Math.floor(d.start)}–${Math.floor(d.end)}` },
-        h("b", null, lordName(d.lord)),
+        h("b", null, isEn() ? lordName(d.lord).slice(0, 2) : lordName(d.lord)),
         h("small", null, String(Math.floor(d.start))),
       ),
     ),
