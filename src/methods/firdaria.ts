@@ -307,7 +307,7 @@ export function buildFirdaria(chart: Chart, now: Date): ReturnType<MethodFn<Fird
     sections,
     plain,
     caveats: [
-      ...(known ? [] : [UNKNOWN_TIME_NOTE, "日夜盘（序列从太阳还是月亮开始）和宫位依赖出生时间，未知时间时仅供参考。"]),
+      ...(known ? [] : [UNKNOWN_TIME_NOTE(), "日夜盘（序列从太阳还是月亮开始）和宫位依赖出生时间，未知时间时仅供参考。"]),
       "序列采用阿布·马舍（Abu Ma'shar）的主流版本：两种序列中南北交点都排在七星之后（日间盘 70–75 岁，夜间盘同样 70–75 岁）。个别版本（如依 Bonatti 字面理解）会把夜间盘的交点插在火星之后，结果不同。",
       "月交点使用平均交点，不计真交点的摆动；交点大限不再细分小限。大限与小限的日期以 365.2425 日为一年，从出生时刻起算，与实际生日相差在数小时内。",
     ],

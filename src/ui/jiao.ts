@@ -1,9 +1,10 @@
 import { minuteStamp } from "../core/draw-seed";
-import { type Face, type JiaoResult, type JiaoThrow, jiaoVerdict, MAX_THROWS, RESULT_MEANING, throwJiao } from "../core/jiao";
+import { type Face, type JiaoResult, type JiaoThrow, jiaoVerdict, MAX_THROWS, RESULT_MEANING, resultName, throwJiao } from "../core/jiao";
 import { h, reducedMotion, sleep } from "./dom";
+import { t } from "../i18n";
 
 const TONE: Record<JiaoResult, string> = { 圣杯: "holy", 笑杯: "laugh", 阴杯: "yin" };
-const FACES_TEXT: Record<Face, string> = { flat: "平面", round: "圆面" };
+const facesText = (f: Face) => (f === "flat" ? t("平面", "flat side") : t("圆面", "round side"));
 
 /** A crescent block seen from above. */
 const CRESCENT = "M8 46 C 14 8, 106 8, 112 46 C 113 53, 104 55, 96 50 C 78 39, 42 39, 24 50 C 16 55, 7 53, 8 46 Z";
@@ -19,12 +20,12 @@ const SVG_FACE: Record<Face, string> = {
 };
 
 function markup(html: string): HTMLElement {
-  const t = document.createElement("template");
-  t.innerHTML = html;
-  return t.content.firstElementChild as HTMLElement;
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  return tpl.content.firstElementChild as HTMLElement;
 }
 
-const miniFace = (f: Face) => h("span", { class: "jiao-mini-face", title: FACES_TEXT[f] }, markup(SVG_FACE[f]));
+const miniFace = (f: Face) => h("span", { class: "jiao-mini-face", title: facesText(f) }, markup(SVG_FACE[f]));
 
 type Cup = { cup: HTMLElement; fly: HTMLElement; block: HTMLElement; shadow: HTMLElement; face: Face; angle: number; tilt: number };
 
@@ -113,22 +114,23 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
   const status = h("p", { class: "v-caption", role: "status", "aria-live": "polite" });
   const seedLine = h("p", { class: "seed-line", hidden: true });
   const cups = [makeCup("flat", false), makeCup("round", true)] as const;
-  const stage = h("div", { class: "jiao-stage", role: "img", "aria-label": "两个筊杯" }, cups[0].cup, cups[1].cup);
-  const slots = Array.from({ length: MAX_THROWS }, (_, i) => h("figure", { class: "jiao-slot" }, h("div", { class: "jiao-slot-body" }, "？"), h("figcaption", null, `第 ${i + 1} 掷`)));
+  const throwNo = (i: number) => t(`第 ${i + 1} 掷`, `Throw ${i + 1}`);
+  const stage = h("div", { class: "jiao-stage", role: "img", "aria-label": t("两个筊杯", "Two moon blocks") }, cups[0].cup, cups[1].cup);
+  const slots = Array.from({ length: MAX_THROWS }, (_, i) => h("figure", { class: "jiao-slot" }, h("div", { class: "jiao-slot-body" }, "？"), h("figcaption", null, throwNo(i))));
   const verdict = h("section", { class: "jiao-verdict", hidden: true, "aria-live": "polite" });
-  const throwBtn = h("button", { type: "submit", class: "btn btn-primary" }, "掷筊 ✦");
-  const resetBtn = h("button", { type: "button", class: "btn btn-ghost", hidden: true, onclick: reset }, "重新问");
+  const throwBtn = h("button", { type: "submit", class: "btn btn-primary" }, t("掷筊 ✦", "Throw ✦"));
+  const resetBtn = h("button", { type: "button", class: "btn btn-ghost", hidden: true, onclick: reset }, t("重新问", "Ask again"));
 
   function sync() {
-    const v = jiaoVerdict(thrown.map((t) => t.result));
+    const v = jiaoVerdict(thrown.map((x) => x.result));
     const started = thrown.length > 0;
     throwBtn.disabled = busy || (started && v.done);
     throwBtn.hidden = started && v.done;
-    throwBtn.textContent = started ? `再掷一次（第 ${thrown.length + 1}/${MAX_THROWS} 掷）` : "掷筊 ✦";
+    throwBtn.textContent = started ? t(`再掷一次（第 ${thrown.length + 1}/${MAX_THROWS} 掷）`, `Throw again (${thrown.length + 1}/${MAX_THROWS})`) : t("掷筊 ✦", "Throw ✦");
     resetBtn.hidden = !started;
     resetBtn.disabled = busy;
     seedLine.hidden = !at;
-    if (at) seedLine.textContent = `起卦 ${minuteStamp(at)}`;
+    if (at) seedLine.textContent = t(`起卦 ${minuteStamp(at)}`, `Cast ${minuteStamp(at)}`);
     verdict.hidden = !started;
     if (started) {
       verdict.dataset.tone = v.tone;
@@ -136,43 +138,46 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     }
   }
 
-  function fill(i: number, t: JiaoThrow) {
-    slots[i]!.classList.add("filled", TONE[t.result]);
-    slots[i]!.querySelector(".jiao-slot-body")!.replaceChildren(h("span", { class: "jiao-mini" }, miniFace(t.a), miniFace(t.b)), h("b", { class: "jiao-res" }, t.result));
-    slots[i]!.querySelector("figcaption")!.textContent = `第 ${i + 1} 掷 · ${RESULT_MEANING[t.result].faces}`;
+  function fill(i: number, th: JiaoThrow) {
+    slots[i]!.classList.add("filled", TONE[th.result]);
+    slots[i]!.querySelector(".jiao-slot-body")!.replaceChildren(h("span", { class: "jiao-mini" }, miniFace(th.a), miniFace(th.b)), h("b", { class: "jiao-res" }, resultName(th.result)));
+    slots[i]!.querySelector("figcaption")!.textContent = `${throwNo(i)} · ${RESULT_MEANING[th.result].faces}`;
   }
 
   async function run() {
     if (busy || disposed) return;
-    const v = jiaoVerdict(thrown.map((t) => t.result));
+    const v = jiaoVerdict(thrown.map((x) => x.result));
     if (thrown.length >= MAX_THROWS || (thrown.length > 0 && v.done)) return;
     busy = true;
     at ??= new Date();
     seed ??= crypto.randomUUID();
-    const t = throwJiao(seed, at, thrown.length);
+    const th = throwJiao(seed, at, thrown.length);
     sync();
     stage.dataset.result = "";
-    status.textContent = "掷出……";
+    status.textContent = t("掷出……", "Throwing…");
     if (reducedMotion()) {
-      place(cups[0], t.a);
-      place(cups[1], t.b);
+      place(cups[0], th.a);
+      place(cups[1], th.b);
       await sleep(200);
     } else {
       // The highest point must stay inside the stage: centre height plus the half extent of the tilted, scaled block.
       const cupW = cups[0].cup.offsetWidth, cupH = cups[0].cup.offsetHeight;
       const half = 0.5 * (cupW * 0.82 + cupH * 0.58) * TOSS_SCALE;
       const rise = Math.max(40, Math.min(170, stage.clientHeight - 46 - cupH / 2 - half - 6));
-      await Promise.all([toss(cups[0], t.a, rise, 0, 1500, live), toss(cups[1], t.b, rise * 0.92, 90, 1640, live)]);
+      await Promise.all([toss(cups[0], th.a, rise, 0, 1500, live), toss(cups[1], th.b, rise * 0.92, 90, 1640, live)]);
     }
     if (disposed) return;
-    thrown.push(t);
-    fill(thrown.length - 1, t);
-    stage.dataset.result = TONE[t.result];
-    stage.setAttribute("aria-label", `筊杯：${t.result}`);
+    thrown.push(th);
+    fill(thrown.length - 1, th);
+    stage.dataset.result = TONE[th.result];
+    stage.setAttribute("aria-label", t(`筊杯：${th.result}`, `Moon blocks: ${resultName(th.result)}`));
     busy = false;
     sync();
     const v2 = jiaoVerdict(thrown.map((x) => x.result));
-    status.textContent = `第 ${thrown.length} 掷：${t.result}（${RESULT_MEANING[t.result].faces}）。${v2.done ? v2.title : "继续掷。"}`;
+    status.textContent = t(
+      `第 ${thrown.length} 掷：${th.result}（${RESULT_MEANING[th.result].faces}）。${v2.done ? v2.title : "继续掷。"}`,
+      `Throw ${thrown.length}: ${resultName(th.result)} (${RESULT_MEANING[th.result].faces}). ${v2.done ? v2.title : "Keep throwing."}`,
+    );
     if (!v2.done) throwBtn.focus({ preventScroll: true });
   }
 
@@ -182,13 +187,13 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     at = undefined;
     seed = undefined;
     stage.dataset.result = "";
-    stage.setAttribute("aria-label", "两个筊杯");
+    stage.setAttribute("aria-label", t("两个筊杯", "Two moon blocks"));
     slots.forEach((s, i) => {
       s.className = "jiao-slot";
       s.querySelector(".jiao-slot-body")!.replaceChildren("？");
-      s.querySelector("figcaption")!.textContent = `第 ${i + 1} 掷`;
+      s.querySelector("figcaption")!.textContent = throwNo(i);
     });
-    status.textContent = "已清空，可以再问。";
+    status.textContent = t("已清空，可以再问。", "Cleared. You can ask again.");
     sync();
     throwBtn.focus();
   }
@@ -198,7 +203,7 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     { class: "jiao-legend" },
     ...(["圣杯", "笑杯", "阴杯"] as const).flatMap((r) => {
       const faces: [Face, Face] = r === "圣杯" ? ["flat", "round"] : r === "笑杯" ? ["flat", "flat"] : ["round", "round"];
-      return [h("div", { class: `jiao-legend-item ${TONE[r]}` }, h("dt", null, h("span", { class: "jiao-mini" }, miniFace(faces[0]), miniFace(faces[1])), r), h("dd", null, h("small", null, RESULT_MEANING[r].faces), RESULT_MEANING[r].text))];
+      return [h("div", { class: `jiao-legend-item ${TONE[r]}` }, h("dt", null, h("span", { class: "jiao-mini" }, miniFace(faces[0]), miniFace(faces[1])), resultName(r)), h("dd", null, h("small", null, RESULT_MEANING[r].faces), RESULT_MEANING[r].text))];
     }),
   );
 
@@ -206,8 +211,8 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
     "section",
     { class: "jiao glass" },
     markup(GRADIENTS),
-    h("h3", null, "掷圣杯"),
-    h("p", { class: "v-caption" }, "请在心中默念一件是非题，再掷出两块月牙形的筊杯。"),
+    h("h3", null, t("掷圣杯", "Moon blocks")),
+    h("p", { class: "v-caption" }, t("请在心中默念一件是非题，再掷出两块月牙形的筊杯。", "Hold a yes-or-no question in mind, then throw the two crescent-shaped blocks (jiaobei).")),
     h(
       "form",
       { class: "jiao-form", onsubmit: (event: Event) => {
@@ -221,9 +226,9 @@ export function jiaoPanel(): { element: HTMLElement; cancel: () => void } {
       status,
     ),
     verdict,
-    h("h4", { class: "jiao-sub" }, "三种结果怎么看"),
+    h("h4", { class: "jiao-sub" }, t("三种结果怎么看", "Reading the three results")),
     legend,
-    h("p", { class: "v-caption" }, "连续三次圣杯才算同意；出笑杯或阴杯就停。"),
+    h("p", { class: "v-caption" }, t("连续三次圣杯才算同意；出笑杯或阴杯就停。", "Only three Holy Cups in a row mean yes; stop at a Laughing Cup or a Yin Cup.")),
   );
   sync();
   return {

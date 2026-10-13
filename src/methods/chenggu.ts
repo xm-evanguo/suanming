@@ -163,7 +163,7 @@ export const chenggu: MethodFn<ChengguVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "称骨以农历正月初一为年界，闰月按本月计。"],
+    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "称骨以农历正月初一为年界，闰月按本月计。"],
     visual: { parts, total },
   };
 };

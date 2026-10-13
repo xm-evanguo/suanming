@@ -115,7 +115,7 @@ export const vedic: MethodFn<VedicVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE]), "岁差采用 Lahiri 线性近似，误差约数角分，接近月宿边界时可能落入相邻月宿。"],
+    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE()]), "岁差采用 Lahiri 线性近似，误差约数角分，接近月宿边界时可能落入相邻月宿。"],
     visual: { nakshatra, pada, moonSid, sunSid, lagnaSid, ayanamsa, dashas },
   };
 };

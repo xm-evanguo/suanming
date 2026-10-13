@@ -144,8 +144,8 @@ export function askEvidence(results: MethodResult[], forecasts: Partial<Record<M
   }
 
   const caveats: string[] = [];
-  if (results.some((r) => r.caveats.includes(UNKNOWN_TIME_NOTE))) caveats.push(UNKNOWN_TIME_NOTE);
-  if (focusResult) for (const c of focusResult.caveats) if (c !== UNKNOWN_TIME_NOTE && caveats.length < 3) caveats.push(c);
+  if (results.some((r) => r.caveats.includes(UNKNOWN_TIME_NOTE()))) caveats.push(UNKNOWN_TIME_NOTE());
+  if (focusResult) for (const c of focusResult.caveats) if (c !== UNKNOWN_TIME_NOTE() && caveats.length < 3) caveats.push(c);
 
   const evidence: AskEvidence = {
     profile: input ? askProfile(input, today) : undefined,

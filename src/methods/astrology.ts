@@ -146,7 +146,7 @@ export const astrology: MethodFn<AstrologyVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE, "未知出生时间时不显示上升星座与宫位。"]), "宫位采用整宫制；行星位置为地心视黄经（当日春分点）。"],
+    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE(), "未知出生时间时不显示上升星座与宫位。"]), "宫位采用整宫制；行星位置为地心视黄经（当日春分点）。"],
     visual: { planets, asc: chart.asc, mc: chart.mc, aspects, elements },
   };
 };

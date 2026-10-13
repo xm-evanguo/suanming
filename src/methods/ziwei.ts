@@ -147,7 +147,7 @@ export const ziwei: MethodFn<ZiweiVisual> = (chart) => {
       ],
     },
     caveats: [
-      ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]),
+      ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]),
       "紫微斗数对时辰极为敏感，时辰相差一格，命盘即完全不同。",
     ],
     visual: {

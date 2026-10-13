@@ -153,7 +153,7 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "此为以生辰起的“本命卦”，象征一生的底色，而非对某件具体事情的占问。"],
+    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "此为以生辰起的“本命卦”，象征一生的底色，而非对某件具体事情的占问。"],
     visual: { ben, hu, bian, moving, numbers: { year, month, day, hour } },
   };
 };

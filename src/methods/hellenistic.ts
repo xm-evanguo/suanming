@@ -301,7 +301,7 @@ export function buildHellenistic(chart: Chart, now: Date): ReturnType<MethodFn<H
     sections,
     plain,
     caveats: [
-      ...(known ? [] : [UNKNOWN_TIME_NOTE, "上升、宫位、福点和精神点都依赖出生时间，未知时间时仅供参考。"]),
+      ...(known ? [] : [UNKNOWN_TIME_NOTE(), "上升、宫位、福点和精神点都依赖出生时间，未知时间时仅供参考。"]),
       "宫位采用整宫制：上升所在的整个星座为第 1 宫。尊贵只计入庙、旺、陷、弱；不计三分性、界与十度区。",
       "昼夜盘以太阳中心的几何高度判断（高于地平线为日间盘）。年主星按“到达的岁数”换算，每到生日换一次。",
       "本页只使用七颗古典行星，天王星、海王星、冥王星不在希腊化占星的体系里。",

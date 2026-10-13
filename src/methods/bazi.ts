@@ -201,7 +201,7 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
       ],
     },
     caveats: [
-      ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]),
+      ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]),
       zodiac.caveat,
       "喜用神为简化推算（按同党比例判断身强弱），专业断法还需看调候、格局与通关。",
     ],

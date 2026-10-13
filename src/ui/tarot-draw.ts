@@ -4,20 +4,23 @@ import { QUESTION_LIMIT } from "../llm/tarot";
 import { pressOnly } from "./components";
 import { h, reducedMotion, reveal, sleep } from "./dom";
 import { tarotLlm } from "./tarot-llm";
+import { isEn, sep, t } from "../i18n";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"];
 type Topic = "all" | "career" | "wealth" | "love" | "health" | "study";
+/** The Chinese label is also part of the draw seed, so it stays the same in every language. */
 const TOPICS: [Topic, string][] = [["all", "综合"], ["career", "事业"], ["wealth", "财运"], ["love", "感情"], ["health", "身心"], ["study", "学业"]];
-const POSITIONS = [
-  { name: "现状", hint: "你现在所处的局面" },
-  { name: "挑战", hint: "需要跨过的那道坎" },
-  { name: "建议", hint: "接下来可以怎么做" },
+const TOPICS_EN: Record<Topic, string> = { all: "General", career: "Career", wealth: "Money", love: "Love", health: "Body and mind", study: "Study" };
+const positions = () => [
+  { name: t("现状", "Now"), hint: t("你现在所处的局面", "Where you stand") },
+  { name: t("挑战", "Challenge"), hint: t("需要跨过的那道坎", "The hurdle to clear") },
+  { name: t("建议", "Advice"), hint: t("接下来可以怎么做", "What to do next") },
 ];
 
-function topicText(c: TarotCard, t: Topic): string {
-  if (t === "career" || t === "wealth") return c.career;
-  if (t === "love") return c.love;
-  if (t === "health") return c.health;
+function topicText(c: TarotCard, topic: Topic): string {
+  if (topic === "career" || topic === "wealth") return c.career;
+  if (topic === "love") return c.love;
+  if (topic === "health") return c.health;
   return c.summary;
 }
 
@@ -27,7 +30,7 @@ function face(c: TarotCard): HTMLElement {
     "div",
     { class: "tcard-inner" },
     h("div", { class: "tcard-back" }, h("i", null, "✦")),
-    h("div", { class: "tcard-front" }, h("small", null, ROMAN[c.num]), h("span", { class: "tsym" }, c.symbol), h("b", null, c.name), h("small", null, c.en)),
+    h("div", { class: "tcard-front" }, h("small", null, ROMAN[c.num]), h("span", { class: "tsym" }, c.symbol), h("b", null, c.name), !isEn() && h("small", null, c.en)),
   );
 }
 
@@ -111,45 +114,47 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
   let topic: Topic = "all";
   let cancelReading: (() => void) | undefined;
   const root = h("section", { class: "draw glass" });
-  const topicLabel = () => TOPICS.find(([t]) => t === topic)![1];
+  /** Seed input (Chinese in every language) and display label. */
+  const topicSeed = () => TOPICS.find(([k]) => k === topic)![1];
+  const topicLabel = () => (isEn() ? TOPICS_EN[topic] : topicSeed());
 
   function start() {
     cancelReading?.();
-    const question = h("textarea", { class: "field", rows: "3", maxlength: String(QUESTION_LIMIT), "aria-label": "抽牌问题（可选）", placeholder: "想问的具体问题（可不填），例如：我想换工作，但新岗位要搬家，应该先确认哪些条件？" });
+    const question = h("textarea", { class: "field", rows: "3", maxlength: String(QUESTION_LIMIT), "aria-label": t("抽牌问题（可选）", "Question for the draw (optional)"), placeholder: t("想问的具体问题（可不填），例如：我想换工作，但新岗位要搬家，应该先确认哪些条件？", "Your question (optional), e.g. I want to change jobs but the new one means moving. What should I check first?") });
     const chips = h(
       "div",
       { class: "rel-chips" },
-      ...TOPICS.map(([t, label]) =>
+      ...TOPICS.map(([k, label]) =>
         h(
           "button",
           {
             type: "button",
-            class: `dim-chip${t === topic ? " on" : ""}`,
-            "aria-pressed": String(t === topic),
+            class: `dim-chip${k === topic ? " on" : ""}`,
+            "aria-pressed": String(k === topic),
             onclick: (e: Event) => {
-              topic = t;
+              topic = k;
               pressOnly(e.currentTarget as Element);
             },
           },
-          label,
+          isEn() ? TOPICS_EN[k] : label,
         ),
       ),
     );
     root.replaceChildren(
-      h("h3", null, "亲手抽三张牌"),
-      h("p", { class: "v-caption" }, "想好一件具体的事，选一个方向，然后洗牌。"),
+      h("h3", null, t("亲手抽三张牌", "Draw three cards by hand")),
+      h("p", { class: "v-caption" }, t("想好一件具体的事，选一个方向，然后洗牌。", "Think of one real matter, pick a topic, then shuffle.")),
       chips,
       question,
-      h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-primary", onclick: () => fan(question.value.trim()) }, "洗牌 ✦")),
+      h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-primary", onclick: () => fan(question.value.trim()) }, t("洗牌 ✦", "Shuffle ✦"))),
     );
   }
 
   async function fan(q: string) {
-    const seed = drawSeed(q, topicLabel(), new Date());
+    const seed = drawSeed(q, topicSeed(), new Date());
     const picks: SeededCard[] = [];
     const flights: Promise<void>[] = [];
-    const slots = POSITIONS.map((p) => h("figure", { class: "tslot draw-slot" }, h("div", { class: "slot-empty" }, "？"), h("figcaption", null, p.name, h("small", null, p.hint))));
-    const status = h("p", { class: "draw-status", "aria-live": "polite" }, "正在把你的问题和此刻写进牌里……");
+    const slots = positions().map((p) => h("figure", { class: "tslot draw-slot" }, h("div", { class: "slot-empty" }, "？"), h("figcaption", null, p.name, h("small", null, p.hint))));
+    const status = h("p", { class: "draw-status", "aria-live": "polite" }, t("正在把你的问题和此刻写进牌里……", "Writing your question and this moment into the cards…"));
     const fanEl = h(
       "div",
       { class: "fan shuffling", style: { "--n": seed.deck.length } as never },
@@ -161,7 +166,7 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
             class: "fan-card",
             disabled: true,
             style: { "--i": i } as never,
-            "aria-label": `第 ${i + 1} 张牌`,
+            "aria-label": t(`第 ${i + 1} 张牌`, `Card ${i + 1}`),
             onclick: (e: Event) => pick(e.currentTarget as HTMLButtonElement, card),
           },
           h("i", null, "✦"),
@@ -169,18 +174,18 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
       ),
     );
     const stage = h("div", { class: "deck-stage" }, fanEl);
-    const seedLine = h("p", { class: "seed-line" }, `起卦 ${seed.stamp}`, h("b", { title: "问卦印记：由问题、方向和时间算出" }, seed.sigil));
-    root.replaceChildren(h("h3", null, q ? `「${q}」` : `${topicLabel()}运势`), seedLine, status, stage, h("div", { class: "tarot-row" }, ...slots));
+    const seedLine = h("p", { class: "seed-line" }, t(`起卦 ${seed.stamp}`, `Cast ${seed.stamp}`), h("b", { title: t("问卦印记：由问题、方向和时间算出", "Draw sigil: computed from the question, topic and time") }, seed.sigil));
+    root.replaceChildren(h("h3", null, q ? t(`「${q}」`, `“${q}”`) : t(`${topicLabel()}运势`, `${topicLabel()} reading`)), seedLine, status, stage, h("div", { class: "tarot-row" }, ...slots));
     if (reducedMotion()) await sleep(300);
     else {
       await absorb(stage, fanEl, [...[...q].filter((c) => c.trim()).slice(0, 28), ...seed.sigil], seed.rand);
-      status.textContent = "洗牌中……";
+      status.textContent = t("洗牌中……", "Shuffling…");
       await riffle(fanEl);
     }
     if (!root.isConnected) return;
     fanEl.classList.remove("shuffling");
     for (const b of fanEl.children) (b as HTMLButtonElement).disabled = false;
-    status.textContent = "牌已洗好。凭直觉点三张。";
+    status.textContent = t("牌已洗好。凭直觉点三张。", "The deck is shuffled. Tap three cards by feel.");
 
     function pick(btn: HTMLButtonElement, card: SeededCard) {
       if (picks.length >= 3 || btn.disabled) return;
@@ -194,8 +199,8 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
         }),
       );
       btn.classList.add("taken");
-      status.textContent = picks.length < 3 ? `还差 ${3 - picks.length} 张。` : "三张牌已就位，正在翻开……";
-      if (picks.length === 3) void Promise.all(flights).then(() => reveal3(fanEl, slots, picks, q)).then(() => (status.textContent = "牌已翻开，解读在下方。"));
+      status.textContent = picks.length < 3 ? t(`还差 ${3 - picks.length} 张。`, `${3 - picks.length} more to go.`) : t("三张牌已就位，正在翻开……", "All three cards are in place. Turning them over…");
+      if (picks.length === 3) void Promise.all(flights).then(() => reveal3(fanEl, slots, picks, q)).then(() => (status.textContent = t("牌已翻开，解读在下方。", "The cards are open. The reading is below.")));
     }
   }
 
@@ -205,11 +210,12 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
       await sleep(i ? 700 : 450);
       s.classList.add("lit");
       s.querySelector(".tcard")!.classList.add("open");
-      s.querySelector("figcaption")!.append(h("em", null, picks[i]!.reversed ? " 逆位" : " 正位"));
+      s.querySelector("figcaption")!.append(h("em", null, picks[i]!.reversed ? t(" 逆位", " reversed") : t(" 正位", " upright")));
     }
     await sleep(picks[2]!.reversed ? 1500 : 900);
     if (!root.isConnected) return;
     const llm = tarotLlm({ question: q, context: "", topic: topicLabel(), cards: picks });
+    const POSITIONS = positions();
     cancelReading = llm.cancel;
     const reading = h(
       "div",
@@ -217,11 +223,11 @@ export function tarotDraw(): { element: HTMLElement; cancel: () => void } {
       ...picks.map(({ num, reversed }, i) => {
         const c = MAJOR_ARCANA[num]!;
         const pos = POSITIONS[i]!;
-        const body = i === 2 ? `${reversed ? c.reversed : c.upright}${c.advice}` : `${reversed ? c.reversed : c.upright}${topicText(c, topic)}`;
-        return reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, `${pos.name} · ${c.name}${reversed ? "（逆位）" : ""}`), h("p", null, body)), i * 120);
+        const body = [reversed ? c.reversed : c.upright, i === 2 ? c.advice : topicText(c, topic)].join(sep());
+        return reveal(h("article", { class: "reading glass" }, h("span", { class: "reading-no" }, String(i + 1).padStart(2, "0")), h("h3", null, `${pos.name} · ${c.name}${reversed ? t("（逆位）", " (reversed)") : ""}`), h("p", null, body)), i * 120);
       }),
       llm.element,
-      h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: start }, "↺ 换个问题再抽")),
+      h("div", { class: "draw-actions" }, h("button", { type: "button", class: "btn btn-ghost", onclick: start }, t("↺ 换个问题再抽", "↺ Draw again with a new question"))),
     );
     root.append(reading);
   }

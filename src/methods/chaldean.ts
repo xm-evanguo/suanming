@@ -195,7 +195,7 @@ export const chaldean: MethodFn<ChaldeanVisual> = (chart) => {
       ],
     },
     caveats: [
-      ...(known ? [] : [UNKNOWN_TIME_NOTE, "行星日和太阳十度区不受影响，但行星时依赖出生时间，仅供参考。"]),
+      ...(known ? [] : [UNKNOWN_TIME_NOTE(), "行星日和太阳十度区不受影响，但行星时依赖出生时间，仅供参考。"]),
       "行星日从当地日出起算：日出前出生的人属于前一天。日出日落按几何地平线及标准大气折射计算（不含海拔）。",
       "太阳十度区采用迦勒底面（Chaldean Faces）：白羊座 0–10° 为火星，之后按土、木、火、日、金、水、月循环。",
     ],

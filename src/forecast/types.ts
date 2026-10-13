@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Chart } from "../core/chart";
 import type { Dim } from "../data/types";
 import type { MethodId } from "../methods/types";
@@ -29,8 +30,10 @@ export interface Period {
   month?: number;
 }
 
-/** "2026 年" or "2026 年 3 月". */
-export const periodName = (p: Period) => (p.month ? `${p.year} 年 ${p.month} 月` : `${p.year} 年`);
+export const MONTH_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+/** "2026 年" or "2026 年 3 月"; "2026" or "March 2026" in English. */
+export const periodName = (p: Period) =>
+  p.month ? t(`${p.year} 年 ${p.month} 月`, `${MONTH_EN[p.month - 1]} ${p.year}`) : t(`${p.year} 年`, String(p.year));
 
 export interface PeriodReading {
   period: Period;
