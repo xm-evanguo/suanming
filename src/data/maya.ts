@@ -1,3 +1,5 @@
+import { DAY_SIGNS_EN, TONES_EN } from "./en/maya";
+import { live } from "../i18n";
 import type { Brief, Profile, Scores } from "./types";
 
 /** Tzolk'in day sign (20 in the cycle). `maya` is the Yucatec-style name, `glyph` is a single emoji. */
@@ -14,7 +16,7 @@ const sc = (career: number, wealth: number, love: number, health: number, wisdom
   wisdom,
 });
 
-export const DAY_SIGNS: DaySign[] = [
+const DAY_SIGNS_ZH: DaySign[] = [
   {
     maya: "Imix",
     glyph: "🐉",
@@ -398,7 +400,7 @@ export const DAY_SIGNS: DaySign[] = [
 ];
 
 /** The 13 tones of creation. Index 0 is tone 1, index 12 is tone 13. */
-export const TONES: Brief[] = [
+const TONES_ZH: Brief[] = [
   {
     name: "1 · 磁性之音（统一）",
     keywords: ["目的", "吸引", "开始"],
@@ -465,3 +467,6 @@ export const TONES: Brief[] = [
     text: "完成整个循环并超越，活在当下，将所学融入存在，等待新一轮的开始。",
   },
 ];
+
+export const DAY_SIGNS = live(DAY_SIGNS_ZH, DAY_SIGNS_EN);
+export const TONES = live(TONES_ZH, TONES_EN);

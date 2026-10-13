@@ -387,21 +387,21 @@ function card(num: number, label: string, i: number, reversed = false): HTMLElem
   const c = MAJOR_ARCANA[num]!;
   const el = h(
     "button",
-    { class: "tcard", style: { "--i": i } as never, "aria-label": `${label}：${c.name}${reversed ? "（逆位）" : ""}`, onclick: (e: Event) => (e.currentTarget as HTMLElement).classList.toggle("open") },
-    h("div", { class: "tcard-inner" }, h("div", { class: "tcard-back" }, h("i", null, "✦")), h("div", { class: `tcard-front${reversed ? " reversed" : ""}` }, h("small", null, ROMAN[num]), h("span", { class: "tsym" }, c.symbol), h("b", null, c.name), h("small", null, c.en))),
+    { class: "tcard", style: { "--i": i } as never, "aria-label": `${label}${t("：", ": ")}${c.name}${reversed ? t("（逆位）", " (reversed)") : ""}`, onclick: (e: Event) => (e.currentTarget as HTMLElement).classList.toggle("open") },
+    h("div", { class: "tcard-inner" }, h("div", { class: "tcard-back" }, h("i", null, "✦")), h("div", { class: `tcard-front${reversed ? " reversed" : ""}` }, h("small", null, ROMAN[num]), h("span", { class: "tsym" }, c.symbol), h("b", null, c.name), !isEn() && h("small", null, c.en))),
   );
-  return h("figure", { class: "tslot" }, el, h("figcaption", null, label, reversed && h("em", null, " 逆位")));
+  return h("figure", { class: "tslot" }, el, h("figcaption", null, label, reversed && h("em", null, t(" 逆位", " reversed"))));
 }
 function tarot(r: MethodResult<TarotVisual>): HTMLElement {
   const v = r.visual;
   const year = new Date().getFullYear();
-  const life = [card(v.personality, "人格牌", 0), ...(v.soul !== v.personality ? [card(v.soul, "灵魂牌", 1)] : []), card(v.yearCard, `${year} 年度牌`, 2)];
+  const life = [card(v.personality, t("人格牌", "Personality card"), 0), ...(v.soul !== v.personality ? [card(v.soul, t("灵魂牌", "Soul card"), 1)] : []), card(v.yearCard, t(`${year} 年度牌`, `${year} year card`), 2)];
   const root = h(
     "div",
     { class: "v-tarot" },
-    h("h4", null, "生命牌"),
+    h("h4", null, t("生命牌", "Birth cards")),
     h("div", { class: "tarot-row" }, ...life),
-    caption("生命牌由生日数字算出，一生不变；年度牌每年更换。点击卡牌可以翻回去再看一次。"),
+    caption(t("生命牌由生日数字算出，一生不变；年度牌每年更换。点击卡牌可以翻回去再看一次。", "Birth cards come from your birthday numbers and never change; the year card changes every year. Tap a card to turn it over and look again.")),
   );
   const io = new IntersectionObserver((es) => {
     if (!es.some((e) => e.isIntersecting)) return;
@@ -464,7 +464,7 @@ function maya(r: MethodResult<MayaVisual>): HTMLElement {
       "div",
       { class: "v-row" },
       h("div", { class: "maya-sign" }, barDot(v.tone), h("span", { class: "maya-glyph" }, s.glyph), h("b", null, `${v.tone} ${s.maya}`), h("small", null, `${s.name} · ${TONES[v.tone - 1]!.name}`), h("div", { class: "longcount" }, ...v.longCount.map((n) => h("span", null, String(n))))),
-      h("div", null, h("h4", null, "卓尔金 260 日神圣历"), h("div", { class: "tz-grid" }, ...cells), caption(`列为 13 天一组的“波”，行为 20 个太阳印记。你的 Kin ${v.kin} 正在闪烁。`)),
+      h("div", null, h("h4", null, t("卓尔金 260 日神圣历", "Tzolk'in · the 260-day sacred calendar")), h("div", { class: "tz-grid" }, ...cells), caption(t(`列为 13 天一组的“波”，行为 20 个太阳印记。你的 Kin ${v.kin} 正在闪烁。`, `Each column is a \"wave\" of 13 days; each row is one of the 20 solar signs. Your Kin ${v.kin} is the one blinking.`))),
     ),
   );
 }
