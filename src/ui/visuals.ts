@@ -24,6 +24,9 @@ import type { ZiweiVisual } from "../methods/ziwei";
 import { caption, EL_COLOR, f, polar, sector } from "./svg-geom";
 import { esc, h, svg, WX_COLOR } from "./dom";
 import { ANCIENT_VISUALS } from "./visuals-ancient";
+import { isEn, listJoin, t } from "../i18n";
+import { animalName, ganName, gzName, nayinName, shishenName, wxName, zhiName } from "../data/en/terms";
+import { taiSuiName } from "../methods/shengxiao";
 
 // Each renderer narrows the visual payload of its own method.
 // biome-ignore lint: heterogeneous visual payloads
@@ -41,11 +44,12 @@ function bazi(r: MethodResult<BaziVisual>): HTMLElement {
         "div",
         { class: `pillar${i === 2 ? " day" : ""}`, style: { "--i": i } as never },
         h("small", null, p.label),
-        h("span", { class: "god" }, p.ganGod),
+        h("span", { class: "god" }, shishenName(p.ganGod)),
         h("b", { class: "gz", style: { color: WX_COLOR[ganWuXing(p.gan)] } }, p.gan),
         h("b", { class: "gz", style: { color: WX_COLOR[zhiWuXing(p.zhi)] } }, p.zhi),
-        h("div", { class: "hidden-stems" }, ...p.hidden.map((x) => h("span", { style: { color: WX_COLOR[ganWuXing(x.gan)] } }, `${x.gan}`, h("small", null, x.god)))),
-        h("small", { class: "nayin" }, p.nayin),
+        isEn() && h("small", { class: "gz-py" }, `${ganName(p.gan)} ${zhiName(p.zhi)}`),
+        h("div", { class: "hidden-stems" }, ...p.hidden.map((x) => h("span", { style: { color: WX_COLOR[ganWuXing(x.gan)] }, title: isEn() ? `${ganName(x.gan)} · ${shishenName(x.god)}` : undefined }, isEn() ? ganName(x.gan) : `${x.gan}`, h("small", null, isEn() ? "" : x.god)))),
+        h("small", { class: "nayin" }, nayinName(p.nayin)),
       ),
     ),
   );
@@ -56,7 +60,7 @@ function bazi(r: MethodResult<BaziVisual>): HTMLElement {
       h(
         "div",
         { class: `wx-bar${v.favorable.includes(w) ? " fav" : ""}`, style: { "--v": `${v.wuxing[w]}%`, "--c": WX_COLOR[w], "--i": i } as never },
-        h("b", null, w),
+        h("b", null, wxName(w)),
         h("div", { class: "track" }, h("i")),
         h("span", null, `${v.wuxing[w]}%`),
       ),
@@ -69,8 +73,8 @@ function bazi(r: MethodResult<BaziVisual>): HTMLElement {
       h(
         "div",
         { class: `yun${now >= d.startYear && now <= d.endYear ? " now" : ""}`, style: { "--i": i } as never },
-        h("b", null, d.ganzhi),
-        h("small", null, `${d.startAge} 岁`),
+        h("b", { class: isEn() ? "gz-en" : undefined }, gzName(d.ganzhi)),
+        h("small", null, t(`${d.startAge} 岁`, `age ${d.startAge}`)),
         h("small", null, `${d.startYear}–${d.endYear}`),
       ),
     ),
@@ -79,8 +83,8 @@ function bazi(r: MethodResult<BaziVisual>): HTMLElement {
     "div",
     { class: "v-bazi" },
     pillars,
-    h("div", { class: "v-row" }, h("div", null, h("h4", null, "五行能量"), wx, caption(`日主自身力量 ${v.selfShare}% · 喜用 ${v.favorable.join("、")}`)), h("div", null, h("h4", null, "大运长河"), yun, caption(v.startYun))),
-    h("h4", null, "生肖与太岁"),
+    h("div", { class: "v-row" }, h("div", null, h("h4", null, t("五行能量", "Five elements")), wx, caption(t(`日主自身力量 ${v.selfShare}% · 喜用 ${v.favorable.join("、")}`, `Day Master's own strength ${v.selfShare}% · useful: ${listJoin(v.favorable.map(wxName))}`))), h("div", null, h("h4", null, t("大运长河", "Ten-year luck periods")), yun, caption(v.startYun))),
+    h("h4", null, t("生肖与太岁", "Zodiac animal and Tai Sui")),
     zodiacWheel(v.zodiac),
   );
 }
@@ -181,7 +185,7 @@ function zodiacWheel(v: ShengxiaoVisual): HTMLElement {
   const animals = SHENG_XIAO.map((s, i) => {
     const p = pos(i);
     const cls = i === v.index ? "me" : i === v.thisYear.index ? "year" : "";
-    return `<g class="sx ${cls}" style="--i:${i}"><circle cx="${f(p.x)}" cy="${f(p.y)}" r="${i === v.index ? 30 : 23}"/><text x="${f(p.x)}" y="${f(p.y + 8)}" text-anchor="middle" class="emoji">${s.emoji}</text><text x="${f(p.x)}" y="${f(p.y + (i === v.index ? 46 : 38))}" text-anchor="middle" class="zl">${s.zhi}${ZODIAC_ANIMALS[i]}</text></g>`;
+    return `<g class="sx ${cls}" style="--i:${i}"><circle cx="${f(p.x)}" cy="${f(p.y)}" r="${i === v.index ? 30 : 23}"/><text x="${f(p.x)}" y="${f(p.y + 8)}" text-anchor="middle" class="emoji">${s.emoji}</text><text x="${f(p.x)}" y="${f(p.y + (i === v.index ? 46 : 38))}" text-anchor="middle" class="zl">${isEn() ? animalName(s.zhi) : `${s.zhi}${ZODIAC_ANIMALS[i]}`}</text></g>`;
   }).join("");
   const me = SHENG_XIAO[v.index]!;
   return h(
@@ -191,11 +195,11 @@ function zodiacWheel(v: ShengxiaoVisual): HTMLElement {
     h(
       "ul",
       { class: "legend" },
-      h("li", { class: "sanhe" }, `三合 ${v.sanhe.map((i) => ZODIAC_ANIMALS[i]).join("")}`),
-      h("li", { class: "liuhe" }, `六合 ${ZODIAC_ANIMALS[v.liuhe]}`),
-      h("li", { class: "chong" }, `相冲 ${ZODIAC_ANIMALS[v.chong]}`),
-      h("li", { class: "hai" }, `相害 ${ZODIAC_ANIMALS[v.hai]}`),
-      h("li", { class: "year" }, `${v.thisYear.year} ${v.thisYear.ganzhi}年 · ${v.thisYear.relation}`),
+      h("li", { class: "sanhe" }, t(`三合 ${v.sanhe.map((i) => ZODIAC_ANIMALS[i]).join("")}`, `Three Harmony ${v.sanhe.map((i) => animalName(ZODIAC_ANIMALS[i]!)).join(" ")}`)),
+      h("li", { class: "liuhe" }, t(`六合 ${ZODIAC_ANIMALS[v.liuhe]}`, `Six Harmony ${animalName(ZODIAC_ANIMALS[v.liuhe]!)}`)),
+      h("li", { class: "chong" }, t(`相冲 ${ZODIAC_ANIMALS[v.chong]}`, `Clash ${animalName(ZODIAC_ANIMALS[v.chong]!)}`)),
+      h("li", { class: "hai" }, t(`相害 ${ZODIAC_ANIMALS[v.hai]}`, `Harm ${animalName(ZODIAC_ANIMALS[v.hai]!)}`)),
+      h("li", { class: "year" }, t(`${v.thisYear.year} ${v.thisYear.ganzhi}年 · ${v.thisYear.relation}`, `${v.thisYear.year} ${gzName(v.thisYear.ganzhi)} year · ${taiSuiName(v.thisYear.relation)}`)),
     ),
   );
 }

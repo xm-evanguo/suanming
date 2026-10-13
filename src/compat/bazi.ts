@@ -3,6 +3,8 @@ import { Acc, REL_PHRASE, bareWord, groupOf, pickText, REL_WORD, type ByGroup, w
 import type { WuXing } from "../data/types";
 import { bazi } from "../methods/bazi";
 import type { CompatFn, CompatTag, RelationKind } from "./types";
+import { capFirst, isEn, listJoin, live, t } from "../i18n";
+import { ganName, gzName, wxName, zhiName } from "../data/en/terms";
 
 /** 天干五合: 甲己 乙庚 丙辛 丁壬 戊癸, with the element each pair transforms into. */
 const GAN_HE_WX: WuXing[] = ["土", "金", "水", "木", "火"];
@@ -20,6 +22,7 @@ export const ganChong = (a: string, b: string): boolean => {
 };
 
 export type BranchRel = "同支" | "六合" | "三合" | "冲" | "害" | "刑";
+const BRANCH_REL_EN: Record<BranchRel, string> = { 同支: "the same branch (a repeat)", 六合: "Six Harmony", 三合: "Three Harmony", 冲: "a clash", 害: "a harm", 刑: "a punishment" };
 
 const XING_PAIRS = [
   [0, 3], // 子卯
@@ -49,12 +52,29 @@ export function branchRelations(i: number, j: number): BranchRel[] {
 }
 
 /** Plain-language traits of each element, used in scenes. */
-const EL_TRAIT: Record<WuXing, { has: string; scene: string; learn: string }> = {
+const EL_TRAIT_ZH: Record<WuXing, { has: string; scene: string; learn: string }> = {
   木: { has: "肯成长、愿意学", scene: "你犹豫要不要尝试新东西时，听听 TA 怎么看", learn: "遇到新机会先动手试，再慢慢修正" },
   火: { has: "热情、行动快", scene: "你拖着不想动的事，让 TA 拉你一把", learn: "把想法大声说出来，并且马上迈出第一步" },
   土: { has: "稳、靠得住", scene: "你急着做决定时，先听听 TA 的意见", learn: "做事留余地，答应了就守信用" },
   金: { has: "果断、讲规则", scene: "你在细节上犹豫不决时，请 TA 帮你定个标准", learn: "把标准和底线说清楚，不拖泥带水" },
   水: { has: "灵活、会变通", scene: "你钻牛角尖时，让 TA 帮你换个角度", learn: "遇到阻碍不硬碰，先绕一绕再前进" },
+};
+const EL_TRAIT = live(EL_TRAIT_ZH, {
+  木: { has: "willingness to grow and learn", scene: "When you are unsure whether to try something new, hear what they think", learn: "when a new chance comes, try it first and adjust as you go" },
+  火: { has: "warmth and quick action", scene: "When you keep putting something off, let them pull you along", learn: "say your ideas out loud and take the first step right away" },
+  土: { has: "steadiness and reliability", scene: "When you are rushing a decision, hear their view first", learn: "leave some slack, and keep your word once you give it" },
+  金: { has: "decisiveness and respect for rules", scene: "When you dither over details, ask them to help you set a standard", learn: "make your standards and limits clear, without dragging things out" },
+  水: { has: "flexibility and adaptability", scene: "When you get stuck in a rut, let them help you see it from another angle", learn: "do not ram into obstacles; go around them first, then move on" },
+});
+/** Headline words; the Chinese text is the key. */
+const HEAD_EN: Record<string, string> = {
+  天合地合: "Stem and branch both combine",
+  日干相合: "Day stems combine",
+  日支六合: "Day branches in Six Harmony",
+  日支相冲: "Day branches clash",
+  五行补益: "Elements complement",
+  印星护身: "Resource star protects",
+  "平稳相处 · 靠经营": "Steady · built with effort",
 };
 
 const topElement = (wx: Record<WuXing, number>): WuXing => WUXING.reduce((a, b) => (wx[a] >= wx[b] ? a : b));
@@ -91,7 +111,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         weight: 3,
         tags: ["fate", "attraction", "harmony"],
         dim: romance ? "love" : undefined,
-        pro: `你的日柱${mGan}${mZhi}与TA的日柱${oGan}${oZhi}：日干${mGan}${oGan}五合（合化${he}），日支${mZhi}${oZhi}六合，为「天合地合」。`,
+        pro: t(
+          `你的日柱${mGan}${mZhi}与TA的日柱${oGan}${oZhi}：日干${mGan}${oGan}五合（合化${he}），日支${mZhi}${oZhi}六合，为「天合地合」。`,
+          `Your day pillar ${gzName(mGan + mZhi)} and theirs ${gzName(oGan + oZhi)}: the day stems combine (into ${wxName(he)}) and the day branches are in Six Harmony, so "heaven and earth both combine".`,
+        ),
         plain: pickText(
           {
             romance: "这是少见的好组合：性情相投，过日子的节奏也容易合拍。你们常常是“说不上为什么，就是舒服”。遇到分歧，也容易有人先给台阶。",
@@ -100,6 +123,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
             child: `${wd}天生亲近，读得懂对方的情绪，日常相处也顺。多陪伴、多聊聊日常小事，这份默契会越来越深。`,
           },
           relation,
+          {
+            romance: "This is a rare, good match: your natures fit and your rhythm of daily life lines up easily. You often feel comfortable together \"without knowing why\". When you disagree, one of you usually offers a way out.",
+            elder: `${capFirst(wd)} get along in conversation and in daily habits. A bond like this is uncommon: say things plainly and they will usually listen, and family matters are easy to work out together.`,
+            peer: "You talk easily and work at a similar pace. When you team up, you split the work without much back and forth; partners like this are hard to find.",
+            child: `${capFirst(wd)} are naturally close and can read each other's moods, and daily life runs smoothly. Spend time together and chat about small everyday things, and this understanding will deepen.`,
+          },
         ),
       },
       20,
@@ -113,7 +142,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: posW,
           tags: romance ? ["fate", "attraction"] : ["fate", "harmony"],
           dim: romance ? "love" : undefined,
-          pro: `你的日干${mGan}与TA的日干${oGan}五合（合化${he}）。日干代表自己，日干相合是八字合参里最直接的“人与人互相吸引”。`,
+          pro: t(
+            `你的日干${mGan}与TA的日干${oGan}五合（合化${he}）。日干代表自己，日干相合是八字合参里最直接的“人与人互相吸引”。`,
+            `Your day stem ${ganName(mGan)} and theirs ${ganName(oGan)} combine (into ${wxName(he)}). The day stem stands for the self, so a day-stem combination is the most direct sign of mutual attraction in BaZi matching.`,
+          ),
           plain: pickText(
             {
               romance: "TA 身上有种天然的吸引力：说话、做事的方式，很容易让你想靠近。熟起来不用刻意讨好，也能聊得下去。",
@@ -122,6 +154,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
               child: `${wd}天然亲近，容易读懂对方的小情绪。你不用说太多，TA 也能感觉到你的心意。`,
             },
             relation,
+            {
+              romance: "They have a natural pull for you: the way they talk and act makes you want to come closer. Once you know each other, you do not need to try hard to please; the conversation flows.",
+              elder: `There is a hard-to-name closeness between ${wd}, and you understand each other easily. You do not have to go around in circles to say what you mean.`,
+              peer: "You get familiar quickly and talking is easy. When you need to work together, it is never awkward for either of you to speak first.",
+              child: `${capFirst(wd)} are naturally close and easily read each other's little moods. You do not need to say much; they can feel what you mean.`,
+            },
           ),
         },
         romance ? 12 : 8,
@@ -132,7 +170,7 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           tone: "mixed",
           weight: 1,
           tags: ["conflict", "growth"],
-          pro: `你的日干${mGan}与TA的日干${oGan}相冲（天干四冲）。`,
+          pro: t(`你的日干${mGan}与TA的日干${oGan}相冲（天干四冲）。`, `Your day stem ${ganName(mGan)} and theirs ${ganName(oGan)} clash (one of the four stem clashes).`),
           plain: pickText(
             {
               romance: "你们性格上有些“顶牛”的地方：一个想快，一个想稳。吵起来多半是方式不同，不是谁不爱谁。",
@@ -141,6 +179,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
               child: `${w}有自己的主意，和你的想法常常不一样。给 TA 说完整句话的机会，再说你的看法。`,
             },
             relation,
+            {
+              romance: "Your personalities butt heads in places: one wants speed, the other wants safety. Most fights are about method, not about who loves whom.",
+              elder: `${capFirst(wd)} often see things from opposite angles. Listening to the end before you answer works better than arguing about who is right on the spot.`,
+              peer: "Your working styles are far apart: one direct, one particular. Agree on the rules up front, and adjusting to each other gets much easier.",
+              child: `${capFirst(w)} has their own ideas, often different from yours. Let them finish a whole sentence before you give your view.`,
+            },
           ),
         },
         -3,
@@ -148,7 +192,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
     }
 
     for (const rel of dayRels) {
-      const pro = `你的日支${mZhi}与TA的日支${oZhi}${rel === "同支" ? "相同（伏吟）" : rel}。${romance ? "日支为配偶宫，婚恋看重这一层。" : "日支代表日常相处的底层习惯。"}`;
+      const pro = t(
+        `你的日支${mZhi}与TA的日支${oZhi}${rel === "同支" ? "相同（伏吟）" : rel}。${romance ? "日支为配偶宫，婚恋看重这一层。" : "日支代表日常相处的底层习惯。"}`,
+        `Your day branch ${zhiName(mZhi)} and theirs ${zhiName(oZhi)}: ${BRANCH_REL_EN[rel]}. ${romance ? "The day branch is the spouse palace, which matters most in love." : "The day branch stands for the habits underneath daily life together."}`,
+      );
       if (rel === "六合") {
         headlineBits.push("日支六合");
         acc.add(
@@ -166,6 +213,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `${wd}的作息、脾气能对得上，日常相处很自然。固定的亲子时间会让这份默契更稳。`,
               },
               relation,
+              {
+                romance: "The rhythm of daily life lines up easily: what to eat, when to sleep, how to spend weekends can be settled in a chat or two. That understanding is precious over the long run.",
+                elder: `${capFirst(wd)} have similar habits at home and fit together without much explaining. Holidays and day-to-day contact both come easily.`,
+                peer: "Working together day to day is smooth: setting times, splitting tasks, handing things over, you rarely need to double-check.",
+                child: `${capFirst(wd)} match in routine and temper, so daily life together feels natural. Regular time together makes this bond even steadier.`,
+              },
             ),
           },
           romance ? 12 : 7,
@@ -185,6 +238,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `${wd}在做人做事的态度上有共鸣，容易把你的经验自然地传给 TA。`,
               },
               relation,
+              {
+                romance: "You value similar things, and talks about the future come together easily. When choices come up, pulling toward the same goal is not hard.",
+                elder: `${capFirst(wd)} value similar things and tend to agree when talking about long-term plans.`,
+                peer: "When you push in the same direction, you get far more done than alone. Set a shared goal, then each take your part.",
+                child: `${capFirst(wd)} share an attitude to life and work, so your experience passes to them naturally.`,
+              },
             ),
           },
           romance ? 8 : 4,
@@ -206,6 +265,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `${wd}在作息和习惯上常有拉扯。与其硬压，不如定几条双方都认的规矩。`,
               },
               relation,
+              {
+                romance: "Daily habits collide easily: one wants to go out, the other wants to stay in; one plans, the other goes with the flow. Neither is wrong; agree on the important things in advance and you will argue far less.",
+                elder: `${capFirst(wd)} have very different habits, and one sentence can set off a clash when you talk things over. Agree to \"only discuss this one thing\" and leave old grievances out, and it goes much more smoothly.`,
+                peer: "Your working rhythms are out of sync: one rushes to finish, the other wants to polish. Write down the deadlines and standards before you start, and most friction goes away.",
+                child: `${capFirst(wd)} often tug against each other over routines and habits. Rather than forcing it, set a few rules you both accept.`,
+              },
             ),
           },
           romance ? -12 : -7,
@@ -225,6 +290,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `${w}有时会把你的话理解成批评。多用“我担心”开头，少用“你总是”。`,
               },
               relation,
+              {
+                romance: "On the surface things are polite, but small knots form inside: a careless remark from them may stay with you for a long time. Say what bothers you the same day; do not let it pile up.",
+                elder: `With ${wb}, a careless remark can easily be heard as something else. After saying something important, ask, \"Did that come across?\"`,
+                peer: "Small misunderstandings come up easily between you, usually because something was not said clearly. Confirm verbal agreements in writing.",
+                child: `${capFirst(w)} sometimes hears your words as criticism. Start with \"I'm worried\" more often, and \"you always\" less.`,
+              },
             ),
           },
           -4,
@@ -244,6 +315,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `你对${wb}的要求容易越说越多。每次只提一件事，效果比一次说一串好。`,
               },
               relation,
+              {
+                romance: "You both take things seriously and sometimes pick at each other over small things. Before you speak, ask yourself: am I helping them, or trying to prove I am right?",
+                elder: `${capFirst(wd)} both have principles and tend to lock horns over \"how it should be done\". Ask for their reasons before giving yours.`,
+                peer: "You tend to pick at each other's work, which also makes you both more thorough. Keep criticism to the work, never the person.",
+                child: `Your demands on ${wb} can keep growing as you talk. Raise one thing at a time; it works better than a list.`,
+              },
             ),
           },
           -3,
@@ -263,6 +340,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
                 child: `${wd}的性格相近，容易互相理解，也容易在同一个点上较劲。`,
               },
               relation,
+              {
+                romance: "Your habits are so alike it is like looking in a mirror: strengths are magnified together, and so are flaws. Leave each other some room to be different, and the relationship stays fresh.",
+                elder: `${capFirst(wd)} are alike in temper and habits, so you understand each other, and you also worry about the same things together.`,
+                peer: "You work in similar ways and understand each other at a hint; your blind spots are the same too, so have a third person check important things.",
+                child: `${capFirst(wd)} have similar natures, so you understand each other, and you may also dig in over the same points.`,
+              },
             ),
           },
           2,
@@ -275,7 +358,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           tone: "mixed",
           weight: 1,
           tags: ["harmony"],
-          pro: `你的日柱${mGan}${mZhi}与TA的日柱${oGan}${oZhi}：日干无合冲，日支${mZhi}${oZhi}无合冲刑害。`,
+          pro: t(
+            `你的日柱${mGan}${mZhi}与TA的日柱${oGan}${oZhi}：日干无合冲，日支${mZhi}${oZhi}无合冲刑害。`,
+            `Your day pillar ${gzName(mGan + mZhi)} and theirs ${gzName(oGan + oZhi)}: the day stems neither combine nor clash, and the day branches have no combination, clash, punishment or harm.`,
+          ),
           plain: pickText(
             {
               romance: "你们之间没有特别强的牵引，也没有明显的碰撞。感情要靠日常经营：多约会、多聊心里话，缘分会一点点积起来。",
@@ -284,6 +370,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
               child: `${wd}的相处平稳，没有明显的对冲。固定的相处时间比说道理更能拉近关系。`,
             },
             relation,
+            {
+              romance: "There is no especially strong pull between you, and no obvious collision either. Love here grows through everyday effort: more dates and more heart-to-hearts, and the bond builds up bit by bit.",
+              elder: `There is no obvious friction between ${wd}, and no special understanding either. Spend a little more time catching up, and the relationship will warm up.`,
+              peer: "You did not click instantly, and you rarely clash. Clear division of work carries you, and over time you can become dependable partners.",
+              child: `${capFirst(wd)} get along steadily with no obvious clash. Regular time together brings you closer than lectures do.`,
+            },
           ),
         },
         0,
@@ -294,9 +386,9 @@ export const baziCompat: CompatFn = (me, other, relation) => {
   // 2. Year branch (生肖) relation.
   const yRels = branchRelations(zhiIndex(mYear), zhiIndex(oYear));
   const yearW = g === "peer" ? 1 : 2;
-  const yPro = (rel: string) => `你的年支${mYear}与TA的年支${oYear}${rel}（生肖${rel === "同支" ? "相同" : rel}）。`;
+  const yPro = (rel: BranchRel) => t(`你的年支${mYear}与TA的年支${oYear}${rel}（生肖${rel === "同支" ? "相同" : rel}）。`, `Your year branch ${zhiName(mYear)} and theirs ${zhiName(oYear)}: ${BRANCH_REL_EN[rel]} (zodiac animals).`);
   if (yRels.includes("六合") || yRels.includes("三合")) {
-    const rel = yRels.includes("六合") ? "六合" : "三合";
+    const rel: BranchRel = yRels.includes("六合") ? "六合" : "三合";
     acc.add(
       {
         tone: "good",
@@ -311,12 +403,18 @@ export const baziCompat: CompatFn = (me, other, relation) => {
             child: `${wd}之间家庭气氛比较和气。孩子容易愿意跟你说心里话。`,
           },
           relation,
+          {
+            romance: "Your family backgrounds and the way you grew up are fairly close, so meeting the family and talking about the future rarely cause big waves.",
+            elder: `${capFirst(wd)} can keep the mood calm at home. When you disagree, the other side is usually willing to give a little.`,
+            peer: "Your backgrounds fit well; there are few awkward silences when you are together, and your circles of friends overlap easily.",
+            child: `The family mood between ${wd} is fairly peaceful, and your child is likely to share what is on their mind.`,
+          },
         ),
       },
       yearW * 3,
     );
   } else if (yRels.includes("冲") || yRels.includes("害")) {
-    const rel = yRels.includes("冲") ? "冲" : "害";
+    const rel: BranchRel = yRels.includes("冲") ? "冲" : "害";
     acc.add(
       {
         tone: "bad",
@@ -331,6 +429,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
             child: `${wd}对家里规矩的看法容易不同。定规矩时让 TA 参与，TA 会更愿意遵守。`,
           },
           relation,
+          {
+            romance: "You grew up in quite different worlds and handle things differently, so on big topics such as family and money you will each have a position. Talking these through early beats colliding later.",
+            elder: `${capFirst(wd)} tend to dig in on big family matters. Before major decisions, each give your reasons first, then discuss; it goes better than arguing directly.`,
+            peer: "Your backgrounds and working habits are quite different. Line up expectations before you work together, to avoid \"I didn't see that coming\" later.",
+            child: `${capFirst(wd)} tend to see the family rules differently. Let them help set the rules, and they will be more willing to keep them.`,
+          },
         ),
       },
       -yearW * 2,
@@ -350,6 +454,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
             child: `${wd}属相相同，脾气里有相似的部分，教育时从“我小时候也这样”开始，TA 更愿意听。`,
           },
           relation,
+          {
+            romance: "You share a zodiac animal, so your experiences and ideas are often alike, and talk about growing up strikes a chord.",
+            elder: `${capFirst(wd)} share a zodiac animal and have a lot in common, so you understand each other easily.`,
+            peer: "You share a zodiac animal; your hobbies and reactions are often alike, so you have plenty to talk about.",
+            child: `${capFirst(wd)} share a zodiac animal and have similar tempers. When guiding them, start from \"I was like that as a kid too\", and they will listen more.`,
+          },
         ),
       },
       2,
@@ -363,7 +473,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
   const oTop = topElement(ov.wuxing);
   const favTop = mv.favorable.includes(oTop) ? oTop : mv.favorable.reduce((a, b) => (ov.wuxing[a] >= ov.wuxing[b] ? a : b));
   const trait = EL_TRAIT[favTop];
-  const favPro = `你的喜用神为${mv.favorable.join("、")}；TA八字五行中${mv.favorable.map((f) => `${f}${ov.wuxing[f]}%`).join("、")}，合计${favShare}%（TA最旺为${oTop}${ov.wuxing[oTop]}%）。`;
+  const favPro = t(
+    `你的喜用神为${mv.favorable.join("、")}；TA八字五行中${mv.favorable.map((f) => `${f}${ov.wuxing[f]}%`).join("、")}，合计${favShare}%（TA最旺为${oTop}${ov.wuxing[oTop]}%）。`,
+    `Your useful elements are ${listJoin(mv.favorable.map(wxName))}; their chart has ${listJoin(mv.favorable.map((f) => `${wxName(f)} ${ov.wuxing[f]}%`))}, ${favShare}% in all (their strongest is ${wxName(oTop)} at ${ov.wuxing[oTop]}%). `,
+  );
   if (favShare >= 40 || (mv.favorable.includes(oTop) && ov.wuxing[oTop] >= 28)) {
     headlineBits.push("五行补益");
     acc.add(
@@ -371,8 +484,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         tone: "good",
         weight: 3,
         tags: tagFor(relation, ["support", "harmony"]),
-        pro: `${favPro}TA 补你所缺。`,
-        plain: `TA 的性格里有你缺的那份“${trait.has}”。${trait.scene}。长期相处，你会比一个人时更从容。`,
+        pro: favPro + t("TA 补你所缺。", "They make up what you lack."),
+        plain: t(`TA 的性格里有你缺的那份“${trait.has}”。${trait.scene}。长期相处，你会比一个人时更从容。`, `Their character has the ${trait.has} you lack. ${trait.scene}. Over time, you will feel calmer together than on your own.`),
       },
       14,
     );
@@ -382,8 +495,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         tone: "good",
         weight: 2,
         tags: tagFor(relation, ["support"]),
-        pro: `${favPro}有一定补益。`,
-        plain: `TA 身上有一部分你需要的“${trait.has}”的气质。不用刻意求助，在日常聊天里就能受到影响。`,
+        pro: favPro + t("有一定补益。", "Some complement."),
+        plain: t(`TA 身上有一部分你需要的“${trait.has}”的气质。不用刻意求助，在日常聊天里就能受到影响。`, `They have some of the ${trait.has} you need. You do not have to ask for help; it rubs off in everyday conversation.`),
       },
       8,
     );
@@ -393,8 +506,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         tone: "mixed",
         weight: 1,
         tags: ["growth"],
-        pro: `${favPro}TA 的五行与你的喜用关系不大。`,
-        plain: "TA 的气质和你所缺的关系不大，不会自然“补到你”。帮助要靠沟通：想要什么支持，直接开口说清楚。",
+        pro: favPro + t("TA 的五行与你的喜用关系不大。", "Their elements have little to do with your useful ones."),
+        plain: t("TA 的气质和你所缺的关系不大，不会自然“补到你”。帮助要靠沟通：想要什么支持，直接开口说清楚。", "Their nature has little to do with what you lack, so it will not fill the gap on its own. Help comes through talking: say clearly what support you want."),
       },
       0,
     );
@@ -406,8 +519,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         tone: "good",
         weight: 1,
         tags: ["harmony", "support"],
-        pro: `TA 的喜用神为${ov.favorable.join("、")}，你的八字中这些五行合计${reverseShare}%：你也能补益 TA。`,
-        plain: "你身上恰好有 TA 需要的那种特质，被 TA 需要的感觉会让这段关系更稳。你也不必总觉得自己是在被帮助。",
+        pro: t(`TA 的喜用神为${ov.favorable.join("、")}，你的八字中这些五行合计${reverseShare}%：你也能补益 TA。`, `Their useful elements are ${listJoin(ov.favorable.map(wxName))}, which make up ${reverseShare}% of your chart: you complement them too.`),
+        plain: t("你身上恰好有 TA 需要的那种特质，被 TA 需要的感觉会让这段关系更稳。你也不必总觉得自己是在被帮助。", "You happen to have the qualities they need, and feeling needed makes the relationship steadier. You do not have to feel you are always the one being helped."),
       },
       4,
     );
@@ -420,7 +533,10 @@ export const baziCompat: CompatFn = (me, other, relation) => {
     const resource = generatedBy(self); // 印
     const os = ov.wuxing[officer];
     const rs = ov.wuxing[resource];
-    const pro = `你的日主五行为${self}，官杀为${officer}、印为${resource}；TA八字中${officer}${os}%、${resource}${rs}%。`;
+    const pro = t(
+      `你的日主五行为${self}，官杀为${officer}、印为${resource}；TA八字中${officer}${os}%、${resource}${rs}%。`,
+      `Your Day Master is ${wxName(self)}, so your Officer element is ${wxName(officer)} and your Resource element is ${wxName(resource)}; their chart has ${wxName(officer)} ${os}% and ${wxName(resource)} ${rs}%. `,
+    );
     if (rs >= 25) {
       headlineBits.push("印星护身");
       acc.add(
@@ -429,8 +545,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 3,
           tags: ["support", "career", "growth"],
           dim: "career",
-          pro: `${pro}TA 的五行里印（生我）旺，为事业上的资源与庇护。`,
-          plain: `在事业上，${w}更像你的后盾：愿意给你经验、人脉或兜底。遇到拿不准的选择，别先自己扛，找 TA 聊一聊，常会得到实用的建议。`,
+          pro: pro + t("TA 的五行里印（生我）旺，为事业上的资源与庇护。", "Their Resource element (which feeds you) is strong: career resources and protection."),
+          plain: t(`在事业上，${w}更像你的后盾：愿意给你经验、人脉或兜底。遇到拿不准的选择，别先自己扛，找 TA 聊一聊，常会得到实用的建议。`, `In your career, ${w} is more like your backstop: willing to offer experience, contacts or a safety net. When you are unsure about a choice, do not carry it alone; talk it over with them and you will often get practical advice.`),
         },
         12,
       );
@@ -441,8 +557,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 2,
           tags: ["support", "career"],
           dim: "career",
-          pro: `${pro}TA 的印（生我）有一定分量。`,
-          plain: `在事业上，${w}能给你一些方向上的提点，但不一定会直接出手。想要具体帮助，把你的计划讲清楚再请 TA 看。`,
+          pro: pro + t("TA 的印（生我）有一定分量。", "Their Resource element (which feeds you) carries some weight."),
+          plain: t(`在事业上，${w}能给你一些方向上的提点，但不一定会直接出手。想要具体帮助，把你的计划讲清楚再请 TA 看。`, `In your career, ${w} can point you in a direction but may not step in directly. If you want concrete help, explain your plan clearly and ask them to look at it.`),
         },
         6,
       );
@@ -454,8 +570,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 2,
           tags: ["support", "career", "growth"],
           dim: "career",
-          pro: `${pro}TA 的官杀（克我）旺，主规矩、责任与压力。`,
-          plain: `在事业上，${w}更像一位提醒你守规矩的人，而不是直接给资源的人。遇到合同、制度、流程类的问题，可以多问问 TA。`,
+          pro: pro + t("TA 的官杀（克我）旺，主规矩、责任与压力。", "Their Officer element (which controls you) is strong: rules, duty and pressure."),
+          plain: t(`在事业上，${w}更像一位提醒你守规矩的人，而不是直接给资源的人。遇到合同、制度、流程类的问题，可以多问问 TA。`, `In your career, ${w} is more someone who reminds you to follow the rules than someone who hands you resources. For contracts, policies and procedures, ask them.`),
         },
         4,
       );
@@ -467,8 +583,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 1,
           tags: ["career"],
           dim: "career",
-          pro: `${pro}TA 的官杀、印均不突出。`,
-          plain: `在事业上，${w}不太会直接给你资源，更多是情感上的支持。真正的机会要靠你自己和圈子去打开，把近况跟 TA 说说，就够了。`,
+          pro: pro + t("TA 的官杀、印均不突出。", "Neither their Officer nor their Resource element stands out."),
+          plain: t(`在事业上，${w}不太会直接给你资源，更多是情感上的支持。真正的机会要靠你自己和圈子去打开，把近况跟 TA 说说，就够了。`, `In your career, ${w} is unlikely to hand you resources; the support is mostly emotional. Real opportunities will come through you and your own circle; keeping them up to date is enough.`),
         },
         -2,
       );
@@ -478,8 +594,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         tone: "good",
         weight: 1,
         tags: ["growth"],
-        pro: `TA 八字最旺五行为${oTop}（${ov.wuxing[oTop]}%）。`,
-        plain: `你可以向${wb}学一件事：${EL_TRAIT[oTop].learn}。留意 TA 遇到难事时的做法，比听 TA 讲道理更有用。`,
+        pro: t(`TA 八字最旺五行为${oTop}（${ov.wuxing[oTop]}%）。`, `Their strongest element is ${wxName(oTop)} (${ov.wuxing[oTop]}%).`),
+        plain: t(`你可以向${wb}学一件事：${EL_TRAIT[oTop].learn}。留意 TA 遇到难事时的做法，比听 TA 讲道理更有用。`, `One thing you can learn from ${wb}: ${EL_TRAIT[oTop].learn}. Watching how they handle hard times teaches more than listening to their advice.`),
       },
       2,
     );
@@ -489,8 +605,11 @@ export const baziCompat: CompatFn = (me, other, relation) => {
   const mEl = ganWuXing(mGan);
   const oEl = ganWuXing(oGan);
   const rel = wxRelation(mEl, oEl);
-  const rpro = `你的日主${mGan}（${mEl}）与TA的日主${oGan}（${oEl}）：TA ${REL_PHRASE[rel]}。`;
-  const dm: Record<typeof rel, { tone: "good" | "mixed"; weight: 1 | 2; tags: CompatTag[]; text: ByGroup; delta: number }> = {
+  const rpro = t(
+    `你的日主${mGan}（${mEl}）与TA的日主${oGan}（${oEl}）：TA ${REL_PHRASE[rel]}。`,
+    `Your Day Master ${ganName(mGan)} (${wxName(mEl)}) and theirs ${ganName(oGan)} (${wxName(oEl)}): they ${REL_PHRASE[rel]}.`,
+  );
+  const dm: Record<typeof rel, { tone: "good" | "mixed"; weight: 1 | 2; tags: CompatTag[]; text: ByGroup; en: ByGroup; delta: number }> = {
     生我: {
       tone: "good",
       weight: 2,
@@ -501,6 +620,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         elder: `${w}是托着你的人。你做决定时，TA 往往能给你底气，哪怕只是一句“你放心去做”。`,
         peer: "TA 是会帮你托底的人：你卡住时，TA 常常能递上一句真正有用的话。",
         child: `${w}会让你放松、被需要。工作上遇到压力，和 TA 待一会儿，心情通常会好些。`,
+      },
+      en: {
+        romance: "They are like your charging station: when you are tired, you recover more easily by their side. You do not have to put on a brave face with them.",
+        elder: `${capFirst(w)} holds you up. When you make decisions, they often give you confidence, even if only with a \"go ahead, it'll be fine\".`,
+        peer: "They are someone who has your back: when you are stuck, they often hand you the one remark that really helps.",
+        child: `${capFirst(w)} helps you relax and feel needed. When work is stressful, a little time with them usually lifts your mood.`,
       },
     },
     克我: {
@@ -514,6 +639,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         peer: "TA 做事有自己的标准，合作时会对你提要求。开工前把分工和期限讲明白，可以省掉很多不愉快。",
         child: `${w}会在你没注意时“挑战”你的权威。与其压住，不如先听 TA 把话说完。`,
       },
+      en: {
+        romance: "They have strong views and make you want to do better without meaning to; sometimes you may also feel managed. When you want freedom, say so rather than stewing.",
+        elder: `${capFirst(w)} expects a lot of you and speaks bluntly. The remarks that sting are often the ones that save you a detour.`,
+        peer: "They have their own standards and will make demands when you work together. Settle who does what and by when before you start, and you will skip a lot of friction.",
+        child: `${capFirst(w)} will \"challenge\" your authority when you least expect it. Rather than shutting it down, hear them out first.`,
+      },
     },
     我生: {
       tone: "mixed",
@@ -525,6 +656,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         elder: `你对${wb}很上心，常想多为 TA 做点什么。心意很好，也请记得让 TA 知道你需要什么。`,
         peer: "你容易在这段关系里多出力。帮忙可以，但把“谁负责什么”说清楚，免得好心被当成理所当然。",
         child: `你对${wb}有很多付出，这是长辈的本能。给 TA 留一点自己试错的空间，TA 才长得出自己的力量。`,
+      },
+      en: {
+        romance: "You tend to give a little more in this relationship. That is fine in moderation, but do not do what is theirs to do, or you will both wear out.",
+        elder: `You care a lot about ${wb} and often want to do more for them. That is kind; also make sure they know what you need.`,
+        peer: "You tend to put in more here. Helping is fine, but be clear about who is responsible for what, so your kindness is not taken for granted.",
+        child: `You give a great deal to ${wb}; that is a parent's instinct. Leave them some room to make their own mistakes, so they can grow their own strength.`,
       },
     },
     我克: {
@@ -538,6 +675,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         peer: "你在这里更像领头的那个人。让 TA 有机会提方案，合作才不会变成你一个人在做。",
         child: `${w}通常会听你的安排。多给 TA 选择权，TA 会慢慢长出自己的主见。`,
       },
+      en: {
+        romance: "You have the upper hand here and are used to deciding. Leave them some decisions, and they will be more willing to tell you the truth.",
+        elder: `You tend to have the final say with ${wb}. Asking \"What do you think?\" will make them more willing to give you honest views.`,
+        peer: "You are more the leader here. Give them a chance to propose plans, so the partnership does not turn into you doing it all.",
+        child: `${capFirst(w)} usually goes along with your plans. Give them more choices, and they will slowly grow their own opinions.`,
+      },
     },
     同: {
       tone: "good",
@@ -550,6 +693,12 @@ export const baziCompat: CompatFn = (me, other, relation) => {
         peer: "你们是“同类人”，沟通成本低，默契来得快。缺的东西也一样，所以要找别人来补。",
         child: `${wd}性格接近，容易看懂彼此。也要小心把自己的遗憾投射到 TA 身上。`,
       },
+      en: {
+        romance: "At heart you are alike, so many things click at a hint; for the same reason you dig in over the same points. When you argue, try stepping into the other's shoes first.",
+        elder: `${capFirst(wd)} are alike at heart, so you understand where they are coming from. Watch out for both of you refusing to give way on the same thing.`,
+        peer: "You are the same kind of person: talking costs little and understanding comes fast. You also lack the same things, so look to others to fill the gaps.",
+        child: `${capFirst(wd)} have similar natures and read each other easily. Be careful not to project your own regrets onto them.`,
+      },
     },
   };
   const d = dm[rel];
@@ -559,7 +708,7 @@ export const baziCompat: CompatFn = (me, other, relation) => {
       weight: d.weight,
       tags: tagFor(relation, d.tags),
       pro: rpro,
-      plain: pickText(d.text, relation),
+      plain: pickText(d.text, relation, d.en),
     },
     d.delta,
   );
@@ -573,8 +722,8 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 2,
           tags: ["attraction", "fate"],
           dim: "love",
-          pro: "女命以克我者为官星（夫星）：TA 的日主五行克你的日主，合于传统的“官星入局”。",
-          plain: "TA 给你的是“靠得住、有担当”的感觉，这类人常常是你愿意托付的对象。你也会不自觉地想在 TA 面前更优秀。",
+          pro: t("女命以克我者为官星（夫星）：TA 的日主五行克你的日主，合于传统的“官星入局”。", "In a woman's chart, what controls the self is the Officer (husband) star: their Day Master element controls yours, the traditional \"Officer star enters the chart\"."),
+          plain: t("TA 给你的是“靠得住、有担当”的感觉，这类人常常是你愿意托付的对象。你也会不自觉地想在 TA 面前更优秀。", "They come across as dependable and responsible, the kind of person you would trust with your future. Without meaning to, you want to be at your best around them."),
         },
         5,
       );
@@ -585,14 +734,14 @@ export const baziCompat: CompatFn = (me, other, relation) => {
           weight: 2,
           tags: ["attraction", "fate"],
           dim: "love",
-          pro: "男命以我克者为财星（妻星）：TA 的日主五行为你所克，合于传统的“财星入局”。",
-          plain: "你会很自然地想照顾 TA、替 TA 安排好。TA 也容易感受到你的用心，这种“被惦记”的感觉是你们之间的吸引力。",
+          pro: t("男命以我克者为财星（妻星）：TA 的日主五行为你所克，合于传统的“财星入局”。", "In a man's chart, what the self controls is the Wealth (wife) star: your Day Master element controls theirs, the traditional \"Wealth star enters the chart\"."),
+          plain: t("你会很自然地想照顾 TA、替 TA 安排好。TA 也容易感受到你的用心，这种“被惦记”的感觉是你们之间的吸引力。", "You naturally want to look after them and arrange things for them. They feel your care easily, and that feeling of being thought of is what draws you together."),
         },
         5,
       );
     }
   }
 
-  const headline = headlineBits.length ? headlineBits.slice(0, 2).join(" · ") : "平稳相处 · 靠经营";
-  return { methodId: "bazi", name: "八字合参", score: acc.score(), headline, items: acc.list() };
+  const headline = (headlineBits.length ? headlineBits.slice(0, 2) : ["平稳相处 · 靠经营"]).map((b) => (isEn() ? (HEAD_EN[b] ?? b) : b)).join(" · ");
+  return { methodId: "bazi", name: t("八字合参", "BaZi matching"), score: acc.score(), headline, items: acc.list() };
 };

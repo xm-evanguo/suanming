@@ -412,3 +412,5 @@ body[data-mode="plain"] .mode-thumb { transform: translateX(100%); }
 .title-glow.title-en { font-family: var(--latin); letter-spacing: 0.04em; }
 .title-glow.title-en span:empty, .title-glow.title-en span:is(:nth-child(2), :nth-child(4)) { display: inline-block; width: 0.3em; }
 .donut-big.en { font-size: 30px; }
+.pillar .gz-py { color: var(--muted); font-size: 11px; font-family: var(--latin); letter-spacing: 0.04em; }
+.yun b.gz-en { font-size: 13px; }

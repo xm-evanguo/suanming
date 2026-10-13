@@ -50,8 +50,17 @@ export const pick = <T>(zh: T, en: T): T => (lang === "en" ? en : zh);
 /** Sentence separators: Chinese text has no spaces between sentences. */
 export const sep = () => (lang === "en" ? " " : "");
 
-/** List joiner: "、" in Chinese, ", " in English. */
-export const listJoin = (items: string[]) => items.join(lang === "en" ? ", " : "、");
+/** List joiner: "甲、乙、丙" in Chinese, "a, b and c" in English. */
+export function listJoin(items: string[], and = "and"): string {
+  if (lang !== "en") return items.join("、");
+  return items.length <= 2 ? items.join(` ${and} `) : `${items.slice(0, -1).join(", ")} ${and} ${items.at(-1)}`;
+}
+
+/** Upper-case the first letter, for an English phrase at the start of a sentence. */
+export const capFirst = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
+
+/** Lower-case the first letter, for an English sentence placed after a colon. */
+export const lcFirst = (s: string) => (lang === "en" && /^[A-Z][a-z]/.test(s) ? s[0]!.toLowerCase() + s.slice(1) : s);
 
 /** "1 year" / "2 years" in English, "N 年" in Chinese, for any unit pair. */
 export function plural(n: number | string, zhUnit: string, enOne: string, enMany = `${enOne}s`): string {

@@ -4,7 +4,10 @@ import { PLAIN_DAY_MASTER, PLAIN_DAYUN, PLAIN_ELEMENT_HELP, PLAIN_EXCESS, PLAIN_
 import { SHENG_XIAO } from "../data/shengxiao";
 import type { WuXing } from "../data/types";
 import { type ShengxiaoVisual, zodiacInfo } from "./shengxiao";
-import { type MethodFn, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
+import { type MethodFn, plainTitles, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
+import { isEn, lcFirst, listJoin, t } from "../i18n";
+import { dirName, ganWx, gzName, shishenName, wxName } from "../data/en/terms";
+import { methodName } from "./names";
 
 export interface Pillar {
   label: string;
@@ -33,7 +36,7 @@ const HIDDEN_WEIGHTS: Record<number, number[]> = { 1: [1], 2: [0.7, 0.3], 3: [0.
 export const bazi: MethodFn<BaziVisual> = (chart) => {
   const ec = chart.eightChar;
   const keys = ["Year", "Month", "Day", "Time"] as const;
-  const labels = ["年柱", "月柱", "日柱", "时柱"];
+  const labels = isEn() ? ["Year pillar", "Month pillar", "Day pillar", "Hour pillar"] : ["年柱", "月柱", "日柱", "时柱"];
   const pillars: Pillar[] = keys.map((k, i) => {
     const hideGan: string[] = ec[`get${k}HideGan`]();
     const zhiGods: string[] = ec[`get${k}ShiShenZhi`]();
@@ -77,7 +80,10 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
     .slice(1, 9)
     // biome-ignore lint: untyped library objects
     .map((d: any) => ({ ganzhi: d.getGanZhi(), startAge: d.getStartAge(), startYear: d.getStartYear(), endYear: d.getEndYear() }));
-  const startYun = `出生后 ${yun.getStartYear()} 年 ${yun.getStartMonth()} 个月 ${yun.getStartDay()} 天起运`;
+  const startYun = t(
+    `出生后 ${yun.getStartYear()} 年 ${yun.getStartMonth()} 个月 ${yun.getStartDay()} 天起运`,
+    `Luck periods start ${yun.getStartYear()} y ${yun.getStartMonth()} m ${yun.getStartDay()} d after birth`,
+  );
 
   const dm = DAY_MASTERS[dayGan as keyof typeof DAY_MASTERS];
   const godCount: Record<string, number> = {};
@@ -110,23 +116,107 @@ export const bazi: MethodFn<BaziVisual> = (chart) => {
   const pdm = PLAIN_DAY_MASTER[dayGan]!;
   const animal = SHENG_XIAO[zodiac.visual.index]!;
   const animalName = (i: number) => SHENG_XIAO[i]!.name;
-  const friends = zodiac.visual.sanhe.filter((i) => i !== zodiac.visual.index).map(animalName).join("、");
+  const friends = isEn()
+    ? zodiac.visual.sanhe.filter((i) => i !== zodiac.visual.index).map(animalName).join(" and ")
+    : zodiac.visual.sanhe.filter((i) => i !== zodiac.visual.index).map(animalName).join("、");
   const taisui = PLAIN_TAISUI[zodiac.visual.thisYear.relation] ?? "";
   const wealthShare = share("我克");
   const workMoney =
     wealthShare >= 20
-      ? "你对赚钱的机会比较敏感，抓得住就能有收获。"
+      ? t("你对赚钱的机会比较敏感，抓得住就能有收获。", "You have a good nose for money-making chances; catch them and you will gain.")
       : wealthShare === 0
-        ? "赚钱不是你天生最敏感的一块，靠专业技能慢慢积累，比追机会更稳。"
-        : "钱的方面，稳扎稳打比押注更适合你。";
-  const firstSentence = (t: string) => (t.includes("。") ? `${t.slice(0, t.indexOf("。"))}。` : t);
+        ? t("赚钱不是你天生最敏感的一块，靠专业技能慢慢积累，比追机会更稳。", "Money is not where your instincts are sharpest; building it slowly through skill is safer than chasing chances.")
+        : t("钱的方面，稳扎稳打比押注更适合你。", "With money, steady steps suit you better than big bets.");
+  const firstSentence = (text: string) => (isEn() ? (text.split(/(?<=\.)\s/)[0] ?? text) : text.includes("。") ? `${text.slice(0, text.indexOf("。"))}。` : text);
   const helpLines = favorable.slice(0, 2).map((w) => PLAIN_ELEMENT_HELP[w]);
   const phase = currentYun ? PLAIN_DAYUN[wxRelation(self, ganWuXing(currentYun.ganzhi.charAt(0)))] : "";
   const energyLine = strong
-    ? "你自身的力量很足，不缺主见和底气，更需要的是找到出口，把力气用在事业、表达和责任上。"
-    : "你自身的力量偏弱，单打独斗容易累，有团队、长辈或好导师的支持，你会走得更稳。";
+    ? t("你自身的力量很足，不缺主见和底气，更需要的是找到出口，把力气用在事业、表达和责任上。", "Your own strength runs high; you do not lack opinions or confidence. What you need is an outlet: put that strength into work, expression and responsibility.")
+    : t("你自身的力量偏弱，单打独斗容易累，有团队、长辈或好导师的支持，你会走得更稳。", "Your own strength runs low, so going it alone tires you. With a team, elders or a good mentor behind you, you walk more steadily.");
   const balanceLine =
-    wuxing[maxWx] >= 30 ? PLAIN_EXCESS[maxWx] : missing.length ? "" : "你身上各种特质比较均衡，没有哪一块特别突出或缺失，这让你比较能适应不同环境。";
+    wuxing[maxWx] >= 30 ? PLAIN_EXCESS[maxWx] : missing.length ? "" : t("你身上各种特质比较均衡，没有哪一块特别突出或缺失，这让你比较能适应不同环境。", "Your traits are fairly balanced, with nothing much too strong or missing, so you adapt well to different settings.");
+
+  if (isEn()) {
+    const fav0 = fav[0];
+    const animalPersonality = firstSentence(animal.personality).replace(/^You /, "you ");
+    return {
+      id: "bazi",
+      name: methodName("bazi"),
+      intro: "Sets out four pillars of heavenly stems and earthly branches from the year, month, day and hour of birth, and reads how the five elements and the ten gods interact.",
+      origin: "中国",
+      icon: "☯",
+      headline: `${ganWx(dayGan, self)} Day Master · ${strong ? "strong" : "weak"}`,
+      tagline: `${dm.image[0]!.toUpperCase()}${dm.image.slice(1)}: ${dm.title.toLowerCase()}`,
+      keywords: dm.keywords,
+      scores,
+      element: self,
+      lucky: {
+        colors: fav.flatMap((f) => f.colors).slice(0, 3),
+        numbers: fav.flatMap((f) => f.numbers).slice(0, 4),
+        directions: fav.map((f) => f.direction),
+      },
+      facts: [
+        { label: "Four pillars", value: pillars.map((p) => gzName(p.gan + p.zhi)).join(" ") },
+        { label: "Day Master", value: `${ganWx(dayGan, self)} (${dm.yinYang === "阳" ? "yang" : "yin"})` },
+        { label: "Five elements", value: WUXING.map((w) => `${wxName(w)} ${wuxing[w]}%`).join(" ") },
+        { label: "Useful elements", value: listJoin(favorable.map(wxName)) },
+        { label: "Luck periods", value: startYun },
+        ...zodiac.facts,
+      ],
+      sections: [
+        { title: "The Day Master", body: `${dm.summary} ${dm.personality}` },
+        ...zodiac.sections,
+        {
+          title: "Five-element pattern",
+          body:
+            `${wxName(maxWx)} is strongest in your chart at ${wuxing[maxWx]}%. ${WU_XING[maxWx].excessText} ` +
+            (missing.length ? `Your chart has no ${listJoin(missing.map(wxName))}: ${missing.map((m) => WU_XING[m].lackText).join(" ")} ` : "All five elements are present, so the foundation is well rounded. ") +
+            `The Day Master's allies (Friend, Rob Wealth and the Resources) make up about ${selfShare}%, so it is judged ${strong ? "strong" : "weak"}, and ${listJoin(favorable.map(wxName))} ${favorable.length === 1 ? "is" : "are"} the useful ${favorable.length === 1 ? "element" : "elements"}.`,
+        },
+        {
+          title: "The ten gods",
+          body: topGods.map((g) => `${shishenName(g)} stands out: ${lcFirst(SHI_SHEN[g as keyof typeof SHI_SHEN]?.text ?? "")}`).join(" "),
+        },
+        { title: "Career and money", body: dm.career },
+        { title: "Love and marriage", body: dm.love },
+        { title: "Health", body: `${dm.health} Your useful element is ${wxName(favorable[0]!)}: spend time with ${listJoin(fav0?.colors ?? [])} tones and face ${dirName(fav0?.direction ?? "")}.` },
+        {
+          title: "Ten-year luck",
+          body: currentYun
+            ? `In ${now} you are in the ${gzName(currentYun.ganzhi)} ten-year luck period (${currentYun.startYear}–${currentYun.endYear}). ${dm.advice}`
+            : dm.advice,
+        },
+      ],
+      plain: {
+        summary: `You are like ${pdm.image}. ${energyLine} You were born in the year of the ${animal.name}. ${animal.summary.replace(/^Born in an? [A-Za-z]+ year, /, "").replace(/^./, (c) => c.toUpperCase())}`,
+        sections: [
+          { title: plainTitles().who, body: `${pdm.who} As a ${animal.name}, ${animalPersonality} ${topGods.map((g) => firstSentence(PLAIN_SHISHEN[g] ?? "")).join(" ")}` },
+          { title: plainTitles().work, body: `${pdm.work} ${workMoney}` },
+          { title: plainTitles().love, body: `${pdm.love} As a ${animal.name}, you click with people born in ${friends} years; with ${animalName(zodiac.visual.chong)} people you tend to clash, but talking it through smooths things out.` },
+          {
+            title: "Body and energy",
+            body: [pdm.body, balanceLine, ...missing.map((m) => PLAIN_LACK[m])].filter(Boolean).join(" "),
+          },
+          {
+            title: plainTitles().advice,
+            body:
+              `${strong ? "You have enough strength; the point is to use it in the right place." : "You need to borrow strength; do not carry everything alone."} Ways to top up your energy day to day: ${helpLines.join("; ")}.` +
+              `${taisui ? ` ${taisui}` : ""}${phase ? ` You are in a ten-year phase (${currentYun!.startYear}–${currentYun!.endYear}): ${phase}` : ""}`,
+          },
+          {
+            title: plainTitles().how,
+            body: "BaZi turns the year, month, day and hour of your birth into two characters each, eight in all. It then looks at how much Wood, Fire, Earth, Metal and Water they hold and how the five help or hold each other back, and from that reads your tendencies and the rhythm of your life. Your zodiac animal comes from your birth year, counted from the Start of Spring.",
+          },
+        ],
+      },
+      caveats: [
+        ...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]),
+        zodiac.caveat,
+        "The useful elements are a simplified estimate (strength judged by the share of allied elements). A full professional reading also weighs seasonal balance, chart structure and mediating elements.",
+      ],
+      visual: { pillars, dayGan, wuxing, strong, selfShare, favorable, dayun, startYun, zodiac: zodiac.visual },
+    };
+  }
 
   return {
     id: "bazi",

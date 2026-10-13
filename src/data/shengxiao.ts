@@ -1,3 +1,5 @@
+import { SHENG_XIAO_EN, NA_YIN_EN } from "./en/shengxiao";
+import { live } from "../i18n";
 import type { Profile, Scores } from "./types";
 
 /** Build a Scores object from five integers (career, wealth, love, health, wisdom). */
@@ -16,7 +18,7 @@ export interface Animal extends Profile {
 }
 
 /** Twelve zodiac animals in branch order (子 to 亥). `element` is the element of the branch. */
-export const SHENG_XIAO: Animal[] = [
+const SHENG_XIAO_ZH: Animal[] = [
   {
     zhi: "子",
     emoji: "🐭",
@@ -248,7 +250,7 @@ export const SHENG_XIAO: Animal[] = [
 ];
 
 /** The 30 nayin (sound-element) names with imagery and character text. */
-export const NA_YIN: Record<string, string> = {
+const NA_YIN_ZH: Record<string, string> = {
   海中金: "藏于深海的金子，光芒暂时被水波遮住。性情内敛含蓄，厚积薄发，早年需要耐心沉淀，遇到时机便一鸣惊人。",
   炉中火: "炉膛里燃烧的炭火，热烈而有力量。性格明朗果敢，擅长在磨砺中成事，需要有方向的锻造，才能炼出真金。",
   大林木: "苍莽林海中的巨木，根深叶茂。胸怀开阔、有担当，适合承担重任，但需防过于自负，学会为他人遮荫。",
@@ -280,3 +282,6 @@ export const NA_YIN: Record<string, string> = {
   石榴木: "秋日里挂满果实的石榴树，籽粒饱满。内秀外美、福泽丰厚，晚年多有收获，家庭与子女运尤佳。",
   大海水: "辽阔无边的大海，包罗万象。胸襟宽广、气魄不凡，可容纳百川，宜把握大方向，避免波动失控。",
 };
+
+export const SHENG_XIAO = live(SHENG_XIAO_ZH, SHENG_XIAO_EN);
+export const NA_YIN = live(NA_YIN_ZH, NA_YIN_EN);
