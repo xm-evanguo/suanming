@@ -129,6 +129,8 @@ button { font: inherit; color: inherit; }
 
 /* ─── Wizard ─── */
 .wizard { min-height: calc(100vh - 64px); display: grid; place-items: center; }
+/* .hero and .wizard set display, which overrides the hidden attribute. */
+.hero[hidden], .wizard[hidden] { display: none; }
 .wizard-card { width: min(640px, 100%); padding: 32px clamp(20px, 5vw, 44px) 28px; animation: cardIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(30px) scale(0.96); filter: blur(6px); } }
 .constellation { list-style: none; display: flex; justify-content: space-between; padding: 0; margin: 0 0 24px; position: relative; }
@@ -593,6 +595,7 @@ button { font: inherit; color: inherit; }
   .view { padding: 20px 16px 72px; }
   .btn-xl { padding: 16px 30px; font-size: 18px; }
   .hero { min-height: calc(100svh - 120px); }
+  .wizard { min-height: calc(100svh - 120px); }
   .hero-sub { letter-spacing: 0.12em; }
   .m-hero { padding-top: 28px; }
   .choices { grid-template-columns: 1fr 1fr; }
