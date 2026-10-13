@@ -4,6 +4,8 @@ A single-page fortune-telling website. The user enters a birth date, time and pl
 
 Other features:
 
+- **中文 / English.** The whole site, including every reading, forecast, relationship comparison and the AI prompts, is available in Chinese and English. The switch sits next to Profile; the first visit follows the browser language. The choice is saved in the browser and the page reloads in the new language.
+- **Phones.** The layout works down to 320 px wide. On phones the 专业版 / 通俗版 pill sits at the bottom centre and slides away while you scroll down.
 - **Profile (`#/profile`).** The user can change birth data, set the DeepSeek API key and select which birth systems to use. All 14 start enabled. A disabled system is removed from pages, fusion, forecasts, compatibility and AI question evidence, including focus data. An empty selection shows an empty state. The three separate rituals (Qimen, tarot draw and jiao) stay available.
 - **专业版 / 通俗版 toggle.** Every result has a professional reading and a plain-language reading. The plain view is the default. A click on the toggle saves the choice in the browser.
 - **Timeline (`#/timeline`).** It shows forecasts for this year plus two more years, and for the next 12 months. The user can filter by area (career, wealth, love, health, wisdom). If the selected systems have no year or month forecasts, that section shows a no-data message. If only year forecasts are available, the details start with this year.
@@ -80,10 +82,11 @@ bunx wrangler@4 pages deploy dist --project-name suanming --branch main
 - `src/forecast/` — period forecasts. Each system gives `Signal`s (area, tone, weight, professional and plain text) for 3 years and 12 months. `index.ts` holds the registry and `runForecasts`.
 - `src/compat/` — relationship comparison. Each system gives tagged `CompatItem`s for a pair of charts. `index.ts` holds `runCompat`.
 - `src/llm/` — the shared DeepSeek client (`client.ts`), the tarot prompt (`tarot.ts`) and the 问事 evidence and prompt (`ask.ts`).
-- `src/data/` — static interpretation tables and text pools (`plain-*`, `forecast-*`, `compat-*`).
+- `src/data/` — static interpretation tables and text pools (`plain-*`, `forecast-*`, `compat-*`). `src/data/en/` holds the English text of these tables and `terms.ts`, the English names of stems, branches, elements, solar terms and directions.
+- `src/i18n.ts` — the current language, `t()` for inline text and `live()` for bilingual data tables.
 - `src/ui/` — views (wizard, ritual, hub, method page, summary, timeline, people, 问事), the mode toggle, the tarot draw, the 圣杯 throw, the shared API key field, SVG visuals and the `h()` DOM helper.
 - `src/css/` — styles for the newer features (`features.css`) and the ancient-system visuals (`ancient.css`).
-- `tests/` — engine, plain-text, ancient-system, forecast, compatibility, topic, draw seed, 圣杯 and AI request tests (mocked, no network).
+- `tests/` — engine, plain-text, ancient-system, forecast, compatibility, topic, draw seed, 圣杯, AI request and English-coverage tests (mocked, no network).
 
 ## Known limits
 
@@ -92,4 +95,5 @@ bunx wrangler@4 pages deploy dist --project-name suanming --branch main
 - Schools differ. This site uses 立春 for the year boundary, the lunar-javascript default 子时 rule, true solar time when the user enables it, the GMT correlation for Maya (not Dreamspell), Lahiri ayanamsa, mean lunar nodes, and the Abu Ma'shar firdaria order. Other schools can give different results.
 - Qimen uses UTC+8, a day boundary at 23:00, exact solar-term boundaries and the 甲己 day head to select the yuan. The centre uses Kun palace; Tian Qin travels with Tian Rui. The basic reading does not assess seasonal strength, void branches, punishment, tombs or all stem patterns. It does not give a full verdict or event date. Chart rules are described in [遁甲演义, volume 1](https://zh.wikisource.org/wiki/遁甲演義_(四庫全書本)/卷1). The tests also check a [published full chart](https://www.guyujian.cn/learn/qimen/07).
 - The birth profile uses the mean scores of the enabled systems. These scores do not enter year or month forecasts. With all systems enabled, year forecasts use year signals from 9 systems and month forecasts use month signals from 7 systems; tarot and firdaria have no month forecasts. The timeline index uses signal weights. These scores are display aids, not probabilities.
-- The last input, the mode, the selected systems and the added people are kept in `localStorage` in the user's browser only.
+- The last input, the mode, the language, the selected systems and the added people are kept in `localStorage` in the user's browser only.
+- The English readings are translations of the Chinese ones. Traditional terms keep a romanised name (BaZi stems and branches in pinyin, Zi Wei stars in pinyin, Sukuyō mansions and nakshatras by their usual English or Sanskrit names). The BaZi pillars still show the Chinese characters, with pinyin below.
