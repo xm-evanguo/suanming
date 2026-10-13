@@ -1,3 +1,5 @@
+import { ZODIAC_EN } from "./en/zodiac";
+import { live } from "../i18n";
 import type { Profile } from "./types";
 
 export interface ZodiacSign extends Profile {
@@ -14,7 +16,7 @@ export interface ZodiacSign extends Profile {
 }
 
 /** Twelve western zodiac signs, ordered Aries to Pisces. */
-export const ZODIAC: ZodiacSign[] = [
+const ZODIAC_ZH: ZodiacSign[] = [
   {
     name: "白羊座",
     title: "燃烧的开拓者",
@@ -328,3 +330,5 @@ export const ZODIAC: ZodiacSign[] = [
     ascText: "上升双鱼的你，眼神柔和、气质朦胧，带着一点梦幻感。别人觉得你温柔好说话，也常在你面前不自觉地敞开心扉。",
   },
 ];
+
+export const ZODIAC = live(ZODIAC_ZH, ZODIAC_EN);
