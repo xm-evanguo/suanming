@@ -1,3 +1,5 @@
+import { WEEKDAY_ZH_EN, DIGNITY_NAME_EN, DIGNITY_PLAIN_EN, TRAD_INFO_EN, HOUSES_EN, SECT_EN, LOT_TEXT_EN, FORTUNE_IN_HOUSE_EN, SPIRIT_IN_HOUSE_EN, FORTUNE_PLAIN_EN, SPIRIT_PLAIN_EN } from "./en/hellenistic";
+import { live } from "../i18n";
 import type { Dim, Scores, WuXing } from "./types";
 import { PLANETS } from "./planets";
 
@@ -9,7 +11,7 @@ export const CHALDEAN_ORDER: Trad[] = ["saturn", "jupiter", "mars", "sun", "venu
 
 /** Weekday (0 = Sunday) to ruling planet. */
 export const WEEKDAY_RULER: Trad[] = ["sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn"];
-export const WEEKDAY_ZH = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+const WEEKDAY_ZH_ZH: string[] = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
 /** Traditional domicile rulers of the 12 signs, Aries first. */
 export const SIGN_RULER: Trad[] = ["mars", "venus", "mercury", "moon", "sun", "mercury", "venus", "mars", "jupiter", "saturn", "saturn", "jupiter"];
@@ -19,7 +21,7 @@ export const EXALTATION: Record<Trad, number> = { sun: 0, moon: 1, mercury: 5, v
 
 export type Dignity = "domicile" | "exaltation" | "detriment" | "fall" | "peregrine";
 
-export const DIGNITY_NAME: Record<Dignity, string> = {
+const DIGNITY_NAME_ZH: Record<Dignity, string> = {
   domicile: "入庙",
   exaltation: "擢升",
   detriment: "落陷",
@@ -28,7 +30,7 @@ export const DIGNITY_NAME: Record<Dignity, string> = {
 };
 
 /** Plain-language description of a dignity. */
-export const DIGNITY_PLAIN: Record<Dignity, string> = {
+const DIGNITY_PLAIN_ZH: Record<Dignity, string> = {
   domicile: "在自己家里，发挥得很自在",
   exaltation: "被抬举的位置，容易得到尊重",
   detriment: "在不对盘的环境里，需要多花力气",
@@ -76,7 +78,7 @@ export interface TradInfo {
 
 const g = (k: keyof typeof PLANETS) => PLANETS[k].glyph;
 
-export const TRAD_INFO: Record<Trad, TradInfo> = {
+const TRAD_INFO_ZH: Record<Trad, TradInfo> = {
   sun: {
     zh: "太阳", glyph: g("sun"), weekday: "日", nature: "luminary", wx: "火",
     kw: ["自我", "权威", "名望"], plainKw: "自信和被看见",
@@ -187,7 +189,7 @@ export interface HouseInfo {
   care: string[];
 }
 
-export const HOUSES: HouseInfo[] = [
+const HOUSES_ZH: HouseInfo[] = [
   {
     name: "命宫", short: "自我", topic: "生命、身体与自我形象", plainTopic: "你自己的状态和形象", dim: "health",
     good: ["适合给自己换个新形象，或者开始一个坚持得住的运动习惯。", "想做的个人计划，现在就启动，比等“准备好”更有效。"],
@@ -269,7 +271,7 @@ export interface SectInfo {
   text: string;
 }
 
-export const SECT: Record<"day" | "night", SectInfo> = {
+const SECT_ZH: Record<"day" | "night", SectInfo> = {
   day: {
     name: "日间盘", light: "sun", benefic: "jupiter", maleficOfSect: "saturn", maleficContrary: "mars", beneficContrary: "venus",
     text: "出生时太阳在地平线之上。日间盘以太阳为主光，木星是顺应日间的吉星，最能帮到你；土星顺应日间，凶性较收敛；火星与日间“逆向”，是需要多留意的一颗。",
@@ -280,7 +282,7 @@ export const SECT: Record<"day" | "night", SectInfo> = {
   },
 };
 
-export const LOT_TEXT = {
+const LOT_TEXT_ZH: Record<"fortune" | "spirit", { name: string; glyph: string; meaning: string }> = {
   fortune: {
     name: "福点", glyph: "⊗︎",
     meaning: "福点（Lot of Fortune）以月亮为核心，代表身体、健康与物质际遇——命运“送到你手上的东西”。",
@@ -292,7 +294,7 @@ export const LOT_TEXT = {
 };
 
 /** Short lines about where a lot falls, keyed by house (1-12), for the Lot of Fortune. */
-export const FORTUNE_IN_HOUSE: string[] = [
+const FORTUNE_IN_HOUSE_ZH: string[] = [
   "福点落在命宫：运气与你本人的状态紧紧相连，把身体和精神养好，好运自然跟着来。",
   "福点落在财帛宫：物质运不错，靠自己的手艺和专业积累，收入有机会稳步增长。",
   "福点落在兄弟宫：好运常从身边人、同事、邻里和日常沟通里来，多交流多走动。",
@@ -307,7 +309,7 @@ export const FORTUNE_IN_HOUSE: string[] = [
   "福点落在玄秘宫：福气在幕后与独处中积累，需要你更主动地去发现，而不是等别人递给你。",
 ];
 
-export const SPIRIT_IN_HOUSE: string[] = [
+const SPIRIT_IN_HOUSE_ZH: string[] = [
   "精神点落在命宫：你的志向与自我高度重合，适合走“以人立业”的路，靠个人风格取胜。",
   "精神点落在财帛宫：你想做的事和谋生紧密相连，擅长把想法变成实实在在的收入。",
   "精神点落在兄弟宫：你的志趣在表达、教学、写作与沟通，信息就是你的工具。",
@@ -323,7 +325,7 @@ export const SPIRIT_IN_HOUSE: string[] = [
 ];
 
 /** Plain-language versions (second person, no jargon), keyed by house 1-12. */
-export const FORTUNE_PLAIN: string[] = [
+const FORTUNE_PLAIN_ZH: string[] = [
   "你的好运跟你本人的状态绑在一起：睡得好、心情稳的时候，机会就多。",
   "你的好运多来自自己的手艺和专业，踏实积累收入，比押宝更适合你。",
   "你的好运常从身边人来：同事、邻居、兄弟姐妹随口的一个消息，可能就是转机。",
@@ -338,7 +340,7 @@ export const FORTUNE_PLAIN: string[] = [
   "你的好运藏在安静处：需要你主动去发现，而不是等别人递给你。",
 ];
 
-export const SPIRIT_PLAIN: string[] = [
+const SPIRIT_PLAIN_ZH: string[] = [
   "你适合靠“人”立业：个人风格鲜明的工作，比如做自己的品牌、做主讲或带队。",
   "你适合能直接变成收入的工作：手艺、专业服务、销售、理财相关的岗位。",
   "你适合靠表达吃饭：写作、教学、媒体、翻译，以及需要大量沟通的岗位。",
@@ -352,3 +354,15 @@ export const SPIRIT_PLAIN: string[] = [
   "你适合靠团队和人脉的工作：社群运营、平台、需要联合众人的项目。",
   "你适合幕后、专注的工作：研究、写作、辅导，不求热闹，但能做得很深。",
 ];
+
+export const WEEKDAY_ZH = live(WEEKDAY_ZH_ZH, WEEKDAY_ZH_EN);
+export const DIGNITY_NAME = live(DIGNITY_NAME_ZH, DIGNITY_NAME_EN);
+export const DIGNITY_PLAIN = live(DIGNITY_PLAIN_ZH, DIGNITY_PLAIN_EN);
+export const TRAD_INFO = live(TRAD_INFO_ZH, TRAD_INFO_EN);
+export const HOUSES = live(HOUSES_ZH, HOUSES_EN);
+export const SECT = live(SECT_ZH, SECT_EN);
+export const LOT_TEXT = live(LOT_TEXT_ZH, LOT_TEXT_EN);
+export const FORTUNE_IN_HOUSE = live(FORTUNE_IN_HOUSE_ZH, FORTUNE_IN_HOUSE_EN);
+export const SPIRIT_IN_HOUSE = live(SPIRIT_IN_HOUSE_ZH, SPIRIT_IN_HOUSE_EN);
+export const FORTUNE_PLAIN = live(FORTUNE_PLAIN_ZH, FORTUNE_PLAIN_EN);
+export const SPIRIT_PLAIN = live(SPIRIT_PLAIN_ZH, SPIRIT_PLAIN_EN);
