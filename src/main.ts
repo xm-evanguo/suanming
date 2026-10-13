@@ -14,14 +14,33 @@ import { renderProfile } from "./ui/profile";
 import { h } from "./ui/dom";
 import type { MethodId } from "./methods/types";
 import { METHOD_ORDER } from "./methods";
+import { getLang, switchLang, t } from "./i18n";
 
 const app = document.getElementById("app")!;
 const stars = startStarfield(document.getElementById("cosmos") as HTMLCanvasElement);
 
+if (getLang() === "en") {
+  document.title = "Tianji Star Map · Destiny across 14 systems";
+  document.querySelector('meta[name="description"]')?.setAttribute(
+    "content",
+    "Enter your birth date, time and place to read your chart in 14 systems, including BaZi, Zi Wei Dou Shu, Western and Hellenistic astrology, Chaldean hours, Persian firdaria, tarot, Nine Star Ki, Sukuyō, Vedic astrology and the Maya calendar, with year and month outlooks, relationship matching and one combined summary. Everything is calculated in your browser.",
+  );
+}
 loadSaved();
 const showModeToggle = mountModeToggle();
 
 let current: (() => void) | undefined;
+
+/** Top-right links: the language switch and Profile. */
+function siteNav(): HTMLElement {
+  const other = getLang() === "en" ? "zh" : "en";
+  return h(
+    "nav",
+    { class: "profile-nav", "aria-label": t("个人设置", "Settings") },
+    h("button", { type: "button", class: "btn btn-ghost lang-switch", lang: other === "en" ? "en" : "zh-CN", onclick: () => switchLang(other) }, other === "en" ? "EN" : "中文"),
+    h("a", { href: "#/profile", class: "btn btn-ghost" }, t("个人资料", "Profile")),
+  );
+}
 
 function route() {
   const hash = location.hash.replace(/^#/, "") || "/";
@@ -39,12 +58,13 @@ function route() {
   const view = document.createElement("div");
   view.className = "view";
   app.replaceChildren(view);
-  view.append(h("nav", { class: "profile-nav", "aria-label": "个人设置" }, h("a", { href: "#/profile", class: "btn btn-ghost" }, "个人资料 · Profile")));
+  // The ritual has its own fixed skip button in this corner.
+  if (parts[0] !== "ritual") view.append(siteNav());
   scrollTo({ top: 0 });
   showModeToggle(["hub", "m", "summary", "timeline", "people", "ask"].includes(parts[0] ?? ""));
 
   if (s.results?.length === 0 && ["hub", "summary", "timeline", "ritual"].includes(parts[0] ?? "")) {
-    view.append(h("section", { class: "glass profile-card" }, h("h1", null, "尚未启用任何体系"), h("p", null, "请到 Profile 勾选想使用的体系。奇门、抽塔罗和掷圣杯仍可使用。"), h("div", { class: "draw-actions" }, h("a", { href: "#/profile", class: "btn btn-primary" }, "选择体系"), h("a", { href: "#/ask/qimen", class: "btn btn-ghost" }, "前往问事"))));
+    view.append(h("section", { class: "glass profile-card" }, h("h1", null, t("尚未启用任何体系", "No systems are on")), h("p", null, t("请到 Profile 勾选想使用的体系。奇门、抽塔罗和掷圣杯仍可使用。", "Turn on the systems you want in Profile. Qimen, the tarot draw and the moon blocks still work.")), h("div", { class: "draw-actions" }, h("a", { href: "#/profile", class: "btn btn-primary" }, t("选择体系", "Choose systems")), h("a", { href: "#/ask/qimen", class: "btn btn-ghost" }, t("前往问事", "Go to Ask")))));
     requestAnimationFrame(() => view.classList.add("shown"));
     return;
   }

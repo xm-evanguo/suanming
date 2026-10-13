@@ -1,5 +1,7 @@
+import { PLAIN_DASHA_EN } from "./en/plain-vedic";
+import { live } from "../i18n";
 /** What each life stage ruled by a given planet feels like, in everyday words. Keys match the lords in `methods/vedic.ts`. */
-export const PLAIN_DASHA: Record<string, string> = {
+const PLAIN_DASHA_ZH: Record<string, string> = {
   计都: "放下和内省：适合断舍离、整理内心，对热闹的事兴趣会降低。",
   金星: "关系、享受和审美：感情、艺术和生活品质变得重要，也容易在花钱上放松，要有预算。",
   太阳: "自我和事业：想被看见、想做出成绩，适合争取位置和影响力，注意别和权威硬碰硬。",
@@ -10,3 +12,5 @@ export const PLAIN_DASHA: Record<string, string> = {
   土星: "责任和积累：事情会变慢、变重，但做的每件事都会留下痕迹。靠耐心和自律往前走。",
   水星: "沟通和学习：适合学习、写作、做生意，头脑活跃，注意别分心太多。",
 };
+
+export const PLAIN_DASHA = live(PLAIN_DASHA_ZH, PLAIN_DASHA_EN);

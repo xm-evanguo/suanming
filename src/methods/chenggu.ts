@@ -1,5 +1,9 @@
 import { PLAIN_CHENGGU_PARTS, PLAIN_CHENGGU_TIERS } from "../data/plain-chenggu";
-import { type MethodFn, UNKNOWN_TIME_NOTE } from "./types";
+import { type MethodFn, plainTitles, UNKNOWN_TIME_NOTE } from "./types";
+import { isEn, t } from "../i18n";
+import { methodName } from "./names";
+import { KEYWORDS_EN, READINGS_EN, TIERS_EN } from "../data/en/chenggu";
+import { cnDayNum, gzName, zhiName } from "../data/en/terms";
 
 /** Bone weights in 钱 (1 两 = 10 钱). Source: the traditional 称骨 tables (e.g. 华易网 k366.com). */
 const YEAR: Record<string, number> = {
@@ -86,11 +90,15 @@ const TIERS = [
 ];
 
 export interface ChengguVisual {
-  parts: { label: string; key: string; weight: number }[];
+  /** `stage` is the internal key 年 / 月 / 日 / 时; `label` and `key` are for display. */
+  parts: { stage: string; label: string; key: string; weight: number }[];
   total: number;
 }
 
-export const fmtLiang = (qian: number) => (qian >= 10 ? `${Math.floor(qian / 10)}两${qian % 10 ? `${qian % 10}钱` : ""}` : `${qian}钱`);
+export const fmtLiang = (qian: number) =>
+  isEn()
+    ? qian >= 10 ? `${Math.floor(qian / 10)} liang${qian % 10 ? ` ${qian % 10} qian` : ""}` : `${qian} qian`
+    : qian >= 10 ? `${Math.floor(qian / 10)}两${qian % 10 ? `${qian % 10}钱` : ""}` : `${qian}钱`;
 
 export const chenggu: MethodFn<ChengguVisual> = (chart) => {
   const l = chart.lunar;
@@ -98,25 +106,78 @@ export const chenggu: MethodFn<ChengguVisual> = (chart) => {
   const month = Math.abs(l.getMonth() as number);
   const day = l.getDay() as number;
   const hourZhi: string = l.getTimeZhi();
+  const en = isEn();
   const parts = [
-    { label: "年", key: `${yearGz}年`, weight: YEAR[yearGz]! },
-    { label: "月", key: `${l.getMonthInChinese()}月`, weight: MONTH[month - 1]! },
-    { label: "日", key: l.getDayInChinese(), weight: DAY[day - 1]! },
-    { label: "时", key: `${hourZhi}时`, weight: HOUR[hourZhi]! },
+    { stage: "年", label: t("年", "Year"), key: en ? `${gzName(yearGz)} year` : `${yearGz}年`, weight: YEAR[yearGz]! },
+    { stage: "月", label: t("月", "Month"), key: en ? `lunar month ${month}` : `${l.getMonthInChinese()}月`, weight: MONTH[month - 1]! },
+    { stage: "日", label: t("日", "Day"), key: en ? `lunar day ${cnDayNum(l.getDayInChinese())}` : l.getDayInChinese(), weight: DAY[day - 1]! },
+    { stage: "时", label: t("时", "Hour"), key: en ? `${zhiName(hourZhi)} hour` : `${hourZhi}时`, weight: HOUR[hourZhi]! },
   ];
   const total = parts.reduce((s, p) => s + p.weight, 0);
-  const tier = TIERS.find((t) => total <= t.max)!;
-  const reading = READINGS[Math.min(Math.max(total - 21, 0), READINGS.length - 1)]!;
+  const tierZh = TIERS.find((x) => total <= x.max)!;
+  const tierIndex = TIERS.indexOf(tierZh);
+  const tier = en ? { ...tierZh, ...TIERS_EN[tierIndex]! } : tierZh;
+  const reading = (en ? READINGS_EN : READINGS)[Math.min(Math.max(total - 21, 0), READINGS.length - 1)]!;
   const base = 48 + (total - 21) * 0.9;
-  const tierIndex = TIERS.indexOf(tier);
   const pt = PLAIN_CHENGGU_TIERS[tierIndex]!;
   // Folk mapping: 年 = childhood, 月 = youth, 日 = midlife, 时 = later life. Ties go to the earlier stage.
   const heaviest = parts.reduce((a, b) => (b.weight > a.weight ? b : a));
   const lightest = parts.reduce((a, b) => (b.weight < a.weight ? b : a));
   const stageLine =
-    heaviest.label === lightest.label
+    heaviest.stage === lightest.stage
       ? ""
-      : `四项里，“${PLAIN_CHENGGU_PARTS[heaviest.label]}”这一项分量最重，通常会更顺一些；“${PLAIN_CHENGGU_PARTS[lightest.label]}”这一项分量最轻，需要你自己多用点力。`;
+      : t(
+          `四项里，“${PLAIN_CHENGGU_PARTS[heaviest.stage]}”这一项分量最重，通常会更顺一些；“${PLAIN_CHENGGU_PARTS[lightest.stage]}”这一项分量最轻，需要你自己多用点力。`,
+          ` Of the four, ${PLAIN_CHENGGU_PARTS[heaviest.stage]} weighs the most and usually goes more smoothly; ${PLAIN_CHENGGU_PARTS[lightest.stage]} weighs the least and needs a little more effort from you.`,
+        );
+
+  const scores = {
+    career: Math.round(base + 4),
+    wealth: Math.round(base + 2),
+    love: Math.round(55 + (total - 21) * 0.4),
+    health: Math.round(60 + (total - 21) * 0.3),
+    wisdom: Math.round(52 + (total - 21) * 0.6),
+  };
+  if (en)
+    return {
+      id: "chenggu",
+      name: methodName("chenggu"),
+      intro: "Said to come from Yuan Tiangang of the Tang dynasty: the lunar year, month, day and hour of birth are turned into a \"bone weight\" that measures a life's fortune in liang and qian.",
+      origin: "中国",
+      icon: "⚖",
+      headline: `Bone weight ${fmtLiang(total)}`,
+      tagline: tier.name,
+      keywords: KEYWORDS_EN[tierIndex]!,
+      scores,
+      lucky: { colors: [], numbers: [Math.floor(total / 10), total % 10 || 10], directions: [] },
+      facts: parts.map((p) => ({ label: `${p.label} · ${p.key}`, value: fmtLiang(p.weight) })).concat([{ label: "Total", value: fmtLiang(total) }]),
+      sections: [
+        { title: `Bone weight ${fmtLiang(total)} · ${tier.name}`, body: `${reading} ${tier.text}` },
+        { title: "The weighing", body: `${parts.map((p) => `${p.label} (${p.key}) weighs ${fmtLiang(p.weight)}`).join(", ")}; together they come to ${fmtLiang(total)}.` },
+        {
+          title: "An old method, read anew",
+          body: "Bone weighing only looks up the lunar birth date in tables and adds the numbers, without any five-element analysis; it is the most widespread folk shortcut. A light weight is not a verdict of hardship; it is more a reminder that what fate left out is yours to make up through effort.",
+        },
+      ],
+      plain: {
+        summary: `Your \"bone weight\" is ${fmtLiang(total)}, within the traditional range of 2 liang 1 qian to 7 liang 1 qian (1 liang = 10 qian). ${pt.core} This is just a popular folk pastime; take it as a fun reference.`,
+        sections: [
+          {
+            title: "What this number means",
+            body: `The old method turns the year, month, day and hour of your birth into a weight each and adds them up to get your \"bone weight\": ${parts.map((p) => `${p.label.toLowerCase()} ${fmtLiang(p.weight)}`).join(", ")}, ${fmtLiang(total)} in all. Tradition says the higher the number, the more blessed, but it does not decide whether you are good or bad.${stageLine}`,
+          },
+          { title: "The rhythm of your life", body: pt.rhythm },
+          { title: plainTitles().work, body: pt.work },
+          { title: plainTitles().advice, body: pt.advice },
+          {
+            title: plainTitles().how,
+            body: "Bone weighing is a folk shortcut said to date from the Tang dynasty. It only uses your lunar birth year, month, day and hour to look up four tables, adds the four weights and matches the total to an old verse. Because it is so simple, it is best taken as a fun reference.",
+          },
+        ],
+      },
+      caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "Bone weighing starts the year at Lunar New Year, and a leap month counts as its regular month."],
+      visual: { parts, total },
+    };
 
   return {
     id: "chenggu",
@@ -163,7 +224,7 @@ export const chenggu: MethodFn<ChengguVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "称骨以农历正月初一为年界，闰月按本月计。"],
+    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "称骨以农历正月初一为年界，闰月按本月计。"],
     visual: { parts, total },
   };
 };

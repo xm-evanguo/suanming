@@ -2,7 +2,11 @@ import { zhiIndex } from "../core/ganzhi";
 import { HEXAGRAMS, TRIGRAMS } from "../data/hexagrams";
 import { WU_XING } from "../data/bazi";
 import { PLAIN_HEXAGRAMS, PLAIN_MOVING_STAGE, PLAIN_TI_YONG } from "../data/plain-meihua";
-import { type MethodFn, UNKNOWN_TIME_NOTE } from "./types";
+import { type MethodFn, plainTitles, UNKNOWN_TIME_NOTE } from "./types";
+import { isEn } from "../i18n";
+import { methodName } from "./names";
+import { TI_YONG_EN, TRIGRAM_NAME_EN } from "../data/en/meihua";
+import { wxName } from "../data/en/terms";
 
 /** 先天八卦数: 1乾 2兑 3离 4震 5巽 6坎 7艮 8坤. */
 export const XIANTIAN = ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"] as const;
@@ -94,7 +98,7 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
   const order = ["木", "火", "土", "金", "水"];
   const d = (order.indexOf(yongWx) - order.indexOf(tiWx) + 5) % 5;
   const relKey = d === 0 ? "比和" : d === 4 ? "用生体" : d === 2 ? "体克用" : d === 1 ? "体生用" : "用克体";
-  const rel = TI_YONG[relKey]!;
+  const rel = isEn() ? { ...TI_YONG[relKey]!, ...TI_YONG_EN[relKey]! } : TI_YONG[relKey]!;
 
   const hb = HEXAGRAMS[ben.num - 1]!;
   const hv = HEXAGRAMS[bian.num - 1]!;
@@ -107,6 +111,60 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
   const plainBian = PLAIN_HEXAGRAMS[bian.num - 1]!;
   const plainRel = PLAIN_TI_YONG[relKey]!;
   const sameEnd = ben.num === bian.num;
+
+  if (isEn()) {
+    const LINE = ["first", "second", "third", "fourth", "fifth", "top"];
+    const tri = (k: string) => `${TRIGRAM_NAME_EN[k]} (${TRIGRAMS[k]!.nature})`;
+    const verdictEn: Record<string, string> = { 比和: "You are in tune with your surroundings.", 用生体: "Your surroundings mostly work in your favour.", 体克用: "You can steer the situation.", 体生用: "Take care to act within your means.", 用克体: "Outside pressure runs high." };
+    return {
+      id: "meihua",
+      name: methodName("meihua"),
+      intro: "Handed down from Shao Yong of the Northern Song: a hexagram is cast from the numbers of the lunar birth year, month, day and hour, and read through the main, inner and changed hexagrams and the Ti-Yong relation.",
+      origin: "中国",
+      icon: "䷀",
+      headline: `${hb.fullName} → ${hv.fullName}`,
+      tagline: `Hexagram ${ben.num} · ${LINE[moving - 1]} line moving · ${rel.verdict}`,
+      keywords: hb.keywords.slice(0, 4),
+      scores,
+      element: tiWx,
+      lucky: { colors: tiInfo.colors.slice(0, 2), numbers: [TRIGRAMS[ti] ? XIANTIAN.indexOf(ti as (typeof XIANTIAN)[number]) + 1 : 1], directions: [tiInfo.direction] },
+      facts: [
+        { label: "Casting numbers", value: `year ${year} · month ${month} · day ${day} · hour ${hour}` },
+        { label: "Upper trigram", value: `(${year}+${month}+${day}) mod 8 → ${TRIGRAM_NAME_EN[upper]}` },
+        { label: "Lower trigram", value: `(${year}+${month}+${day}+${hour}) mod 8 → ${TRIGRAM_NAME_EN[lower]}` },
+        { label: "Moving line", value: `(${year + month + day + hour}) mod 6 → line ${moving}` },
+        { label: "Main / inner / changed", value: `${hb.name} / ${hh.name} / ${hv.name}` },
+      ],
+      sections: [
+        { title: `Main hexagram · ${hb.fullName}`, body: `Judgement: \"${hb.judgment}\" Image: \"${hb.image}\" ${hb.meaning}` },
+        { title: `Inner hexagram · ${hh.fullName}`, body: `The inner hexagram is hidden inside the main one and shows how things unfold. ${hh.meaning}` },
+        { title: `Changed hexagram · ${hv.fullName}`, body: `When the moving line changes, the outcome appears. Judgement: \"${hv.judgment}\" ${hv.meaning}` },
+        {
+          title: `Ti and Yong · ${rel.verdict}`,
+          body: `The Ti trigram is ${tri(ti)}, element ${wxName(tiWx)}, and stands for you; the Yong trigram is ${tri(yong)}, element ${wxName(yongWx)}, and stands for your surroundings. ${rel.text}`,
+        },
+      ],
+      plain: {
+        summary: `The hexagram cast from your birth time speaks of the base colour of your life, with the keywords \"${hb.keywords[0]}\" and \"${hb.keywords[1]}\". ${sameEnd ? "" : `Later it moves toward \"${hv.keywords[0]}\". `}${verdictEn[relKey]}`,
+        sections: [
+          { title: "The base colour of your life", body: `${plainBen} (Traditionally this hexagram is called ${hb.fullName}.)` },
+          { title: "What you meet along the way", body: hu.num === ben.num ? "Midway, the situation stays close to the base colour, without much contrast." : `Midway, you often meet a situation like this: ${plainHu} (Traditionally called ${hh.fullName}.)` },
+          { title: "Where it leads in the end", body: `The change comes at ${PLAIN_MOVING_STAGE[moving - 1]}. ${sameEnd ? "The outcome is close to the base colour, so your path is fairly consistent." : bian.num === hu.num ? "The final direction is close to the midway situation, so the same advice applies." : `Things gradually move this way: ${plainBian} (Traditionally called ${hv.fullName}.)`}` },
+          { title: "You and your surroundings", body: plainRel },
+          {
+            title: plainTitles().advice,
+            body: `${rel.delta >= 0 ? "The overall trend is in your favour" : "Overall, a little caution is needed"}; what needs the most care is ${PLAIN_MOVING_STAGE[moving - 1]}. ${rel.delta >= 0 ? "Go with the flow." : "Before deciding, leave yourself some margin."}`,
+          },
+          {
+            title: plainTitles().how,
+            body: "Plum Blossom numerology turns your lunar birth year, month, day and hour into numbers and adds them up to get a hexagram (a figure of six lines). Because it is cast from your birth time, it speaks of the base colour of your life rather than answering a specific question.",
+          },
+        ],
+      },
+      caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "This is a natal hexagram cast from the birth time; it stands for the base colour of a life, not an answer about a specific matter."],
+      visual: { ben, hu, bian, moving, numbers: { year, month, day, hour } },
+    };
+  }
 
   return {
     id: "meihua",
@@ -153,7 +211,7 @@ export const meihua: MethodFn<MeihuaVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE]), "此为以生辰起的“本命卦”，象征一生的底色，而非对某件具体事情的占问。"],
+    caveats: [...(chart.input.timeKnown ? [] : [UNKNOWN_TIME_NOTE()]), "此为以生辰起的“本命卦”，象征一生的底色，而非对某件具体事情的占问。"],
     visual: { ben, hu, bian, moving, numbers: { year, month, day, hour } },
   };
 };

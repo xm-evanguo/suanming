@@ -1,3 +1,5 @@
+import { PLAIN_DAY_MASTER_EN, PLAIN_SHISHEN_EN, PLAIN_EXCESS_EN, PLAIN_LACK_EN, PLAIN_ELEMENT_HELP_EN, PLAIN_DAYUN_EN, PLAIN_TAISUI_EN } from "./en/plain-bazi";
+import { live } from "../i18n";
 import type { WuXing } from "./types";
 
 /** Plain-language tables for the 八字 page (day stem, ten gods, elements, zodiac year). All text is Simplified Chinese. */
@@ -11,7 +13,7 @@ export interface PlainDayMaster {
   body: string;
 }
 
-export const PLAIN_DAY_MASTER: Record<string, PlainDayMaster> = {
+const PLAIN_DAY_MASTER_ZH: Record<string, PlainDayMaster> = {
   甲: {
     image: "一棵长得很直的大树，根扎得深，一直想往上长",
     who: "你有原则，也有抱负，不爱低头讨好人。开会时，你常是第一个说“这样不对”的人。朋友有难你会出头，所以担子也容易全压到你肩上。",
@@ -85,7 +87,7 @@ export const PLAIN_DAY_MASTER: Record<string, PlainDayMaster> = {
 };
 
 /** What each ten god (十神) means in daily life. */
-export const PLAIN_SHISHEN: Record<string, string> = {
+const PLAIN_SHISHEN_ZH: Record<string, string> = {
   比肩: "你很看重平等，喜欢自己做主，不喜欢被安排。适合和志同道合的人合伙，但谈到钱，要提前说清楚。",
   劫财: "你敢闯敢拼，讲义气，花钱也大方。借钱给朋友、冲动消费之前，先等一天再决定。",
   食神: "你有生活情趣，性格松弛，会享受，也有点才艺。心情舒服、吃得好睡得好时，你的创意最多。",
@@ -99,7 +101,7 @@ export const PLAIN_SHISHEN: Record<string, string> = {
 };
 
 /** What an unusually strong element looks like in daily life. */
-export const PLAIN_EXCESS: Record<WuXing, string> = {
+const PLAIN_EXCESS_ZH: Record<WuXing, string> = {
   木: "你的“生长劲”特别足：想法多，主见强，容易同时开很多头。每个月挑一件事做完，再开下一件。",
   火: "你的“热度”特别高：反应快，爱冲，情绪来得急。吵架或回重要消息前，先等十分钟。",
   土: "你的“稳”特别重：慢热，爱守着熟悉的东西，容易错过变化。每个季度试一件没做过的新事。",
@@ -108,7 +110,7 @@ export const PLAIN_EXCESS: Record<WuXing, string> = {
 };
 
 /** What a missing element looks like in daily life, with a small habit to fix it. */
-export const PLAIN_LACK: Record<WuXing, string> = {
+const PLAIN_LACK_ZH: Record<WuXing, string> = {
   木: "你身上少一点“舒展感”：容易犹豫，不太想开始。先做一个五分钟的小动作，比等准备好再动更有效。",
   火: "你身上少一点“热度”：容易低调，不爱表现自己。每周主动发起一次聚会，或在会上多说一句。",
   土: "你身上少一点“稳定感”：做事容易飘，缺固定节奏。先把起床和吃饭的时间固定下来。",
@@ -117,7 +119,7 @@ export const PLAIN_LACK: Record<WuXing, string> = {
 };
 
 /** Everyday habits that feed each element. Used for the 喜用 advice. */
-export const PLAIN_ELEMENT_HELP: Record<WuXing, string> = {
+const PLAIN_ELEMENT_HELP_ZH: Record<WuXing, string> = {
   木: "多去公园或爬山，养点绿植，给自己定一个学习或成长的小目标",
   火: "多晒太阳，多和朋友见面，保持运动，让自己有一点“热度”",
   土: "把作息、预算和家里的东西理清楚，多做能慢慢积累的事",
@@ -126,7 +128,7 @@ export const PLAIN_ELEMENT_HELP: Record<WuXing, string> = {
 };
 
 /** The element of the current ten-year luck period, as seen from the person's own element. */
-export const PLAIN_DAYUN: Record<"同" | "生我" | "我生" | "我克" | "克我", string> = {
+const PLAIN_DAYUN_ZH: Record<"同" | "生我" | "我生" | "我克" | "克我", string> = {
   同: "身边的同行和伙伴会变多，机会多半靠人脉，但竞争也多，花钱要有计划。",
   生我: "你更容易得到支持，比如长辈、老师和学习的机会。适合进修、考证、充电。",
   我生: "适合输出：表达、创作、做项目，把你的本事拿出来给人看。",
@@ -135,7 +137,7 @@ export const PLAIN_DAYUN: Record<"同" | "生我" | "我生" | "我克" | "克�
 };
 
 /** Plain advice for the zodiac year relation (太岁). Keys match `taiSuiRelation().name`. */
-export const PLAIN_TAISUI: Record<string, string> = {
+const PLAIN_TAISUI_ZH: Record<string, string> = {
   "值太岁（本命年）": "今年是你的本命年，变化和起伏会多一点。大决定别赶着做，先把日常稳住。",
   冲太岁: "今年容易有变动，比如换工作或搬家。变动不一定是坏事，主动安排比被动接受更好。",
   害太岁: "今年容易有小误会。重要的事写下来，少靠别人转述。",
@@ -143,3 +145,11 @@ export const PLAIN_TAISUI: Record<string, string> = {
   三合太岁: "今年有顺风，适合启动搁置已久的计划。",
   平和之年: "今年没有特别的起伏，按计划走就好。",
 };
+
+export const PLAIN_DAY_MASTER = live(PLAIN_DAY_MASTER_ZH, PLAIN_DAY_MASTER_EN);
+export const PLAIN_SHISHEN = live(PLAIN_SHISHEN_ZH, PLAIN_SHISHEN_EN);
+export const PLAIN_EXCESS = live(PLAIN_EXCESS_ZH, PLAIN_EXCESS_EN);
+export const PLAIN_LACK = live(PLAIN_LACK_ZH, PLAIN_LACK_EN);
+export const PLAIN_ELEMENT_HELP = live(PLAIN_ELEMENT_HELP_ZH, PLAIN_ELEMENT_HELP_EN);
+export const PLAIN_DAYUN = live(PLAIN_DAYUN_ZH, PLAIN_DAYUN_EN);
+export const PLAIN_TAISUI = live(PLAIN_TAISUI_ZH, PLAIN_TAISUI_EN);

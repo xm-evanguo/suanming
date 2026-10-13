@@ -1,3 +1,5 @@
+import { PERSONAL_YEAR_READINGS_EN, PERSONAL_MONTH_READINGS_EN } from "./en/forecast-numerology";
+import { live } from "../i18n";
 /** Plain-language readings of the numerology personal year and personal month (1-9). */
 import type { Tone } from "../forecast/types";
 import type { Dim } from "./types";
@@ -10,7 +12,7 @@ export interface NumReading {
 }
 
 /** Personal year 1-9. Index = number. Each number has a main reading and two more. */
-export const PERSONAL_YEAR_READINGS: Record<number, NumReading[]> = {
+const PERSONAL_YEAR_READINGS_ZH: Record<number, NumReading[]> = {
   1: [
     { dim: "career", tone: "good", plain: ["新的九年循环从这一年开始，适合开新项目、换赛道、主动提出自己的想法。想做的事，今年就开个头。"] },
     { dim: "love", tone: "mixed", plain: ["感情上适合主动一点：单身的人敢于表达，有伴侣的人可以一起定一个新目标。"] },
@@ -59,7 +61,7 @@ export const PERSONAL_YEAR_READINGS: Record<number, NumReading[]> = {
 };
 
 /** Personal month 1-9, two wordings each so repeated numbers in a year do not read the same. */
-export const PERSONAL_MONTH_READINGS: Record<number, NumReading[]> = {
+const PERSONAL_MONTH_READINGS_ZH: Record<number, NumReading[]> = {
   1: [
     { dim: "career", tone: "good", plain: ["这个月适合开头：提出一个新想法、启动一项计划、报名一门课。想做的事，先迈出第一步。", "这个月主动出击会有回应，想争取的机会、想联系的人，直接开口。"] },
     { dim: "health", tone: "good", plain: ["精神状态不错，可以给自己定一个新的小习惯，比如早起散步十分钟。", "身体比较有劲，适合重新开始运动。"] },
@@ -97,3 +99,6 @@ export const PERSONAL_MONTH_READINGS: Record<number, NumReading[]> = {
     { dim: "love", tone: "mixed", plain: ["情绪里有告别和感谢，对重要的人表达心意，也原谅一件旧事。", "适合和人和解，把心里的结解开。"] },
   ],
 };
+
+export const PERSONAL_YEAR_READINGS = live(PERSONAL_YEAR_READINGS_ZH, PERSONAL_YEAR_READINGS_EN);
+export const PERSONAL_MONTH_READINGS = live(PERSONAL_MONTH_READINGS_ZH, PERSONAL_MONTH_READINGS_EN);

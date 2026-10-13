@@ -1,10 +1,12 @@
 import { norm360, PLANET_KEYS, type PlanetKey } from "../core/chart";
 import { ASPECTS, type AspectKey, PLANET_IN_SIGN_HINT, PLANETS } from "../data/planets";
 import { PLAIN_ASPECT, PLAIN_PLANET, PLAIN_WEST_LACK } from "../data/plain-astrology";
-import { PLAIN_BODY, PLAIN_BODY_DEFAULT } from "../data/plain-common";
+import { PLAIN_BODY, plainBodyDefault } from "../data/plain-common";
 import { ZODIAC } from "../data/zodiac";
 import { profileLucky } from "./profile";
-import { type MethodFn, mixScores, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
+import { capFirst, isEn, listJoin } from "../i18n";
+import { methodName } from "./names";
+import { type MethodFn, mixScores, plainTitles, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
 
 export const signOf = (lon: number) => Math.floor(norm360(lon) / 30);
 export const degInSign = (lon: number) => {
@@ -84,6 +86,88 @@ export const astrology: MethodFn<AstrologyVisual> = (chart) => {
     .join("");
   const weakest = Object.entries(elements).sort((a, b) => a[1] - b[1])[0]![0];
 
+  if (isEn()) {
+    const signEn = (k: "mercury" | "venus" | "mars") => `${PLANET_IN_SIGN_HINT[k]} ${ZODIAC[signOf(P[k].lon)]!.name}.`;
+    const minEl = Object.entries(elements).sort((a, b) => a[1] - b[1])[0]![0];
+    const maxEl = Object.entries(elements).sort((a, b) => b[1] - a[1])[0]![0];
+    const EL_EN: Record<string, string> = { 火: "Fire", 土: "Earth", 风: "Air", 水: "Water" };
+    const NEED_EN: Record<string, string> = { 火: "Passion and action", 土: "Practicality and patience", 风: "Thinking and communication", 水: "Feeling and empathy" };
+    const moonPlain = capFirst(moon.moonText.replace(/^[^:]*:\s*/, ""));
+    const ascPlain = capFirst(asc.ascText.replace(/^[^:]*:\s*/, ""));
+    const aspectsEn = (planetAspects.length >= 2 ? planetAspects : aspects)
+      .slice(0, 2)
+      .map((h, i) => `${i ? "Also, your" : "Your"} \"${PLAIN_PLANET[h.a]}\" and \"${PLAIN_PLANET[h.b]}\" ${PLAIN_ASPECT[h.type]}.`)
+      .join(" ");
+    const titles = plainTitles();
+    return {
+      id: "astrology",
+      name: methodName("astrology"),
+      intro: "A natal chart drawn from where the planets stood along the ecliptic at the moment of your birth; the Sun, Moon and Ascendant are its three cores.",
+      origin: "西方",
+      icon: sun.glyph,
+      headline: `Sun in ${sun.name} · Moon in ${moon.name}${known ? ` · ${asc.name} rising` : ""}`,
+      tagline: sun.title,
+      keywords: sun.keywords,
+      scores,
+      element: sun.element,
+      lucky: profileLucky(sun),
+      facts: [
+        { label: "☉ Sun", value: `${sun.name} ${degInSign(P.sun.lon)}` },
+        { label: "☽ Moon", value: `${moon.name} ${degInSign(P.moon.lon)}` },
+        { label: "ASC Ascendant", value: `${asc.name} ${degInSign(chart.asc)}` },
+        { label: "MC Midheaven", value: `${ZODIAC[signOf(chart.mc)]!.name} ${degInSign(chart.mc)}` },
+        { label: "Retrograde", value: listJoin(retros) || "none" },
+      ],
+      sections: [
+        { title: `Sun in ${sun.name} · Core self`, body: `${sun.summary} ${sun.personality}` },
+        { title: `Moon in ${moon.name} · Emotional needs`, body: moon.moonText },
+        ...(known ? [{ title: `${asc.name} rising · Outer image`, body: asc.ascText }] : []),
+        { title: "Mercury, Venus, Mars · Personal planets", body: (["mercury", "venus", "mars"] as const).map(signEn).join(" ") },
+        {
+          title: "Key aspects",
+          body: top
+            .map((h) => `${PLANETS[h.a].zh} ${ASPECTS[h.type].glyph} ${PLANETS[h.b].zh} (${ASPECTS[h.type].name}, orb ${h.orb.toFixed(1)}°): ${ASPECTS[h.type].text}`)
+            .join(" "),
+        },
+        {
+          title: "Element balance",
+          body: `Fire ${elements.火} · Earth ${elements.土} · Air ${elements.风} · Water ${elements.水}. ${EL_EN[maxEl]} is your strongest element and ${EL_EN[minEl]} your weakest. ${NEED_EN[minEl]} is the energy you can deliberately build up.`,
+        },
+        { title: "Career and money", body: sun.career },
+        { title: "Love and people", body: sun.love },
+        { title: "Words of advice", body: sun.advice },
+      ],
+      plain: {
+        summary: `You were born with the Sun in ${sun.name} and the Moon in ${moon.name}${known ? `, and ${asc.name} rising` : ""}. \"${sun.title}\" is the side of you people recognise most easily.`,
+        sections: [
+          {
+            title: titles.who,
+            body: [
+              `Your Sun sign is ${sun.name} (the sign the Sun was in when you were born, standing for your core character).`,
+              sun.personality,
+              known ? `Your rising sign is ${asc.name} (the you that people see first). ${ascPlain}` : "",
+            ]
+              .filter(Boolean)
+              .join(" "),
+          },
+          { title: "What your heart needs", body: `Your Moon sign is ${moon.name} (it stands for your feelings and sense of security). ${moonPlain}` },
+          { title: titles.work, body: sun.career },
+          { title: titles.love, body: `${sun.love} ${signEn("venus")}` },
+          {
+            title: titles.advice,
+            body: [aspectsEn, PLAIN_WEST_LACK[weakest] ?? "", sun.advice, sun.element ? PLAIN_BODY[sun.element] : plainBodyDefault()].filter(Boolean).join(" "),
+          },
+          {
+            title: titles.how,
+            body: "Western astrology looks at where the Sun, the Moon and the main planets stood in the sky at the moment you were born. Which of the twelve signs they fall in sets the style of each part of your life, and the angle between two planets shows whether those two traits help each other or pull against each other.",
+          },
+        ],
+      },
+      caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE(), "Without a birth time, the Ascendant and the houses are not shown."]), "Houses use the whole-sign system; planet positions are geocentric ecliptic longitudes measured from the equinox of date."],
+      visual: { planets, asc: chart.asc, mc: chart.mc, aspects, elements },
+    };
+  }
+
   return {
     id: "astrology",
     name: "西洋占星",
@@ -138,7 +222,7 @@ export const astrology: MethodFn<AstrologyVisual> = (chart) => {
         { title: "感情里的你", body: `${sun.love}${signLine("venus")}` },
         {
           title: "给你的建议",
-          body: `${plainAspects}${PLAIN_WEST_LACK[weakest] ?? ""}${sun.advice}${sun.element ? PLAIN_BODY[sun.element] : PLAIN_BODY_DEFAULT}`,
+          body: `${plainAspects}${PLAIN_WEST_LACK[weakest] ?? ""}${sun.advice}${sun.element ? PLAIN_BODY[sun.element] : plainBodyDefault()}`,
         },
         {
           title: "这套方法怎么算的",
@@ -146,7 +230,7 @@ export const astrology: MethodFn<AstrologyVisual> = (chart) => {
         },
       ],
     },
-    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE, "未知出生时间时不显示上升星座与宫位。"]), "宫位采用整宫制；行星位置为地心视黄经（当日春分点）。"],
+    caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE(), "未知出生时间时不显示上升星座与宫位。"]), "宫位采用整宫制；行星位置为地心视黄经（当日春分点）。"],
     visual: { planets, asc: chart.asc, mc: chart.mc, aspects, elements },
   };
 };

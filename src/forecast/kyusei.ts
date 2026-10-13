@@ -1,7 +1,11 @@
 import { Solar } from "lunar-javascript";
 import { zhiIndex } from "../core/ganzhi";
 import { buildSignal, limitSignals, type Scope } from "../data/forecast-common";
-import { CENTER_RULE, DIRECTION_RULES, HAZARD_RULES } from "../data/forecast-kyusei";
+import { centerRule, DIRECTION_RULES, HAZARD_RULES } from "../data/forecast-kyusei";
+import { isEn, t } from "../i18n";
+import { dirName, zhiName } from "../data/en/terms";
+import { TRIGRAM_NAME_EN } from "../data/en/meihua";
+import { MONTH_EN } from "./types";
 import { NINE_STARS } from "../data/kyusei";
 import { boardFor, liChunYear, LOSHU_DIRS, monthStar, natalStars, yearStar } from "../methods/kyusei";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, type Signal } from "./types";
@@ -15,8 +19,10 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
   const dir = LOSHU_DIRS[pos]!;
   const five = board.indexOf(5);
   const centerName = NINE_STARS[center - 1]!.name;
-  const tag = scope === "year" ? "年盘" : "月盘";
-  const head = `${p.year}${p.month ? `-${p.month}` : ""}${tag}`;
+  const tag = scope === "year" ? t("年盘", "year chart") : t("月盘", "month chart");
+  const head = isEn() ? `${p.month ? `${MONTH_EN[p.month - 1]} ` : ""}${p.year} ${tag}` : `${p.year}${p.month ? `-${p.month}` : ""}${tag}`;
+  const where = (d: string) => (isEn() ? (d === "中宫" ? "the centre" : `the ${dirName(d)}`) : d);
+  const CENTER_RULE = centerRule();
   const key = (rule: string) => `kyusei:${scope}:${p.year}-${p.month ?? 0}:${rule}`;
   const out: Signal[] = [];
 
@@ -28,7 +34,7 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
         dim: "career",
         tone: "bad",
         weight: scope === "year" ? 3 : 2,
-        pro: `${head}：${centerName}入中宫，本命星${NINE_STARS[star - 1]!.name}回到中宫，称八方塞`,
+        pro: t(`${head}：${centerName}入中宫，本命星${NINE_STARS[star - 1]!.name}回到中宫，称八方塞`, `${head}: ${centerName} in the centre; your natal star ${NINE_STARS[star - 1]!.name} returns to the centre, called \"blocked on all sides\"`),
         phrase: CENTER_RULE,
       }),
     );
@@ -41,7 +47,7 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
         dim: rule.dim,
         tone: rule.tone,
         weight: scope === "year" ? rule.weight : 1,
-        pro: `${head}：${centerName}入中宫，本命星落${dir}（${rule.trigram}宫）`,
+        pro: t(`${head}：${centerName}入中宫，本命星落${dir}（${rule.trigram}宫）`, `${head}: ${centerName} in the centre; your natal star falls in ${where(dir)} (${TRIGRAM_NAME_EN[rule.trigram]} palace)`),
         phrase: rule.phrase,
       }),
     );
@@ -59,8 +65,8 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
       dim: innerRule?.dim ?? "wisdom",
       tone: innerRule?.tone === "good" ? "good" : "mixed",
       weight: 1,
-      pro: `${head}：月命星${innerName}落${innerPos === 4 ? "中宫" : LOSHU_DIRS[innerPos]}（内在情绪层面）`,
-      phrase: { ...innerPhrase, what: innerPhrase.what.map((w) => w.replace("{T}", "{T}在内心层面，")) },
+      pro: t(`${head}：月命星${innerName}落${innerPos === 4 ? "中宫" : LOSHU_DIRS[innerPos]}（内在情绪层面）`, `${head}: month star ${innerName} falls in ${where(LOSHU_DIRS[innerPos]!)} (the inner, emotional layer)`),
+      phrase: { ...innerPhrase, what: innerPhrase.what.map((w) => w.replace("{T}", t("{T}在内心层面，", "{T}, on the inside,"))) },
     }),
   );
 
@@ -73,17 +79,17 @@ function readBoard(star: number, innerStar: number, center: number, zhi: string,
         dim: "career",
         tone: "bad",
         weight: scope === "month" && h.weight === 3 ? 2 : h.weight,
-        pro: `${head}：本命星落${dir}，${why}（${h.label}）`,
+        pro: t(`${head}：本命星落${dir}，${why}（${h.label}）`, `${head}: your natal star falls in ${where(dir)}, ${why} (${h.label})`),
         phrase: h.phrase,
       }),
     );
   };
-  if (five !== 4 && pos === 8 - five) hazard("暗剣殺", `与五黄所在的${LOSHU_DIRS[five]}相对`);
-  if (five !== 4 && pos === five) hazard("五黄殺", "本命星本身是五黄土星");
+  if (five !== 4 && pos === 8 - five) hazard("暗剣殺", t(`与五黄所在的${LOSHU_DIRS[five]}相对`, `opposite ${where(LOSHU_DIRS[five]!)}, where 5 Yellow sits`));
+  if (five !== 4 && pos === five) hazard("五黄殺", t("本命星本身是五黄土星", "your natal star is 5 Yellow Earth itself"));
   const breakDir = DIR_OF_ZHI[(zhiIndex(zhi) + 6) % 12]!;
-  if (pos !== 4 && dir === breakDir) hazard(scope === "year" ? "歳破" : "月破", `${zhi}${scope === "year" ? "年" : "月"}的对冲方位为${breakDir}`);
+  if (pos !== 4 && dir === breakDir) hazard(scope === "year" ? "歳破" : "月破", t(`${zhi}${scope === "year" ? "年" : "月"}的对冲方位为${breakDir}`, `the direction opposite the ${zhiName(zhi)} ${scope} is ${where(breakDir)}`));
 
-  return { period: p, label: `${centerName}中宫 · 本命星落${pos === 4 ? "中宫" : dir}`, signals: limitSignals(out) };
+  return { period: p, label: t(`${centerName}中宫 · 本命星落${pos === 4 ? "中宫" : dir}`, `${centerName} in the centre · your star in ${where(pos === 4 ? "中宫" : dir)}`), signals: limitSignals(out) };
 }
 
 export const kyuseiForecast: ForecastFn = (chart, now): Forecast => {

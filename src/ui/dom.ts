@@ -46,7 +46,7 @@ export async function typewrite(el: HTMLElement, text: string, speed = 38): Prom
     for (const ch of text) {
       if (!el.isConnected) break;
       el.textContent += ch;
-      await new Promise((r) => setTimeout(r, "，。；：！？".includes(ch) ? speed * 6 : speed));
+      await new Promise((r) => setTimeout(r, "，。；：！？.;:!?".includes(ch) ? speed * 6 : speed));
     }
     el.textContent = text;
   }
@@ -116,11 +116,24 @@ export function colorHex(name: string): string {
     ["电光", "#3d7bff"], ["青", "#2aa5a0"], ["蓝", "#3b6fd8"], ["紫", "#8e5bd1"], ["银", "#c4ccd6"], ["灰", "#8a8f98"],
     ["炭", "#3a3c42"], ["白", "#f3f1ea"], ["黑", "#1c1c22"], ["红", "#e0453a"],
   ];
-  let hex = base.find(([k]) => name.includes(k))?.[1] ?? "#b9a6ff";
-  if (/[深墨暗夜]/.test(name)) hex = shade(hex, -0.35);
-  if (/[浅淡嫩月]/.test(name)) hex = shade(hex, 0.35);
+  const lower = name.toLowerCase();
+  if (lower.includes("rainbow")) return "linear-gradient(90deg,#ff5e5e,#ffc65e,#6ee07a,#5eb6ff,#b07bff)";
+  let hex = base.find(([k]) => name.includes(k))?.[1] ?? BASE_EN.find(([k]) => lower.includes(k))?.[1] ?? "#b9a6ff";
+  if (/[深墨暗夜]/.test(name) || /\b(deep|dark|ink|navy|midnight)\b/.test(lower)) hex = shade(hex, -0.35);
+  if (/[浅淡嫩月]/.test(name) || /\b(light|pale|fresh|soft|moon)\b/.test(lower)) hex = shade(hex, 0.35);
   return hex;
 }
+
+/** English colour words, most specific first, for the English data tables. */
+const BASE_EN: [string, string][] = [
+  ["wine", "#7b1e35"], ["burgundy", "#7b1e35"], ["rose", "#e2728f"], ["pink", "#f3a1bf"], ["vermilion", "#e3452c"], ["scarlet", "#e0394a"], ["crimson", "#9e2b3a"],
+  ["ochre", "#a5512f"], ["orange", "#f28a2e"], ["champagne", "#e6cf9a"], ["gold", "#e0b44c"], ["earth yellow", "#c9973e"], ["mustard", "#c9973e"], ["yellow", "#f2cc4c"],
+  ["coffee", "#6f4a2f"], ["tan", "#8b5a2b"], ["brown", "#8b5a2b"], ["apricot", "#f0c9a0"], ["beige", "#eadcbc"], ["cream", "#eadcbc"], ["ivory", "#f4ecd8"],
+  ["milk", "#f6f0e1"], ["pearl", "#efeae2"], ["olive", "#7f8b3a"], ["emerald", "#1fa36b"], ["jade", "#1fa36b"], ["grass", "#6cbf3c"], ["teal", "#22a596"], ["turquoise", "#22a596"],
+  ["cyan green", "#22a596"], ["green", "#3fae63"], ["indigo", "#3c46a5"], ["lake blue", "#2a9bc4"], ["sky blue", "#6ab7ef"], ["sea blue", "#1f6fb6"], ["royal blue", "#2847c9"],
+  ["electric", "#3d7bff"], ["cyan", "#2aa5a0"], ["azure", "#2a9bc4"], ["blue", "#3b6fd8"], ["violet", "#8e5bd1"], ["purple", "#8e5bd1"], ["lavender", "#b9a6ff"],
+  ["silver", "#c4ccd6"], ["grey", "#8a8f98"], ["gray", "#8a8f98"], ["charcoal", "#3a3c42"], ["white", "#f3f1ea"], ["black", "#1c1c22"], ["red", "#e0453a"],
+];
 
 function shade(hex: string, amt: number): string {
   const n = Number.parseInt(hex.slice(1), 16);

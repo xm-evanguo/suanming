@@ -1,3 +1,5 @@
+import { MAJOR_STARS_EN, PALACE_INFO_EN, MUTAGEN_EN } from "./en/ziwei";
+import { live } from "../i18n";
 import type { Brief, Scores, WuXing } from "./types";
 
 /** Build a Scores object from five integers (career, wealth, love, health, wisdom). */
@@ -13,7 +15,7 @@ const sc = (career: number, wealth: number, love: number, health: number, wisdom
  * The 14 major stars. `text` describes a person with the star in the life palace (命宫).
  * Element assignments follow the common table; sources differ for 贪狼 (木/水) and 巨门 (水/土).
  */
-export const MAJOR_STARS: Record<string, Brief & { scores: Scores; element: WuXing }> = {
+const MAJOR_STARS_ZH: Record<string, Brief & { scores: Scores; element: WuXing }> = {
   紫微: {
     name: "紫微",
     keywords: ["尊贵", "领导", "自尊", "统筹"],
@@ -114,7 +116,7 @@ export const MAJOR_STARS: Record<string, Brief & { scores: Scores; element: WuXi
   },
 };
 
-export const PALACE_INFO: Record<string, string> = {
+const PALACE_INFO_ZH: Record<string, string> = {
   命宫: "主宰一个人的先天性格、气质与一生的基本走向，是整张命盘的核心。",
   兄弟: "主管与兄弟姐妹、同辈朋友及合伙人的关系，也反映人际助力。",
   夫妻: "主管婚姻、恋爱与伴侣的性格，反映感情观与亲密关系的模式。",
@@ -129,7 +131,7 @@ export const PALACE_INFO: Record<string, string> = {
   父母: "主管与父母、长辈及上司的关系，也关乎学业、文书与外貌形象。",
 };
 
-export const MUTAGEN: Record<"禄" | "权" | "科" | "忌", Brief> = {
+const MUTAGEN_ZH: Record<"禄" | "权" | "科" | "忌", Brief> = {
   禄: {
     name: "化禄",
     keywords: ["福禄", "机缘", "圆融", "财源"],
@@ -154,3 +156,7 @@ export const MUTAGEN: Record<"禄" | "权" | "科" | "忌", Brief> = {
 
 export const EMPTY_SOUL_TEXT: string =
   "命宫无主星，称为“命无正曜”，需借对宫（迁移宫）的星曜来参看。这样的人可塑性强，容易受环境与际遇影响，既包容又多变；多接触不同的人与事，反而能活出独特的丰富层次。";
+
+export const MAJOR_STARS = live(MAJOR_STARS_ZH, MAJOR_STARS_EN);
+export const PALACE_INFO = live(PALACE_INFO_ZH, PALACE_INFO_EN);
+export const MUTAGEN = live(MUTAGEN_ZH, MUTAGEN_EN);

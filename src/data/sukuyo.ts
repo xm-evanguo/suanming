@@ -1,3 +1,5 @@
+import { SHUKU_EN, RELATION_EN } from "./en/sukuyo";
+import { live } from "../i18n";
 import type { Brief, Profile, Scores } from "./types";
 
 /** Sukuyo (宿曜占星術) lunar mansion profile. `jp` is the Japanese reading. */
@@ -14,7 +16,7 @@ const sc = (career: number, wealth: number, love: number, health: number, wisdom
 });
 
 /** 27 mansions in traditional order, starting at 昴 and ending at 胃. Element follows the 七曜 of each mansion. */
-export const SHUKU: Shuku[] = [
+const SHUKU_ZH: Shuku[] = [
   {
     name: "昴宿",
     jp: "ぼうしゅく",
@@ -504,7 +506,7 @@ export const SHUKU: Shuku[] = [
 ];
 
 /** The six relation types of 三九の秘法 between two people's mansions. */
-export const RELATION: Record<"命" | "业胎" | "荣亲" | "友衰" | "安坏" | "危成", Brief> = {
+const RELATION_ZH: Record<"命" | "业胎" | "荣亲" | "友衰" | "安坏" | "危成", Brief> = {
   命: {
     name: "命",
     keywords: ["同宿", "镜像", "共鸣", "放大"],
@@ -536,3 +538,6 @@ export const RELATION: Record<"命" | "业胎" | "荣亲" | "友衰" | "安坏" 
     text: "初期容易摩擦，甚至让人觉得危险，却能在磨合后共同成长。懂得沟通与包容，冲突便能转化为成就。",
   },
 };
+
+export const SHUKU = live(SHUKU_ZH, SHUKU_EN);
+export const RELATION = live(RELATION_ZH, RELATION_EN);

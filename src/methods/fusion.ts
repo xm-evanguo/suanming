@@ -2,9 +2,14 @@ import { WU_XING } from "../data/bazi";
 import type { Dim, Scores, WuXing } from "../data/types";
 import type { BaziVisual } from "./bazi";
 import type { MethodResult } from "./types";
+import { pick, t } from "../i18n";
+import { wxName } from "../data/en/terms";
 
 export const DIM_NAMES: Record<Dim, string> = { career: "事业", wealth: "财富", love: "感情", health: "健康", wisdom: "智慧" };
+export const DIM_NAMES_EN: Record<Dim, string> = { career: "Career", wealth: "Wealth", love: "Love", health: "Health", wisdom: "Wisdom" };
 export const DIMS = Object.keys(DIM_NAMES) as Dim[];
+/** The name of a life area in the current language. */
+export const dimName = (d: Dim) => pick(DIM_NAMES, DIM_NAMES_EN)[d];
 
 export interface Fusion {
   scores: Scores;
@@ -70,27 +75,34 @@ export function fuse(results: MethodResult[]): Fusion {
   const lucky = {
     colors: topByCount([...(sum ? WU_XING[weakElement].colors : []), ...results.flatMap((r) => r.lucky.colors)].map((c) => c.replace(/色$/, "")), 4),
     numbers: topByCount(results.flatMap((r) => r.lucky.numbers).filter((n) => n > 0 && n < 100), 4),
-    directions: topByCount(results.flatMap((r) => r.lucky.directions).filter((d) => d !== "中宫"), 2),
+    directions: topByCount(results.flatMap((r) => r.lucky.directions).filter((d) => d !== "中宫" && d !== "Centre"), 2),
   };
 
   const groups = [results.filter((r) => r.origin === "中国"), results.filter((r) => ["西方", "古希腊", "古罗马", "波斯"].includes(r.origin)), results.filter((r) => ["日本", "印度", "玛雅"].includes(r.origin))];
   const oracle = [
-    ...groups.filter((group) => group.length).map((group) => group.map((r) => `${r.name}：${r.headline}，${r.tagline}`).join("；") + "。"),
-    `${results.length} 种已启用体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是最值得经营的课题。${sum ? `五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}` : "所选体系没有五行资料。"}`,
+    ...groups
+      .filter((group) => group.length)
+      .map((group) => group.map((r) => t(`${r.name}：${r.headline}，${r.tagline}`, `${r.name}: ${r.headline}, ${r.tagline}`)).join(t("；", "; ")) + t("。", ".")),
+    t(
+      `${results.length} 种已启用体系的平均画像中，「${DIM_NAMES[strongest]}」最为闪耀（${scores[strongest]} 分，${topVotes[strongest]} 种体系视其为你的首要天赋），「${DIM_NAMES[weakest]}」是最值得经营的课题。${sum ? `五行能量以「${dominantElement}」最盛、「${weakElement}」最弱——${WU_XING[weakElement].lackText}` : "所选体系没有五行资料。"}`,
+      `Across the average of ${results.length} enabled systems, ${DIM_NAMES_EN[strongest]} shines brightest (${scores[strongest]} points; ${topVotes[strongest]} ${topVotes[strongest] === 1 ? "system sees" : "systems see"} it as your first gift), and ${DIM_NAMES_EN[weakest]} is the area most worth working on. ${sum ? `Among the five elements, ${wxName(dominantElement)} is strongest and ${wxName(weakElement)} is weakest. ${WU_XING[weakElement].lackText}` : "The selected systems have no five-element data."}`,
+    ),
   ];
 
   const outlook: Fusion["outlook"] = [];
-  const addFact = (id: string, labelIncludes: string) => {
-    const f = by[id]?.facts.find((x) => x.label.includes(labelIncludes));
-    if (f) outlook.push({ from: by[id]!.name, text: `${f.label}：${f.value}` });
+  // The methods use these exact fact labels and section title in each language.
+  const addFact = (id: string, zh: string, en: string) => {
+    const label = t(zh, en);
+    const f = by[id]?.facts.find((x) => x.label.includes(label));
+    if (f) outlook.push({ from: by[id]!.name, text: t(`${f.label}：${f.value}`, `${f.label}: ${f.value}`) });
   };
-  addFact("bazi", "太岁");
-  addFact("kyusei", "年盘");
-  addFact("tarot", "年度牌");
-  addFact("numerology", "个人流年");
-  addFact("vedic", "当前大运");
-  const dy = by.bazi?.sections.find((s) => s.title === "大运流转");
-  if (dy) outlook.push({ from: "生辰八字", text: dy.body.split("。")[0] ?? "" });
+  addFact("bazi", "太岁", "Tai Sui");
+  addFact("kyusei", "年盘", "Year chart");
+  addFact("tarot", "年度牌", "Year card");
+  addFact("numerology", "个人流年", "Personal year");
+  addFact("vedic", "当前大运", "Current dasha");
+  const dy = by.bazi?.sections.find((s) => s.title === t("大运流转", "Ten-year luck"));
+  if (dy) outlook.push({ from: by.bazi!.name, text: t(dy.body.split("。")[0] ?? "", dy.body.split(/(?<=\.) /)[0] ?? "") });
 
   return { scores, overall, strongest, weakest, topVotes, elements, dominantElement, weakElement, keywords, lucky, oracle, outlook };
 }

@@ -1,3 +1,5 @@
+import { NAKSHATRAS_EN, RASHI_EN } from "./en/nakshatra";
+import { live } from "../i18n";
 import type { Profile, Scores } from "./types";
 
 /** Vedic lunar mansion (Nakshatra). `ruler` is the Vimshottari dasha lord in Chinese. */
@@ -16,7 +18,7 @@ const sc = (career: number, wealth: number, love: number, health: number, wisdom
   wisdom,
 });
 
-export const NAKSHATRAS: Nakshatra[] = [
+const NAKSHATRAS_ZH: Nakshatra[] = [
   {
     name: "阿什维尼（马首）",
     sanskrit: "Ashwini",
@@ -560,7 +562,7 @@ export const NAKSHATRAS: Nakshatra[] = [
 ];
 
 /** 12 Vedic (sidereal) signs, Mesha to Meena. */
-export const RASHI: string[] = [
+const RASHI_ZH: string[] = [
   "梅沙 Mesha（白羊）",
   "弗里沙巴 Vrishabha（金牛）",
   "弥偷那 Mithuna（双子）",
@@ -574,3 +576,6 @@ export const RASHI: string[] = [
   "贡跋 Kumbha（水瓶）",
   "弥那 Meena（双鱼）",
 ];
+
+export const NAKSHATRAS = live(NAKSHATRAS_ZH, NAKSHATRAS_EN);
+export const RASHI = live(RASHI_ZH, RASHI_EN);

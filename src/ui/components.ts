@@ -1,5 +1,7 @@
 import type { Dim, Scores } from "../data/types";
-import { DIM_NAMES, DIMS } from "../methods/fusion";
+import { dimName, DIMS } from "../methods/fusion";
+import { isEn, t } from "../i18n";
+import { dirName } from "../data/en/terms";
 import { colorHex, countUp, h, reveal } from "./dom";
 
 const DIM_ICON = { career: "⚔", wealth: "◈", love: "❦", health: "✚", wisdom: "✧" } as const;
@@ -12,7 +14,7 @@ export function pressOnly(btn: Element) {
 }
 
 /** "⚔ 事业": the icon and name of a life dimension. */
-export const dimLabel = (d: Dim) => `${DIM_ICON[d]} ${DIM_NAMES[d]}`;
+export const dimLabel = (d: Dim) => `${DIM_ICON[d]} ${dimName(d)}`;
 
 /** Animated horizontal bars for the five life dimensions. */
 export function scoreBars(scores: Scores): HTMLElement {
@@ -52,9 +54,9 @@ export function luckyRow(l: { colors: string[]; numbers: number[]; directions: s
     "div",
     { class: "lucky" },
     l.colors.length > 0 &&
-      item("幸运色", ...l.colors.map((c) => h("span", { class: "swatch" }, h("i", { style: { background: colorHex(c) } }), c))),
-    l.numbers.length > 0 && item("幸运数字", ...l.numbers.map((n) => h("span", { class: "lucky-num" }, String(n)))),
-    l.directions.length > 0 && item("吉方位", ...l.directions.map((d) => h("span", { class: "lucky-dir" }, `🧭 ${d}`))),
+      item(t("幸运色", "Lucky colours"), ...l.colors.map((c) => h("span", { class: "swatch" }, h("i", { style: { background: colorHex(c) } }), c))),
+    l.numbers.length > 0 && item(t("幸运数字", "Lucky numbers"), ...l.numbers.map((n) => h("span", { class: "lucky-num" }, String(n)))),
+    l.directions.length > 0 && item(t("吉方位", "Lucky directions"), ...l.directions.map((d) => h("span", { class: "lucky-dir" }, `🧭 ${dirName(d)}`))),
   );
 }
 
@@ -84,6 +86,8 @@ export const onlyPlain = (...children: (Node | string | false | null | undefined
 
 export const TONE_MARK = { good: "▲", bad: "▼", mixed: "◆" } as const;
 export const TONE_NAME = { good: "顺", bad: "慎", mixed: "平" } as const;
+export const TONE_NAME_EN = { good: "favourable", bad: "caution", mixed: "mixed" } as const;
+export const toneName = (tone: keyof typeof TONE_MARK) => (isEn() ? TONE_NAME_EN[tone] : TONE_NAME[tone]);
 
 /**
  * One statement from one system. Pro mode shows the rule and the everyday sentence;
@@ -93,7 +97,7 @@ export function statement(s: { tone: keyof typeof TONE_MARK; weight: number; pro
   return h(
     "li",
     { class: `stmt tone-${s.tone} w${s.weight}`, style: { "--i": i } as never },
-    h("i", { class: "stmt-mark", "aria-label": TONE_NAME[s.tone] }, TONE_MARK[s.tone]),
+    h("i", { class: "stmt-mark", "aria-label": toneName(s.tone) }, TONE_MARK[s.tone]),
     h("div", null, h("p", { class: "stmt-plain" }, s.plain), h("p", { class: "stmt-pro only-pro" }, s.pro), h("small", { class: "stmt-src" }, source)),
   );
 }

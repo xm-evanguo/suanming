@@ -3,6 +3,8 @@ import { Acc, REL_PHRASE, bareWord, groupOf, pickText, REL_WORD, type ByGroup, w
 import { RELATION, SHUKU } from "../data/sukuyo";
 import { relationOf, shukuIndex } from "../methods/sukuyo";
 import type { CompatFn, CompatTag } from "./types";
+import { capFirst, isEn, listJoin, t } from "../i18n";
+import { wxName } from "../data/en/terms";
 
 type Rel = keyof typeof RELATION;
 
@@ -15,13 +17,20 @@ export const ringOf = (self: number, other: number): "近" | "中" | "远" => {
   return d < 9 ? "近" : d < 18 ? "中" : "远";
 };
 
+const RING_EN: Record<"近" | "中" | "远", string> = { 近: "near", 中: "middle", 远: "far" };
+const RING_NOTE_EN: Record<"近" | "中" | "远", string> = {
+  近: "near: the most direct influence",
+  中: "middle distance: a moderate influence",
+  远: "far: a lighter influence that shows more as you spend time together",
+};
+const ringNote = (r: "近" | "中" | "远") => (isEn() ? RING_NOTE_EN : RING_NOTE)[r];
 const RING_NOTE: Record<"近" | "中" | "远", string> = {
   近: "近距离，影响最直接",
   中: "中距离，影响适中",
   远: "远距离，影响较淡，随接触增多才显现",
 };
 
-const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: CompatTag[]; delta: number; text: (w: string, wb: string, wd: string) => ByGroup }> = {
+const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: CompatTag[]; delta: number; text: (w: string, wb: string, wd: string) => ByGroup; en: (w: string, wb: string, wd: string) => ByGroup }> = {
   命: {
     tone: "mixed",
     weight: 2,
@@ -32,6 +41,12 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       elder: `${wd}像一个模子刻出来：脾气、口头禅都有点像。你能理解 TA 的出发点，也容易和 TA 在同一件事上同时着急。`,
       peer: "你们是同一类人，一见面就知道对方在想什么。缺点是缺的东西也一样，重要的事最好找第三个人把关。",
       child: `${w}有不少地方像你年轻时的样子。看到 TA 的缺点，先想想“我是不是也这样”，批评会更温和。`,
+    }),
+    en: (w, wb, wd) => ({
+      romance: "Your natures are like the two sides of a mirror: you see their strengths at a glance, and their bad habits too. In arguments you tend to magnify each other's feelings; pause for three minutes before you speak.",
+      elder: `${capFirst(wd)} are cut from the same cloth, down to temper and turns of phrase. You understand where they are coming from, and you may both worry about the same thing at once.`,
+      peer: "You are the same kind of person and know what the other is thinking as soon as you meet. The catch is that you lack the same things, so have a third person check important matters.",
+      child: `${capFirst(w)} is a lot like you were when young. When you see their flaws, ask yourself whether you are the same, and your criticism will be gentler.`,
     }),
   },
   业胎: {
@@ -45,6 +60,12 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       peer: "你们之间有一种说不清的牵引，分开一阵后还会想联系。这样的缘分适合做长久的朋友或搭档，只要别把对方当成自己的责任。",
       child: `${wd}的缘分很深，对 TA 的牵挂也特别重。放手让 TA 试一试，往往比盯着更能守住这份缘分。`,
     }),
+    en: (w, wb, wd) => ({
+      romance: "Your bond has a pull that feels like you have known each other before: you miss each other easily and find it hard to let go. A bond like this is deep but not easy; it needs patience on both sides, and saying how you feel rather than waiting to be guessed.",
+      elder: `The tie between ${wd} runs very deep, beyond ordinary family feeling. When something happens, you think one step further for each other without meaning to, and so you also worry more about each other's choices.`,
+      peer: "There is a pull between you that is hard to name; after time apart you still want to get in touch. A bond like this suits a lifelong friendship or partnership, as long as you do not treat the other as your responsibility.",
+      child: `The bond between ${wd} is deep, and you worry about them a lot. Letting them try things often protects this bond better than watching them closely.`,
+    }),
   },
   荣亲: {
     tone: "good",
@@ -56,6 +77,12 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       elder: `${wd}互相成就：你做得好，TA 为你高兴；TA 需要帮忙，你也自然想出手。有重要的决定，可以放心先和 TA 商量。`,
       peer: "你们在一起时运气会更好：一个人做不成的事，两个人常常能做成。适合合伙做事、一起学习或长期互相推荐机会。",
       child: `${wd}彼此都愿意为对方多想一点。多一起做点小事，比如做饭、散步，这份亲近会很稳。`,
+    }),
+    en: (w, wb, wd) => ({
+      romance: "This is a very comfortable kind of match: you relax easily together and both want to be good to each other. When trouble comes, you tend to work it out together rather than blame each other.",
+      elder: `${capFirst(wd)} lift each other up: when you do well, they are glad for you; when they need help, you naturally want to step in. With important decisions, you can safely talk them over with them first.`,
+      peer: "Luck is better when you are together: what one cannot do alone, two often can. Good for going into business together, studying together or passing chances to each other over the long run.",
+      child: `${capFirst(wd)} both want to think a little more of the other. Doing small things together, such as cooking or walking, keeps this closeness steady.`,
     }),
   },
   友衰: {
@@ -69,6 +96,12 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       peer: "你们很容易成为朋友，一起玩、一起吃饭都轻松。但帮忙和金钱来往最好说清楚，让友情不被消耗。",
       child: `${wd}很亲近，你也容易为 TA 做很多。别替 TA 把所有事都包下来，该让 TA 自己承担的，要放手。`,
     }),
+    en: (w, wb, wd) => ({
+      romance: "You clicked at first, talk easily and are happy to do things for each other. Over time, one of you may grow tired from giving more. Love needs give and take; each keep some time for yourself.",
+      elder: `${capFirst(wd)} got along from the start and are willing to help each other. Over the years one side tends to give more. Asking \"Have you been tired lately?\" now and then beats waiting for complaints.`,
+      peer: "You easily become friends; going out and eating together is easy. But be clear about favours and money, so the friendship is not worn down.",
+      child: `${capFirst(wd)} are close, and you tend to do a lot for them. Do not take everything on for them; let go of what they should carry themselves.`,
+    }),
   },
   安坏: {
     tone: "mixed",
@@ -80,6 +113,12 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       elder: `${wd}之间有一定的“上下感”，一方习惯说了算，另一方容易觉得被压住。把“我想要什么”说出来，比事后忍着更有效。`,
       peer: "你们在一起时容易有谁主导的问题。合作前把角色讲明白，轮流当负责人，能避免暗暗较劲。",
       child: `${wd}之间的强弱差距明显，一方容易觉得被管着。多用商量的口气，少用命令。`,
+    }),
+    en: (w, wb, wd) => ({
+      romance: "The pull between you is strong, but there is a clear imbalance: one of you always feels they are the one giving way. Attraction stays fresh through respect; take turns making important decisions.",
+      elder: `There is a sense of rank between ${wd}: one is used to having the last word, and the other easily feels held down. Saying \"this is what I want\" works better than putting up with it afterwards.`,
+      peer: "When you are together, who leads tends to become an issue. Make the roles clear before working together and take turns being in charge, to avoid quiet tugs of war.",
+      child: `The gap in strength between ${wd} is clear, and one side easily feels managed. Use the tone of discussion more and orders less.`,
     }),
   },
   危成: {
@@ -93,12 +132,19 @@ const MAIN: Record<Rel, { tone: "good" | "mixed" | "bad"; weight: 2 | 3; tags: C
       peer: "你们初期容易争论，意见不合时分歧很直接。把争论限定在事情上，之后往往能成为互相打磨的搭档。",
       child: `${wd}初期容易有碰撞。每次冲突后，找一个轻松的方式和解，比如一起吃顿饭，关系会越磨越顺。`,
     }),
+    en: (w, wb, wd) => ({
+      romance: "At first there is quite a lot of friction, and a small thing can strike sparks. But if you are willing to talk things through, you will grow more mature and more in tune through the adjusting.",
+      elder: `${capFirst(wd)} often clash at first, and talking may even feel hard. Once you are through the adjusting stage, you will find the other is the one who understands you best.`,
+      peer: "You argue easily at first, and disagreements are blunt. Keep arguments to the work, and you can become partners who sharpen each other.",
+      child: `${capFirst(wd)} tend to collide early on. After each conflict, make up in a relaxed way, such as a meal together, and things will get smoother.`,
+    }),
   },
 };
 
 const stepPro = (self: number, other: number, rel: Rel): string => {
   const d = (other - self + 27) % 27;
   const step = d === 0 ? "命" : d === 9 ? "业" : d === 18 ? "胎" : STEP[d % 9];
+  if (isEn()) return `Your natal mansion ${SHUKU[self]!.name} and theirs ${SHUKU[other]!.name}: theirs is ${d} places after yours, the ${RELATION[rel].name} relation in the Three-Nine method, ${ringNote(ringOf(self, other))}.`;
   return `你的本命宿${SHUKU[self]!.name}与TA的本命宿${SHUKU[other]!.name}：TA 的宿位在你之后第 ${d} 位（${step}位），属三九秘法「${rel}」，${RING_NOTE[ringOf(self, other)]}。`;
 };
 
@@ -116,7 +162,7 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
   const rel = relationOf(mi, oi);
   const ring = ringOf(mi, oi);
   const main = MAIN[rel];
-  const mainTags: CompatTag[] = withCareer(relation, romance ? main.tags : main.tags.filter((t) => t !== "attraction"));
+  const mainTags: CompatTag[] = withCareer(relation, romance ? main.tags : main.tags.filter((tag) => tag !== "attraction"));
 
   acc.add(
     {
@@ -125,7 +171,7 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
       tags: mainTags,
       dim: romance ? "love" : undefined,
       pro: stepPro(mi, oi, rel),
-      plain: pickText(main.text(w, wb, wd), relation),
+      plain: pickText(main.text(w, wb, wd), relation, main.en(w, wb, wd)),
     },
     main.delta,
   );
@@ -139,7 +185,10 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
       tone: pos ? "good" : "mixed",
       weight: 1,
       tags: ["fate"],
-      pro: `两宿距离属「${ring}」：${RING_NOTE[ring]}（三九秘法以 9 宿为一环：近 = 命之环，中 = 业之环，远 = 胎之环）。`,
+      pro: t(
+        `两宿距离属「${ring}」：${RING_NOTE[ring]}（三九秘法以 9 宿为一环：近 = 命之环，中 = 业之环，远 = 胎之环）。`,
+        `The two mansions are at ${RING_EN[ring]} distance: ${ringNote(ring)} (the Three-Nine method groups mansions in rings of 9: near = life ring, middle = karma ring, far = womb ring).`,
+      ),
       plain:
         ring === "近"
           ? pickText(
@@ -150,10 +199,16 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
                 child: `${wd}之间的互动直接而明显，情绪来得快也去得快。`,
               },
               relation,
+              {
+                romance: hard ? "This pull comes fast and direct; the feeling is strong, but do not decide too quickly. After a few months together, see whether you are on the same road." : "This bond lets you feel each other quickly; after a few meetings you will know whether you fit.",
+                elder: `The traits of ${wd} show up very directly: the good gets better, and the irritating gets more irritating. More time together deepens your understanding.`,
+                peer: "You can tell quickly whether the other is your kind of person; the feeling between you is direct.",
+                child: `Things between ${wd} are direct and obvious; feelings come fast and go fast.`,
+              },
             )
           : ring === "中"
-            ? "这份缘分不算很浓，也不算很淡。需要一些共同的经历，慢慢把关系做深。"
-            : "你们的缘分偏淡，不会一见面就天雷勾地火。多一起做事、多见面，关系会比第一印象好很多。",
+            ? t("这份缘分不算很浓，也不算很淡。需要一些共同的经历，慢慢把关系做深。", "This bond is neither very strong nor very faint. It needs shared experiences to deepen slowly.")
+            : t("你们的缘分偏淡，不会一见面就天雷勾地火。多一起做事、多见面，关系会比第一印象好很多。", "Your bond is on the faint side; there will be no fireworks at first meeting. Do more together and meet more often, and the relationship will turn out far better than the first impression."),
     },
     ringDelta * (hard ? -1 : 1) * 2,
   );
@@ -169,12 +224,12 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
         tone: goodEl ? "good" : "mixed",
         weight: 1,
         tags: goodEl ? withCareer(relation, ["harmony", "support"]) : ["growth"],
-        pro: `两宿的五行：你的${SHUKU[mi]!.name}属${me2}，TA 的${SHUKU[oi]!.name}属${ot2}，TA ${REL_PHRASE[r]}。`,
+        pro: t(`两宿的五行：你的${SHUKU[mi]!.name}属${me2}，TA 的${SHUKU[oi]!.name}属${ot2}，TA ${REL_PHRASE[r]}。`, `Mansion elements: your ${SHUKU[mi]!.name} is ${wxName(me2)}, their ${SHUKU[oi]!.name} is ${wxName(ot2)}; they ${REL_PHRASE[r]}.`),
         plain: goodEl
-          ? "TA 的节奏和你的相处起来比较顺：你累的时候 TA 不会添乱，你有想法的时候 TA 也愿意听。"
+          ? t("TA 的节奏和你的相处起来比较顺：你累的时候 TA 不会添乱，你有想法的时候 TA 也愿意听。", "Their rhythm fits well with yours: when you are tired they do not add to the load, and when you have ideas they are willing to listen.")
           : r === "我生"
-            ? "你们之间，你付出得更自然。可以多问问 TA 需要什么，而不是凭感觉去帮忙。"
-            : "你们的节奏有些错位，一方快一方慢。约好“多久碰一次头”，比等到出问题再沟通更好。",
+            ? t("你们之间，你付出得更自然。可以多问问 TA 需要什么，而不是凭感觉去帮忙。", "Between you, giving comes more naturally to you. Ask what they need rather than helping by guesswork.")
+            : t("你们的节奏有些错位，一方快一方慢。约好“多久碰一次头”，比等到出问题再沟通更好。", "Your rhythms are a little out of step: one fast, one slow. Agreeing how often to check in beats waiting for problems before talking."),
       },
       goodEl ? 4 : -1,
     );
@@ -187,16 +242,18 @@ export const sukuyoCompat: CompatFn = (me, other, relation) => {
       tone: "good",
       weight: 1,
       tags: g === "elder" ? ["growth", "support"] : ["growth"],
-      pro: `TA 的本命宿为${os.name}（${os.title}），关键词：${os.keywords.slice(0, 3).join("、")}。`,
+      pro: t(`TA 的本命宿为${os.name}（${os.title}），关键词：${os.keywords.slice(0, 3).join("、")}。`, `Their natal mansion is ${os.name} (${os.title.toLowerCase()}); keywords: ${listJoin(os.keywords.slice(0, 3))}.`),
       plain:
         g === "elder"
-          ? `你可以向${wb}学「${os.keywords.slice(0, 2).join("、")}」这一类的做法。留意 TA 在难关面前怎么做，比听 TA 讲道理更能学到东西。`
-          : `TA 最鲜明的底色是「${os.keywords.slice(0, 2).join("、")}」。把它当成你身边的一面镜子：遇到需要这类特质的场合，可以请 TA 带你一起。`,
+          ? t(`你可以向${wb}学「${os.keywords.slice(0, 2).join("、")}」这一类的做法。留意 TA 在难关面前怎么做，比听 TA 讲道理更能学到东西。`, `You can learn from ${wb} how to be ${listJoin(os.keywords.slice(0, 2))}. Watching how they face hard times teaches more than listening to their advice.`)
+          : t(`TA 最鲜明的底色是「${os.keywords.slice(0, 2).join("、")}」。把它当成你身边的一面镜子：遇到需要这类特质的场合，可以请 TA 带你一起。`, `Their most vivid traits are \"${listJoin(os.keywords.slice(0, 2))}\". Treat them as a mirror beside you: when a situation calls for those traits, ask them to bring you along.`),
     },
     1,
   );
 
   const relName = RELATION[rel].name;
-  const headline = `${relName}之缘 · ${ring}距离${rel === "荣亲" ? " · 互利吉缘" : rel === "业胎" ? " · 宿缘深厚" : rel === "命" ? " · 同宿相映" : ""}`;
-  return { methodId: "sukuyo", name: "宿曜三九", score: acc.score(), headline, items: acc.list() };
+  const headline = isEn()
+    ? `${relName} bond · ${RING_EN[ring]} distance${rel === "荣亲" ? " · mutual benefit" : rel === "业胎" ? " · deep destined bond" : rel === "命" ? " · same mansion" : ""}`
+    : `${relName}之缘 · ${ring}距离${rel === "荣亲" ? " · 互利吉缘" : rel === "业胎" ? " · 宿缘深厚" : rel === "命" ? " · 同宿相映" : ""}`;
+  return { methodId: "sukuyo", name: t("宿曜三九", "Sukuyō matching"), score: acc.score(), headline, items: acc.list() };
 };

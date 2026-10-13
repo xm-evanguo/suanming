@@ -1,9 +1,11 @@
+import { AREAS_EN, FOCUS_TEMPLATES_EN, MUTAGEN_TEMPLATES_EN, HELPER_PHRASES_EN } from "./en/forecast-ziwei";
+import { live } from "../i18n";
 /** Plain-language texts for the 紫微斗数 period forecast. */
 import type { Phrase } from "./forecast-common";
 import type { Dim } from "./types";
 
 /** What each natal palace stands for in daily life. `topic` and `scenes` fill the templates below. */
-export const AREAS: Record<string, { dim: Dim; topic: string; scenes: string[] }> = {
+const AREAS_ZH: Record<string, { dim: Dim; topic: string; scenes: string[] }> = {
   命宫: { dim: "wisdom", topic: "你自己的状态和想法", scenes: ["个人形象和自我感觉", "你对自己的新规划"] },
   兄弟: { dim: "career", topic: "同辈和合作伙伴", scenes: ["和同事、同行的合作", "和兄弟姐妹的往来"] },
   夫妻: { dim: "love", topic: "感情和伴侣关系", scenes: ["和伴侣的相处", "新认识的人", "你对一段关系的期待"] },
@@ -19,7 +21,7 @@ export const AREAS: Record<string, { dim: Dim; topic: string; scenes: string[] }
 };
 
 /** Templates by transformation. `{topic}` and `{scene}` come from AREAS. */
-export const MUTAGEN_TEMPLATES: Record<"禄" | "权" | "科" | "忌", string[]> = {
+const MUTAGEN_TEMPLATES_ZH: Record<"禄" | "权" | "科" | "忌", string[]> = {
   禄: [
     "{T}{topic}上比较顺，{scene}容易有好消息。",
     "{T}在{scene}上，容易遇到顺心的事和帮得上忙的人。",
@@ -41,13 +43,13 @@ export const MUTAGEN_TEMPLATES: Record<"禄" | "权" | "科" | "忌", string[]> 
 };
 
 /** Palace-focus sentence: the period's life palace sits on this natal palace. */
-export const FOCUS_TEMPLATES: string[] = [
+const FOCUS_TEMPLATES_ZH: string[] = [
   "{T}你的注意力会集中在{topic}上，尤其是{scene}。",
   "{T}{topic}成了生活的重点，{scene}会占掉你不少心思。",
   "{T}围绕{topic}的事会变多，比如{scene}。",
 ];
 
-export const HELPER_PHRASES: Record<string, Phrase> = {
+const HELPER_PHRASES_ZH: Record<string, Phrase> = {
   贵人命: {
     what: [
       "{T}容易遇到愿意拉你一把的人，比如老同事、前辈或上司。想推进的事，主动约他们聊一聊。",
@@ -114,3 +116,8 @@ export const HELPER_PHRASES: Record<string, Phrase> = {
     ],
   },
 };
+
+export const AREAS = live(AREAS_ZH, AREAS_EN);
+export const MUTAGEN_TEMPLATES = live(MUTAGEN_TEMPLATES_ZH, MUTAGEN_TEMPLATES_EN);
+export const HELPER_PHRASES = live(HELPER_PHRASES_ZH, HELPER_PHRASES_EN);
+export const FOCUS_TEMPLATES = live(FOCUS_TEMPLATES_ZH, FOCUS_TEMPLATES_EN);

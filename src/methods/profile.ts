@@ -1,15 +1,16 @@
-import { PLAIN_BODY, PLAIN_BODY_DEFAULT } from "../data/plain-common";
+import { PLAIN_BODY, plainBodyDefault } from "../data/plain-common";
 import type { Profile } from "../data/types";
-import type { MethodResult, Section } from "./types";
+import { sep, t } from "../i18n";
+import { plainTitles, type MethodResult, type Section } from "./types";
 
 /** Standard reading sections for an archetype profile. */
 export function profileSections(p: Profile, prefix = ""): Section[] {
   return [
-    { title: `${prefix}性格本质`, body: `${p.summary}${p.personality}` },
-    { title: "事业财运", body: p.career },
-    { title: "感情人际", body: p.love },
-    { title: "健康能量", body: p.health },
-    { title: "星语箴言", body: p.advice },
+    { title: `${prefix}${t("性格本质", "Character")}`, body: [p.summary, p.personality].join(sep()) },
+    { title: t("事业财运", "Career and money"), body: p.career },
+    { title: t("感情人际", "Love and people"), body: p.love },
+    { title: t("健康能量", "Health and energy"), body: p.health },
+    { title: t("星语箴言", "Words of advice"), body: p.advice },
   ];
 }
 
@@ -26,11 +27,12 @@ export function profileLucky(p: Profile): MethodResult["lucky"] {
  * `adviceExtra` is appended to the advice block (e.g. a yearly note).
  */
 export function plainProfileSections(p: Profile, lead: string, adviceExtra = ""): Section[] {
-  const body = p.element ? PLAIN_BODY[p.element] : PLAIN_BODY_DEFAULT;
+  const body = p.element ? PLAIN_BODY[p.element] : plainBodyDefault();
+  const titles = plainTitles();
   return [
-    { title: "你是怎样的人", body: `${lead}${p.personality}` },
-    { title: "适合做什么", body: p.career },
-    { title: "感情里的你", body: p.love },
-    { title: "给你的建议", body: `${p.advice}${body}${adviceExtra}` },
+    { title: titles.who, body: [lead, p.personality].filter(Boolean).join(sep()) },
+    { title: titles.work, body: p.career },
+    { title: titles.love, body: p.love },
+    { title: titles.advice, body: [p.advice, body, adviceExtra].filter(Boolean).join(sep()) },
   ];
 }

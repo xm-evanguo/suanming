@@ -5,6 +5,9 @@ import { GOD_RULES, PARTNER_PHRASE, RHYTHM_PHRASE, SHENSHA_RULES, SPOUSE_RULES, 
 import type { WuXing } from "../data/types";
 import { bazi } from "../methods/bazi";
 import { taiSuiRelation } from "../methods/shengxiao";
+import { isEn, listJoin, t } from "../i18n";
+import { ganWx, ganName, gzName, shishenName, wxName, zhiName } from "../data/en/terms";
+import { taiSuiName } from "../methods/shengxiao";
 import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, type Signal, type Tone } from "./types";
 
 /** Ten god of `other` relative to the day master `self` (both are stems). */
@@ -55,6 +58,7 @@ const yiMa = (base: number) => trioTarget(base, [2, 8, 11, 5]);
 const taoHua = (base: number) => trioTarget(base, [9, 3, 6, 0]);
 
 const PARTNER_GODS: Record<"male" | "female", string[]> = { male: ["正财", "偏财"], female: ["正官", "七杀"] };
+const SPOUSE_EN: Record<string, string> = { 伏吟: "a repeat (Fu Yin)", 六合: "Six Harmony", 冲: "a clash", 害: "a harm", 三合: "Three Harmony" };
 
 interface Ctx {
   dayGan: string;
@@ -97,11 +101,12 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
   const stemWx = ganWuXing(stem);
   const branchWx = zhiWuXing(branch);
   const fv = favorOf(c, stemWx) * 2 + favorOf(c, branchWx);
-  const tag = scope === "year" ? "流年" : "流月";
+  const tag = scope === "year" ? t("流年", "Year") : t("流月", "Month");
   const key = (rule: string) => `bazi:${scope}:${p.year}-${p.month ?? 0}:${rule}`;
-  const head = `${tag}${gz}`;
-  const dm = `${c.dayGan}${ganWuXing(c.dayGan)}日主`;
-  const favNote = fv >= 2 ? "，干支五行为喜用，助力" : fv <= -2 ? "，干支五行不利日主，偏弱" : "";
+  const head = isEn() ? `${tag} ${gzName(gz)}` : `${tag}${gz}`;
+  const dm = isEn() ? `the ${ganWx(c.dayGan, ganWuXing(c.dayGan))} Day Master` : `${c.dayGan}${ganWuXing(c.dayGan)}日主`;
+  const favNote = fv >= 2 ? t("，干支五行为喜用，助力", "; both elements are useful, a boost") : fv <= -2 ? t("，干支五行不利日主，偏弱", "; both elements work against the Day Master, weaker") : "";
+  const z = zhiName;
   const out: Signal[] = [];
 
   const stemGod = tenGod(c.dayGan, stem);
@@ -119,7 +124,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
           dim: rule.dim,
           tone: adjust(rule.tone, fv, rel.name === "冲太岁"),
           weight: rule.weight,
-          pro: `${head}：流年支${branch}与年支${c.yearZhi}（生肖）成「${rel.name}」`,
+          pro: t(`${head}：流年支${branch}与年支${c.yearZhi}（生肖）成「${rel.name}」`, `${head}: year branch ${z(branch)} with your year branch ${z(c.yearZhi)} (zodiac animal) forms ${taiSuiName(rel.name)}`),
           phrase: rule.phrase,
         }),
       );
@@ -136,7 +141,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: rule.dim,
         tone: rule.tone,
         weight: fv >= 2 ? 3 : 2,
-        pro: `${head}：${branch}为${c.dayGan}日主的天乙贵人${fv >= 2 ? "，且干支喜用，贵人得力" : ""}`,
+        pro: t(`${head}：${branch}为${c.dayGan}日主的天乙贵人${fv >= 2 ? "，且干支喜用，贵人得力" : ""}`, `${head}: ${z(branch)} is the Heavenly Noble of the ${ganName(c.dayGan)} Day Master${fv >= 2 ? ", and the elements are useful, so the helper is strong" : ""}`),
         phrase: rule.phrase,
       }),
     );
@@ -152,7 +157,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
       dim: god.dim,
       tone: godTone,
       weight: godTone === "good" && fv === 3 ? 3 : 2,
-      pro: `${head}：天干${stem}对${dm}为${stemGod}（${god.meaning}）${favNote}`,
+      pro: t(`${head}：天干${stem}对${dm}为${stemGod}（${god.meaning}）${favNote}`, `${head}: stem ${ganName(stem)} is ${shishenName(stemGod)} to ${dm} (${god.meaning})${favNote}`),
       phrase: god.phrase,
     }),
   );
@@ -164,7 +169,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: god.extra.dim,
         tone: adjust(god.extra.tone, fv),
         weight: 1,
-        pro: `${head}：${stemGod}的另一面（${god.meaning}）`,
+        pro: t(`${head}：${stemGod}的另一面（${god.meaning}）`, `${head}: the other side of ${shishenName(stemGod)} (${god.meaning})`),
         phrase: god.extra.phrase,
       }),
     );
@@ -180,7 +185,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: bg.dim,
         tone: adjust(bg.tone, fv >= 1 ? 2 : fv <= -1 ? -2 : 0, CAN_FALL.has(branchGod)),
         weight: 1,
-        pro: `${head}：地支${branch}本气${MAIN_QI[bi]}对${dm}为${branchGod}（${bg.meaning}）`,
+        pro: t(`${head}：地支${branch}本气${MAIN_QI[bi]}对${dm}为${branchGod}（${bg.meaning}）`, `${head}: the main qi ${ganName(MAIN_QI[bi]!)} of branch ${z(branch)} is ${shishenName(branchGod)} to ${dm} (${bg.meaning})`),
         phrase: bg.phrase,
       }),
     );
@@ -198,7 +203,10 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: "love",
         tone: adjust(steady ? "good" : "mixed", fv),
         weight: partnerGod === stemGod ? 2 : 1,
-        pro: `${head}：${c.gender === "male" ? "男命以财为妻星" : "女命以官杀为夫星"}，${partnerGod}${partnerGod === stemGod ? "透干" : "藏于地支"}`,
+        pro: t(
+          `${head}：${c.gender === "male" ? "男命以财为妻星" : "女命以官杀为夫星"}，${partnerGod}${partnerGod === stemGod ? "透干" : "藏于地支"}`,
+          `${head}: ${c.gender === "male" ? "in a man's chart Wealth is the wife star" : "in a woman's chart Officer and Seven Killings are the husband star"}; ${shishenName(partnerGod)} ${partnerGod === stemGod ? "shows in the stem" : "is hidden in the branch"}`,
+        ),
         phrase: PARTNER_PHRASE[steady ? "steady" : "passion"],
       }),
     );
@@ -220,7 +228,7 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: "love",
         tone: adjust(rule.tone, spouse === "冲" ? fv : 0, spouse === "冲"),
         weight: spouse === "六合" && fv >= 2 ? 2 : rule.weight,
-        pro: `${head}：${branch}与日支${c.dayZhi}（配偶宫）成${spouse === "伏吟" ? "伏吟" : `「${spouse}」`}`,
+        pro: t(`${head}：${branch}与日支${c.dayZhi}（配偶宫）成${spouse === "伏吟" ? "伏吟" : `「${spouse}」`}`, `${head}: ${z(branch)} with your day branch ${z(c.dayZhi)} (spouse palace) forms ${SPOUSE_EN[spouse]}`),
         phrase: rule.phrase,
       }),
     );
@@ -230,21 +238,22 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
   if (WEN_CHANG[c.dayGan] === branch) {
     const rule = SHENSHA_RULES["文昌"]!;
     out.push(
-      buildSignal({ key: key("文昌"), scope, dim: rule.dim, tone: rule.tone, weight: fv >= 2 ? 2 : 1, pro: `${head}：${branch}为${c.dayGan}日主的文昌`, phrase: rule.phrase }),
+      buildSignal({ key: key("文昌"), scope, dim: rule.dim, tone: rule.tone, weight: fv >= 2 ? 2 : 1, pro: t(`${head}：${branch}为${c.dayGan}日主的文昌`, `${head}: ${z(branch)} is the Literary Star of the ${ganName(c.dayGan)} Day Master`), phrase: rule.phrase }),
     );
   }
-  const yiBases = [["日支", c.dayZhi], ["年支", c.yearZhi]].filter(([, z]) => yiMa(zhiIndex(z!)) === bi).map(([n, z]) => `${n}${z}`);
+  const bases = [[t("日支", "day branch "), c.dayZhi], [t("年支", "year branch "), c.yearZhi]];
+  const yiBases = bases.filter(([, zz]) => yiMa(zhiIndex(zz!)) === bi).map(([n, zz]) => `${n}${z(zz!)}`);
   if (yiBases.length) {
     const rule = SHENSHA_RULES["驿马"]!;
     out.push(
-      buildSignal({ key: key("驿马"), scope, dim: rule.dim, tone: rule.tone, weight: yiBases.length > 1 ? 2 : 1, pro: `${head}：${branch}为${yiBases.join("、")}的驿马`, phrase: rule.phrase }),
+      buildSignal({ key: key("驿马"), scope, dim: rule.dim, tone: rule.tone, weight: yiBases.length > 1 ? 2 : 1, pro: t(`${head}：${branch}为${yiBases.join("、")}的驿马`, `${head}: ${z(branch)} is the Travelling Horse of your ${listJoin(yiBases)}`), phrase: rule.phrase }),
     );
   }
-  const taoBases = [["日支", c.dayZhi], ["年支", c.yearZhi]].filter(([, z]) => taoHua(zhiIndex(z!)) === bi).map(([n, z]) => `${n}${z}`);
+  const taoBases = bases.filter(([, zz]) => taoHua(zhiIndex(zz!)) === bi).map(([n, zz]) => `${n}${z(zz!)}`);
   if (taoBases.length) {
     const rule = SHENSHA_RULES["桃花"]!;
     out.push(
-      buildSignal({ key: key("桃花"), scope, dim: rule.dim, tone: rule.tone, weight: taoBases.length > 1 ? 2 : 1, pro: `${head}：${branch}为${taoBases.join("、")}的桃花（咸池）`, phrase: rule.phrase }),
+      buildSignal({ key: key("桃花"), scope, dim: rule.dim, tone: rule.tone, weight: taoBases.length > 1 ? 2 : 1, pro: t(`${head}：${branch}为${taoBases.join("、")}的桃花（咸池）`, `${head}: ${z(branch)} is the Peach Blossom of your ${listJoin(taoBases)}`), phrase: rule.phrase }),
     );
   }
 
@@ -252,7 +261,9 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
   // Always at least two signals: a plain rhythm line when the element score is neutral.
   if (Math.abs(fv) >= 2 || out.length < 2) {
     const kind = fv >= 2 ? "fit" : fv <= -2 ? "off" : "flat";
-    const proNote = kind === "fit" ? "皆合喜用" : kind === "off" ? "皆不合喜用" : "与喜用相互抵消，不偏不倚";
+    const proNote = isEn()
+      ? kind === "fit" ? "both useful" : kind === "off" ? "neither useful" : "useful and not useful cancel out"
+      : kind === "fit" ? "皆合喜用" : kind === "off" ? "皆不合喜用" : "与喜用相互抵消，不偏不倚";
     out.push(
       buildSignal({
         key: key("rhythm"),
@@ -260,16 +271,19 @@ function readPeriod(c: Ctx, p: Period, gz: string, scope: Scope): PeriodReading 
         dim: "health",
         tone: kind === "fit" ? "good" : "mixed",
         weight: 1,
-        pro: `${head}：干${stem}${stemWx}、支${branch}${branchWx}${proNote}（喜用 ${c.favorable.join("、")}）`,
+        pro: t(
+          `${head}：干${stem}${stemWx}、支${branch}${branchWx}${proNote}（喜用 ${c.favorable.join("、")}）`,
+          `${head}: stem ${ganName(stem)} ${wxName(stemWx)} and branch ${z(branch)} ${wxName(branchWx)}, ${proNote} (useful: ${listJoin(c.favorable.map(wxName))})`,
+        ),
         phrase: RHYTHM_PHRASE[kind],
       }),
     );
   }
 
-  let label = `${head} · ${stemGod}`;
+  let label = `${head} · ${shishenName(stemGod)}`;
   if (scope === "year") {
     const dy = c.dayun.find((d) => p.year >= d.startYear && p.year <= d.endYear);
-    if (dy) label += ` · 大运${dy.ganzhi}`;
+    if (dy) label += t(` · 大运${dy.ganzhi}`, ` · luck period ${gzName(dy.ganzhi)}`);
   }
   return { period: p, label, signals: limitSignals(out) };
 }

@@ -1,12 +1,14 @@
 import type { Dim } from "../data/types";
 import { forecastPeriods, type Period, periodName, type PeriodReading, type Signal } from "../forecast/types";
-import { DIM_NAMES, DIMS } from "../methods/fusion";
+import { dimName, DIMS } from "../methods/fusion";
+import { MONTH_EN } from "../forecast/types";
 import { periodScore } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
 import { dimLabel, onlyPro, sectionTitle, statement, topbar } from "./components";
 import { h, reveal, typewrite } from "./dom";
 import { birthLine } from "./hub";
 import { getForecasts, getState } from "./state";
+import { t } from "../i18n";
 
 type Filter = Dim | "all";
 type Kind = "years" | "months";
@@ -63,38 +65,38 @@ export function renderTimeline(view: HTMLElement) {
 
   const guide = h("p", { class: "hub-guide" });
   view.append(
-    topbar(["#/hub", "← 星盘总览"], "TIMELINE", ["#/people", "关系合盘 ❦"]),
+    topbar(["#/hub", t("← 星盘总览", "← Overview")], "TIMELINE", ["#/people", t("关系合盘 ❦", "Relationships ❦")]),
     h(
       "header",
       { class: "page-head" },
-      h("p", { class: "eyebrow" }, "TEMPUS · 流年流月"),
-      h("h1", { class: "title-glow small" }, "未来运程"),
+      h("p", { class: "eyebrow" }, t("TEMPUS · 流年流月", "TEMPUS · YEARS & MONTHS")),
+      h("h1", { class: "title-glow small" }, t("未来运程", "Your outlook")),
       h("p", { class: "birth-line" }, birthLine()),
       guide,
     ),
   );
   typewrite(
     guide,
-    "选一个领域，查看接下来三年和十二个月的变化。",
+    t("选一个领域，查看接下来三年和十二个月的变化。", "Pick an area to see how the next three years and twelve months change."),
     28,
   );
 
-  const chipsEl = h("div", { class: "dim-filter", role: "tablist", "aria-label": "关注领域" });
+  const chipsEl = h("div", { class: "dim-filter", role: "tablist", "aria-label": t("关注领域", "Area") });
   const yearsEl = h("div", { class: "year-cards" });
   const curveEl = h("div", { class: "mcurve" });
   const detailEl = h("section", { class: "period-detail glass", "aria-live": "polite" });
 
   view.append(
     hasAny ? reveal(chipsEl) : "",
-    sectionTitle("三年大势", hasYears ? "点击一年查看详情" : "所选体系没有年运资料。"),
+    sectionTitle(t("三年大势", "Three-year trend"), hasYears ? t("点击一年查看详情", "Tap a year for details") : t("所选体系没有年运资料。", "The selected systems have no year forecasts.")),
     hasYears ? reveal(yearsEl) : "",
-    sectionTitle("未来十二个月", hasMonths ? "点击月份查看详情" : "所选体系没有月运资料。"),
+    sectionTitle(t("未来十二个月", "The next twelve months"), hasMonths ? t("点击月份查看详情", "Tap a month for details") : t("所选体系没有月运资料。", "The selected systems have no month forecasts.")),
     hasMonths ? reveal(h("div", { class: "glass curve-card" }, curveEl)) : "",
     hasAny ? detailEl : "",
   );
 
   function renderChips() {
-    const opts: [Filter, string][] = [["all", "全部领域"], ...DIMS.map((d) => [d, dimLabel(d)] as [Filter, string])];
+    const opts: [Filter, string][] = [["all", t("全部领域", "All areas")], ...DIMS.map((d) => [d, dimLabel(d)] as [Filter, string])];
     chipsEl.replaceChildren(
       ...opts.map(([f, label]) =>
         h(
@@ -138,10 +140,10 @@ export function renderTimeline(view: HTMLElement) {
             onclick: () => select("years", i),
           },
           h("span", { class: "yc-year" }, String(p.year)),
-          h("small", { class: "yc-tag" }, i === 0 ? "今年" : i === 1 ? "明年" : "后年"),
+          h("small", { class: "yc-tag" }, i === 0 ? t("今年", "this year") : i === 1 ? t("明年", "next year") : t("后年", "in two years")),
           h("b", { class: "yc-score" }, String(v)),
-          h("div", { class: "mini-bars" }, ...dims.map((d, j) => h("i", { style: { "--v": `${d}%` } as never, title: `${DIM_NAMES[DIMS[j]!]} ${d}` }))),
-          h("p", { class: "yc-line" }, best ? best.s.plain : "各体系在这一领域没有明显信号。"),
+          h("div", { class: "mini-bars" }, ...dims.map((d, j) => h("i", { style: { "--v": `${d}%` } as never, title: `${dimName(DIMS[j]!)} ${d}` }))),
+          h("p", { class: "yc-line" }, best ? best.s.plain : t("各体系在这一领域没有明显信号。", "No system shows a clear signal in this area.")),
         );
       }),
     );
@@ -179,12 +181,12 @@ export function renderTimeline(view: HTMLElement) {
               class: `mcol tone-${tone}${on ? " on" : ""}`,
               style: { "--v": v, "--i": i } as never,
               "aria-pressed": String(on),
-              "aria-label": `${periodName(p)}，${v} 分`,
+              "aria-label": t(`${periodName(p)}，${v} 分`, `${periodName(p)}, ${v} points`),
               onclick: () => select("months", i),
             },
             h("i", { class: "mc-dot" }),
             h("b", null, String(v)),
-            h("small", null, p.month === 1 || i === 0 ? `${String(p.year).slice(2)}/${p.month}` : `${p.month}月`),
+            h("small", null, p.month === 1 || i === 0 ? `${String(p.year).slice(2)}/${p.month}` : t(`${p.month}月`, MONTH_EN[p.month! - 1]!.slice(0, 3))),
           );
         }),
       ),
@@ -199,7 +201,10 @@ export function renderTimeline(view: HTMLElement) {
     const bad = sigs.filter((x) => x.s.tone === "bad").sort(byStrength);
     const systems = (list: typeof sigs) => new Set(list.map((x) => x.row.result.id)).size;
     const isNow = sel.idx === 0;
-    const rel = sel.kind === "months" ? (sel.idx === 0 ? "本月" : sel.idx === 1 ? "下个月" : "") : sel.idx === 0 ? "今年" : sel.idx === 1 ? "明年" : "后年";
+    const rel =
+      sel.kind === "months"
+        ? sel.idx === 0 ? t("本月", "This month") : sel.idx === 1 ? t("下个月", "Next month") : ""
+        : sel.idx === 0 ? t("今年", "This year") : sel.idx === 1 ? t("明年", "Next year") : t("后年", "In two years");
 
     const src = (row: Row) => h("span", null, `${row.result.icon} ${row.result.name}`, h("span", { class: "only-pro" }, ` · ${row.reading.label}`));
     const list = (items: typeof sigs, max: number) => {
@@ -207,7 +212,7 @@ export function renderTimeline(view: HTMLElement) {
       const rest = items.slice(max).map((x, i) => statement(x.s, src(x.row), i));
       return [
         h("ul", { class: "stmts" }, ...shown),
-        rest.length > 0 ? h("details", { class: "more" }, h("summary", null, `再看 ${rest.length} 条`), h("ul", { class: "stmts" }, ...rest)) : "",
+        rest.length > 0 ? h("details", { class: "more" }, h("summary", null, t(`再看 ${rest.length} 条`, `${rest.length} more`)), h("ul", { class: "stmts" }, ...rest)) : "",
       ];
     };
 
@@ -220,16 +225,18 @@ export function renderTimeline(view: HTMLElement) {
       h(
         "header",
         { class: "pd-head" },
-        h("div", null, h("p", { class: "eyebrow" }, `${rel}${isNow ? " · NOW" : ""}`), h("h2", null, `${periodName(p)} · ${filter === "all" ? "全部领域" : DIM_NAMES[filter]}`)),
-        h("div", { class: "ring", style: { "--p": v } as never }, h("b", null, String(v)), h("small", null, "运势指数")),
+        h("div", null, h("p", { class: "eyebrow" }, `${rel}${isNow ? " · NOW" : ""}`), h("h2", null, `${periodName(p)} · ${filter === "all" ? t("全部领域", "All areas") : dimName(filter)}`)),
+        h("div", { class: "ring", style: { "--p": v } as never }, h("b", null, String(v)), h("small", null, t("运势指数", "Index"))),
       ),
       h(
         "p",
         { class: "pd-consensus" },
-        sigs.length ? `${systems(good)} 个体系给出顺利的信号，${systems(bad)} 个体系提醒你注意。` : "这一时段在所选领域没有信号。",
+        sigs.length
+          ? t(`${systems(good)} 个体系给出顺利的信号，${systems(bad)} 个体系提醒你注意。`, `${systems(good)} ${systems(good) === 1 ? "system gives" : "systems give"} a favourable signal; ${systems(bad)} ${systems(bad) === 1 ? "system warns" : "systems warn"} you to take care.`)
+          : t("这一时段在所选领域没有信号。", "No signals in this area for this period."),
       ),
-      good[0] ? h("div", { class: "pd-key good" }, h("small", null, "✦ 最值得把握"), h("p", null, good[0].s.plain), h("small", { class: "stmt-src" }, src(good[0].row))) : "",
-      bad[0] ? h("div", { class: "pd-key bad" }, h("small", null, "☾ 最需要留意"), h("p", null, bad[0].s.plain), h("small", { class: "stmt-src" }, src(bad[0].row))) : "",
+      good[0] ? h("div", { class: "pd-key good" }, h("small", null, t("✦ 最值得把握", "✦ Best to seize")), h("p", null, good[0].s.plain), h("small", { class: "stmt-src" }, src(good[0].row))) : "",
+      bad[0] ? h("div", { class: "pd-key bad" }, h("small", null, t("☾ 最需要留意", "☾ Most to watch")), h("p", null, bad[0].s.plain), h("small", { class: "stmt-src" }, src(bad[0].row))) : "",
       ...groups.flatMap(([d, items]) => [
         h("h3", { class: "pd-dim" }, dimLabel(d), h("span", { class: "pd-dim-score" }, String(periodScore(items.map((x) => x.s))))),
         ...list(items, filter === "all" ? 3 : 8),
@@ -238,7 +245,7 @@ export function renderTimeline(view: HTMLElement) {
         h(
           "details",
           { class: "more pd-rules" },
-          h("summary", null, "各体系的推算依据"),
+          h("summary", null, t("各体系的推算依据", "The rule behind each system")),
           h("ul", { class: "rule-list" }, ...rowsOf(p).map((row) => h("li", null, h("b", null, `${row.result.icon} ${row.result.name}`), h("span", null, row.reading.label)))),
         ),
       ),

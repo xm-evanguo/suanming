@@ -11,11 +11,15 @@ import {
   TASK,
 } from "../data/firdaria";
 import { CHALDEAN_ORDER, DIGNITY_NAME, TRAD_INFO, type Dignity, type Trad } from "../data/hellenistic";
+import { signName as signEn } from "../data/en/terms";
 import { ZODIAC } from "../data/zodiac";
+import { MONTH_EN } from "../forecast/types";
+import { capFirst, isEn, lcFirst, listJoin } from "../i18n";
 import { degInSign, signOf } from "./astrology";
 import {
   conditionLine,
   houseInfo,
+  shortTopic,
   type Natal,
   natalOf,
   pick,
@@ -26,6 +30,7 @@ import {
   weightOfScore,
   wholeSignHouse,
 } from "./hellenistic";
+import { methodName } from "./names";
 import { type MethodFn, mixScores, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
 
 
@@ -150,7 +155,9 @@ export function firCond(p: FirPlanet, fn: FirNatal): FirCond {
       tone: p === "northNode" ? "good" : "mixed",
       score: p === "northNode" ? 1.5 : 0,
       retro: true,
-      line: `${NODE_INFO[p].zh}落${ZODIAC[pos.sign]!.name}${degInSign(pos.lon)}，位于第${pos.house}宫「${houseInfo(pos.house).topic.replace(/，.*$/, "")}」（平均交点，无庙旺陷弱）`,
+      line: isEn()
+        ? `${NODE_INFO[p].zh} in ${signEn(ZODIAC[pos.sign]!.name)} ${degInSign(pos.lon)}, in house ${pos.house} "${shortTopic(houseInfo(pos.house).topic)}" (mean node, no domicile, exaltation, detriment or fall)`
+        : `${NODE_INFO[p].zh}落${ZODIAC[pos.sign]!.name}${degInSign(pos.lon)}，位于第${pos.house}宫「${houseInfo(pos.house).topic.replace(/，.*$/, "")}」（平均交点，无庙旺陷弱）`,
     };
   }
   const pos = fn.natal.planets[p];
@@ -168,23 +175,26 @@ export function majorPlain(c: FirCond, seed: number): string {
   const H = houseInfo(c.house);
   if (isNode(c.planet)) {
     const N = NODE_INFO[c.planet];
+    if (isEn()) return `This is ${info.stage}. At your birth it sat in the area of "${H.plainTopic}", so change there will be especially visible. ${pick(N.actions, seed)} ${pick(N.care, seed + 1)}`;
     return `这是一个${info.stage}。它在你出生时落在「${H.plainTopic}」这个领域，所以这方面的变化会特别明显。${pick(N.actions, seed)}${pick(N.care, seed + 1)}`;
   }
   const T = TRAD_INFO[c.planet as Trad];
   const act = c.tone === "bad" ? pick(H.care, seed) : pick(H.good, seed);
   const tail = c.tone === "mixed" ? `不过${pick(H.care, seed + 1)}` : "";
+  if (isEn()) return `This is ${info.stage}. ${T.zh} (governs ${T.plainKw}) ${stateText(c.planet as Trad, c.tone)}. At your birth it sat in the area of "${H.plainTopic}", so matters there will stand out. ${act}${c.tone === "mixed" ? ` However, ${lcFirst(pick(H.care, seed + 1))}` : ""}`;
   return `这是一个${info.stage}。${T.zh}（管${T.plainKw}）。它${stateText(c.planet as Trad, c.tone)}。它在你出生时落在「${H.plainTopic}」这个领域，所以这方面的事会特别突出。${act}${tail}`;
 }
 
 /** Plain reading of a sub-period. Nodes have none. */
 export function subPlain(c: FirCond): string {
   const T = TRAD_INFO[c.planet as Trad];
+  if (isEn()) return `This stretch is ruled by ${T.zh} (governs ${T.plainKw}). ${SUB_SCENE[c.planet]} It ${stateText(c.planet as Trad, c.tone)}.`;
   return `这一小段由${T.zh}（管${T.plainKw}）值班。${SUB_SCENE[c.planet]}它${stateText(c.planet as Trad, c.tone)}。`;
 }
 
 // ───────────────────────── Method
 
-const ymd = (d: Date) => `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月`;
+const ymd = (d: Date) => (isEn() ? `${MONTH_EN[d.getUTCMonth()]} ${d.getUTCFullYear()}` : `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月`);
 const fmtAge = (a: number) => (Number.isInteger(a) ? String(a) : a.toFixed(1));
 
 export interface FirdariaVisual {
@@ -281,6 +291,110 @@ export function buildFirdaria(chart: Chart, now: Date): ReturnType<MethodFn<Fird
     ],
   };
 
+  if (isEn()) {
+    const seqEn = (day ? FIR_DAY : FIR_NIGHT).map(([p, y]) => `${firInfo(p).zh} ${y}`).join(", ");
+    const theme = (stage: string) => stage.replace(/^a stage (of|when) /, "");
+    const weakOne = mc.tone === "bad" ? mc : sc && sc.tone === "bad" ? sc : null;
+    const subSame = sub && sub.planet === major.planet;
+    return {
+      id: "firdaria",
+      name: methodName("firdaria"),
+      intro: "The Persian and Arab way of dividing a life into stages: 75 years are handed in turn to the Sun, the Moon and the five planets (and the lunar nodes), and each stage is split again into 7 sub-periods, telling you which act you are in right now.",
+      origin: "波斯",
+      icon: "☊︎",
+      headline: `${M.zh} period${S ? ` · ${S.zh} sub-period` : ""} (${day ? "day" : "night"} sequence)`,
+      tagline: capFirst(theme(M.stage)),
+      keywords: [`${M.zh} period`, ...(S ? [`${S.zh} sub-period`] : []), day ? "Day sequence" : "Night sequence", ...M.kw.slice(0, 2)],
+      scores,
+      element: isNode(major.planet) ? undefined : TRAD_INFO[major.planet].wx,
+      lucky: {
+        colors: [...new Set([...M.colors, ...(S ? S.colors.slice(0, 1) : [])])],
+        numbers: [...new Set([...M.numbers, ...(S ? S.numbers : [])])],
+        directions: [...new Set([M.dir, ...(S ? [S.dir] : [])])],
+      },
+      facts: [
+        { label: "Firdaria sequence", value: day ? "Day chart · starts with the Sun" : "Night chart · starts with the Moon" },
+        { label: "Current major period", value: `${M.glyph} ${M.zh} · age ${fmtAge(major.startAge)}–${fmtAge(major.endAge)} (${major.start.getUTCFullYear()}–${major.end.getUTCFullYear()})` },
+        { label: "Current sub-period", value: sub && S ? `${S.glyph} ${S.zh} · ${ymd(sub.start)} – ${ymd(sub.end)}` : "None (node periods are not divided)" },
+        { label: "Period ruler in your birth chart", value: `${signEn(ZODIAC[mc.sign]!.name)} · house ${mc.house}${mc.dignity ? ` · ${DIGNITY_NAME[mc.dignity]}` : ""}` },
+        { label: "Next major period", value: `${NX.glyph} ${NX.zh} · from ${ymd(major.end)}` },
+      ],
+      sections: [
+        {
+          title: `Firdaria sequence · ${day ? "day chart" : "night chart"}`,
+          body: `Firdaria are a timing technique used by Persian and Arab astrologers: 75 years are split into 9 major periods, each ruled by one planet (or a lunar node), and the sequence repeats after age 75. Yours is a ${day ? "day chart, so the sequence starts with the Sun" : "night chart, so the sequence starts with the Moon"}: ${seqEn} (years). Each of the seven planets' periods is split into 7 equal sub-periods; the first belongs to the period ruler itself, and the rest follow the Chaldean order (${CHALDEAN_ORDER.map((p) => TRAD_INFO[p].zh).join(" → ")}). The nodes' periods are too short to be divided further.`,
+        },
+        {
+          title: `Current major period · ${M.glyph} ${M.zh} (age ${fmtAge(major.startAge)}–${fmtAge(major.endAge)})`,
+          body: `${ymd(major.start)} to ${ymd(major.end)}, ${major.years} years in all. Its theme is ${M.stage}. ${mc.line}. ${isNode(major.planet) ? `Keywords of the ${NODE_INFO[major.planet].zh}: ${listJoin(NODE_INFO[major.planet].kw)}.` : `${M.zh} ${stateText(major.planet as Trad, mc.tone)}.`} The task of this period is ${TASK[major.planet]}.`,
+        },
+        sub && sc && S
+          ? {
+              title: `Current sub-period · ${S.glyph} ${S.zh} (${ymd(sub.start)} – ${ymd(sub.end)})`,
+              body: `Sub-period ${cur.subIndex + 1} of 7 within the ${M.zh} period, each lasting about ${subMonths} months. ${sc.line}. The sub-period ruler ${S.zh} ${stateText(sub.planet, sc.tone)}. ${subSame ? "It is the same planet as the major period ruler, so the theme is pure and concentrated." : `Read it together with the major period ruler ${M.zh}: the major period sets the tone and the sub-period adds the detail.`}`,
+            }
+          : { title: "Current sub-period", body: `The ${M.zh} period lasts only ${major.years} years, and traditionally it is not divided into sub-periods.` },
+        {
+          title: "The whole sequence",
+          body: `${cyclePeriods.map((p) => `${firInfo(p.planet).zh} age ${fmtAge(p.startAge)}–${fmtAge(p.endAge)} (${p.start.getUTCFullYear()}–${p.end.getUTCFullYear()})`).join("; ")}.`,
+        },
+        {
+          title: `Next stop · ${NX.zh} period`,
+          body: `From ${ymd(major.end)} (around age ${fmtAge(major.endAge)}) you enter the ${NX.zh} period, ${next.years} years long. Its theme is ${NX.stage}.`,
+        },
+      ],
+      plain: {
+        summary: `${known ? "" : "You did not enter a birth time, so whether you were born by day or by night was guessed at noon, and the order below is a rough guide only. "}Persian astrologers divided a life into long \"big stages\". You are about ${Math.floor(ageNow)} now, in a stage ruled by ${M.zh} (governs ${M.plainKw}): ${M.stage}.${S ? ` The current small stage is ruled by ${S.zh}.` : ""}`,
+        sections: [
+          {
+            title: "The big stage you are in",
+            body: `This stage lasts about ${major.years} years (${major.start.getUTCFullYear()}–${major.end.getUTCFullYear()}). ${majorPlain(mc, ageNow)}`,
+          },
+          {
+            title: "The small stage right now",
+            body: sub && sc ? `${subPlain(sc)} This small stage lasts about ${subMonths} months, and around ${ymd(sub.end)} it changes to the next one.` : "The big stage you are in is short and is not divided into small stages; treat it as one concentrated \"gear change\".",
+          },
+          {
+            title: "The task of this stage",
+            body: `The task of this time is ${TASK[major.planet]}.${sub && sc && sub.planet !== major.planet ? ` Within the current small stage, the task is ${TASK[sub.planet]}.` : ""}`,
+          },
+          {
+            title: "Worth watching",
+            body: weakOne
+              ? `One planet in the current stage is in a weaker state, so you may spend more effort on \"${houseInfo(weakOne.house).plainTopic}\". ${pick(houseInfo(weakOne.house).care, ageNow)}`
+              : `Overall there is nothing you particularly need to guard against; just do not pack your schedule too full. ${pick(houseInfo(mc.house).care, ageNow + 2)}`,
+          },
+          {
+            title: "Next stop",
+            body: `Around ${ymd(major.end)}, you will move into the stage of ${NX.zh} (governs ${NX.plainKw}): ${NX.stage}. You can wrap up what is in your hands a few months ahead.`,
+          },
+        ],
+      },
+      caveats: [
+        ...(known ? [] : [UNKNOWN_TIME_NOTE(), "Whether the chart is a day or night chart (the sequence starts with the Sun or the Moon) and the houses depend on the birth time, so treat them as a rough guide if it is unknown."]),
+        "The sequence follows the mainstream version of Abu Ma'shar: in both sequences the North and South Nodes come after the seven planets (ages 70–75 in a day chart, and also 70–75 in a night chart). Some versions (for example a literal reading of Bonatti) put the nodes in a night chart after Mars, which gives different results.",
+        "The nodes are the mean nodes, without the wobble of the true nodes, and node periods are not divided into sub-periods. Dates of major and sub-periods count a year as 365.2425 days from the moment of birth, so they differ from your actual birthday by a few hours at most.",
+      ],
+      visual: {
+        day,
+        cycle,
+        ageNow,
+        birthYear: chart.utc.getUTCFullYear(),
+        periods: cyclePeriods.map((p) => ({
+          planet: p.planet,
+          years: p.years,
+          startAge: p.startAge,
+          endAge: p.endAge,
+          startYear: p.start.getUTCFullYear(),
+          endYear: p.end.getUTCFullYear(),
+          subs: p.subs.map((s) => ({ planet: s.planet, startAge: s.startAge, endAge: s.endAge })),
+        })),
+        majorIndex: cyclePeriods.indexOf(major),
+        subIndex: cur.subIndex,
+      },
+    };
+  }
+
   return {
     id: "firdaria",
     name: "波斯法达",
@@ -307,7 +421,7 @@ export function buildFirdaria(chart: Chart, now: Date): ReturnType<MethodFn<Fird
     sections,
     plain,
     caveats: [
-      ...(known ? [] : [UNKNOWN_TIME_NOTE, "日夜盘（序列从太阳还是月亮开始）和宫位依赖出生时间，未知时间时仅供参考。"]),
+      ...(known ? [] : [UNKNOWN_TIME_NOTE(), "日夜盘（序列从太阳还是月亮开始）和宫位依赖出生时间，未知时间时仅供参考。"]),
       "序列采用阿布·马舍（Abu Ma'shar）的主流版本：两种序列中南北交点都排在七星之后（日间盘 70–75 岁，夜间盘同样 70–75 岁）。个别版本（如依 Bonatti 字面理解）会把夜间盘的交点插在火星之后，结果不同。",
       "月交点使用平均交点，不计真交点的摆动；交点大限不再细分小限。大限与小限的日期以 365.2425 日为一年，从出生时刻起算，与实际生日相差在数小时内。",
     ],

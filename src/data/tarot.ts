@@ -1,3 +1,5 @@
+import { MAJOR_ARCANA_EN } from "./en/tarot";
+import { live } from "../i18n";
 import type { Profile } from "./types";
 
 export interface TarotCard extends Profile {
@@ -13,7 +15,7 @@ export interface TarotCard extends Profile {
 }
 
 /** The 22 Major Arcana cards, index === num. */
-export const MAJOR_ARCANA: TarotCard[] = [
+const MAJOR_ARCANA_ZH: TarotCard[] = [
   {
     num: 0,
     en: "The Fool",
@@ -543,3 +545,5 @@ export const MAJOR_ARCANA: TarotCard[] = [
       "世界是大阿卡纳的终章，也是最圆满的灵魂牌。你的一生带着完成与整合的主题，视野宽广，常与不同的文化与人群结缘。课题是在每一次圆满之后继续保持好奇，让生命如螺旋般不断向上。",
   },
 ];
+
+export const MAJOR_ARCANA = live(MAJOR_ARCANA_ZH, MAJOR_ARCANA_EN);

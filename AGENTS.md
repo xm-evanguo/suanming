@@ -26,7 +26,17 @@ Run all three checks (types, tests, build) before a commit.
 - Do not put `filter` on a `transform-style: preserve-3d` element (for example `.tcard-inner`). The filter flattens it, and the back face shows. Put the filter on the faces.
 - Registered `@property --p` is a `<number>`. Do not put a percent value in it. Use a different property name.
 - Astrology glyphs carry `︎`, so they show as text, not as emoji.
-- Code comments and docs are in English. UI text is in Chinese.
+- Code comments and docs are in English. The site has Chinese (source) and English UI and readings.
+
+## Languages
+
+- `src/i18n.ts` holds the language. It comes from the saved choice (`tianji.lang.v1`) or the browser language; the switch next to Profile saves it and reloads, so every text is built once in one language. Outside a browser the default is Chinese, so tests see Chinese unless they call `setLang("en")`.
+- Inline text: `t("中文", "English")`. Data tables: keep the Chinese table and add an English one in `src/data/en/`, then export `live(TABLE_ZH, TABLE_EN)`; existing `TABLE[key]` lookups then read the current language. English entries override text fields only; scores, numbers and internal keys stay in the Chinese table.
+- Chinese strings that the code compares or looks up (五行 `木`, directions `东南`, stems and branches, palace names, `Origin`, relation keys) are internal keys. Do not translate them in place; name them at display time with the helpers in `src/data/en/terms.ts` (`wxName`, `dirName`, `gzName`…) or the method's own name map.
+- A method returns an English `MethodResult` from an `if (isEn())` branch. Shared plain titles come from `plainTitles()`. Fusion finds some facts by label, so keep the English labels "Tai Sui", "Year chart", "Year card", "Personal year" and "Current dasha".
+- Forecast phrases start with `{T}` ("This year" / "this month"). Compatibility texts pass the English variant as the third argument of `pickText`.
+- The AI prompts have an English version and ask the model to answer in English.
+- `tests/i18n.test.ts` runs every method, forecast and comparison in English and fails on any Chinese character outside internal keys. Run it after adding text.
 
 ## Browser checks
 

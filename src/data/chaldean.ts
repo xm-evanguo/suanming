@@ -1,10 +1,12 @@
+import { DECAN_FLAVOR_EN, FACE_TECH_EN, TRIO_TEXT_EN } from "./en/chaldean";
+import { live } from "../i18n";
 import type { Trad } from "./hellenistic";
 
 /** Chaldean "faces": the ruler of each 10-degree decan, starting with Mars on Aries 0-10. */
 export const FACE_START: Trad = "mars";
 
 /** How the ruler of the Sun's decan colours the Sun sign. Plain Chinese. */
-export const DECAN_FLAVOR: Record<Trad, string> = {
+const DECAN_FLAVOR_ZH: Record<Trad, string> = {
   sun: "你的太阳被自己的光加了一层，自信和领导的味道更浓，别人容易把你当成主心骨。",
   moon: "你的太阳带着月亮的柔软，感受力强，做决定时会先问自己舒不舒服，也很会照顾身边人。",
   mercury: "你的太阳带着水星的机灵，脑子转得快，爱学爱问，嘴上功夫和文字功夫都是你的帮手。",
@@ -15,7 +17,7 @@ export const DECAN_FLAVOR: Record<Trad, string> = {
 };
 
 /** Technical one-liners for the faces, used in sections. */
-export const FACE_TECH: Record<Trad, string> = {
+const FACE_TECH_ZH: Record<Trad, string> = {
   sun: "太阳之面：权威、荣誉与自我实现",
   moon: "月亮之面：感受、记忆与照护",
   mercury: "水星之面：智识、言说与技艺",
@@ -29,9 +31,13 @@ export const WEEK_HISTORY =
   "七天一周的名字来自这套体系：古人按行星距离地球的远近排成“土星、木星、火星、太阳、金星、水星、月亮”（迦勒底序），再把一天分成 24 个小时，依次交给七颗星轮流守护。每天的第一个小时由哪颗星守，那一天就以它命名。从土星日起每天的第一小时跳过三颗星，于是依次得到日、月、火、水、木、金、土的顺序。中文的“星期日、星期一……”以及“日月火水木金土”，都是这套安排的回声。";
 
 /** How the day ruler and the hour ruler relate, based on traditional nature. */
-export const TRIO_TEXT = {
+const TRIO_TEXT_ZH: Record<"soft" | "hard" | "even" | "repeat", string> = {
   soft: "三颗星里温和的占多数，做事阻力偏小，遇到事容易有人帮一把。",
   hard: "三颗星里严厉的占多数，你的路更像“先吃苦、后见成果”，耐心是你最大的本钱。",
   even: "三颗星软硬相济，有顺风也有逆风，靠自己调整节奏就能走得稳。",
   repeat: "有两颗以上是同一颗星，这颗星的气质在你身上特别明显，几乎成了你的标签。",
 };
+
+export const DECAN_FLAVOR = live(DECAN_FLAVOR_ZH, DECAN_FLAVOR_EN);
+export const FACE_TECH = live(FACE_TECH_ZH, FACE_TECH_EN);
+export const TRIO_TEXT = live(TRIO_TEXT_ZH, TRIO_TEXT_EN);

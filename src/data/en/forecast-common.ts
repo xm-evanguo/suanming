@@ -1,0 +1,136 @@
+import type { Tone } from "../../forecast/types";
+import type { Dim } from "../types";
+
+/** English "act" pools. Same order and length as `ACT` in `../forecast-common.ts`, so a seed picks the same slot. */
+export const ACT_EN: Record<Dim, Record<Tone, string[]>> = {
+  career: {
+    good: [
+      "If there is a project or role you want, put your recent results on one page, then go and talk to the person in charge.",
+      "If a proposal has been sitting on your desk, send it now; replies come faster than usual.",
+      "If there is a job you want to apply for, update your CV first, then have a chat with one or two people in the field.",
+      "When a report or meeting puts you in front of people, take it on rather than hanging back.",
+      "If you want to ask for a raise or a move, prepare three reasons and pick a moment when your boss is in a good mood.",
+      "Sort your tasks by weight and do the one most likely to show results really well first.",
+    ],
+    mixed: [
+      "Let important decisions sit for two or three days, then talk them through with a colleague you trust.",
+      "After each meeting, write the conclusion down in one sentence; it heads off a lot of misunderstandings.",
+      "Look into new opportunities properly, but do not say yes on the spot.",
+      "When there is a lot on your plate, agree on priorities with your boss before you start.",
+      "Write down who does what with your colleagues: who owns each part and who wraps it up.",
+      "Go after one goal at a time and move at your own pace.",
+    ],
+    bad: [
+      "Avoid head-on clashes in meetings; if you disagree, say so one-to-one afterwards.",
+      "Do not rush to change jobs or roles; steady what you have now, then look at the next step.",
+      "Check your work once more before you hand it in, and ask a colleague to look it over; that matters more than speed.",
+      "When the pressure is high, do not carry it alone; tell your boss early how things stand and what is hard.",
+      "Break big goals into small tasks you can finish each week, and tick them off one by one.",
+      "Protect your core work first, and do not open too many new fronts at once.",
+    ],
+  },
+  wealth: {
+    good: [
+      "For any big purchase, compare a few options and set a budget before you buy.",
+      "When extra money comes in, put part of it into an emergency fund first.",
+      "You can talk pay with your boss or client; put your contribution into numbers.",
+      "Go through your fixed monthly costs and cut subscriptions you do not use; saving will feel more real.",
+      "If you are thinking about a side job, try it on a small scale first and see the response.",
+      "A good time to sort your accounts: write down what comes in and goes out, and you will feel surer.",
+    ],
+    mixed: [
+      "Sleep on any big purchase; if you still want it the next day, buy it.",
+      "Before you and a friend split or advance money, agree on how it will be settled.",
+      "Set aside an emergency fund first, then plan what you want to buy.",
+      "Income may go up and down; set a budget at the start of the month and check it at the end.",
+      "When you see \"limited-time offers\", pause and buy only what is on your list.",
+      "Talk money matters over with family or your partner; do not decide alone.",
+    ],
+    bad: [
+      "Cut back on impulse spending for now; before you pay, ask yourself: do I really need it?",
+      "When money changes hands with others, write down the amount and the date, so nothing gets muddled later.",
+      "Protect the savings you have and trim spending you do not need.",
+      "Double-check quotes, bills and other numbers; small mistakes creep in at times like this.",
+      "If a friend asks you to go into business or lend money, say \"let me think\" rather than yes on the spot.",
+      "Set a cap in advance for things like trips and get-togethers.",
+    ],
+  },
+  love: {
+    good: [
+      "If you are single, go to friends' gatherings and hobby groups; that is where you will meet people.",
+      "If you have a partner, plan a date just for the two of you, even if it is only a walk and a meal.",
+      "Find a quiet moment to say what is on your heart; it will be heard.",
+      "Send a short, sincere hello to someone you care about.",
+      "Have a meal with your family and catch up; you will feel a little closer.",
+      "With someone you like, stop waiting for them to speak first; just ask, \"Free this weekend?\"",
+    ],
+    mixed: [
+      "When you disagree, let the other person finish before you give your view.",
+      "Say what you hope for in the relationship in concrete terms; it is much easier than making them guess.",
+      "Do not jump to conclusions; spend more time together and see who they are day to day.",
+      "Leave some time alone for both of you; the relationship will feel easier.",
+      "When you raise something with your partner, start with \"I'd like\" rather than \"you always\".",
+      "Do not let small family frictions linger; talk them out the same day.",
+    ],
+    bad: [
+      "When an argument starts, pause and talk again once you have both calmed down; do not decide anything in anger.",
+      "Do not read the worst into what the other person says; if you are unsure, ask.",
+      "Leave old grievances alone and talk only about the matter at hand.",
+      "When things go wrong, talk to a friend or go for a walk rather than taking it out on the people close to you.",
+      "Put big decisions such as breaking up or moving in together on hold for a while.",
+      "Notice what the other person is carrying; a simple \"thank you\" cools a lot of heat.",
+    ],
+  },
+  health: {
+    good: [
+      "You are in good shape, so lock in a habit you want, such as exercising three times a week.",
+      "Try a new kind of exercise, such as swimming, brisk walking or yoga, and give it two weeks.",
+      "With regular sleep and meals you will feel sharper; start by fixing a bedtime.",
+      "While your energy is high, book the check-ups you have been putting off, such as a physical or the dentist.",
+      "Get more sun and drink more water; small habits make you feel lighter.",
+      "Exercise with a friend; it is easier to keep going.",
+    ],
+    mixed: [
+      "Keep your hours regular: less screen time in the hour before bed, and lights out earlier.",
+      "On busy days, get up and walk for a few minutes every hour; your neck and shoulders will thank you.",
+      "Keep ten quiet minutes a day for deep breathing or a walk, and let your mind loosen.",
+      "Try to eat at regular times, and go easy on iced drinks and strong coffee.",
+      "When stress builds, relax in a way you enjoy, such as music or a foot soak.",
+      "When you feel tired, rest early instead of pushing on late.",
+    ],
+    bad: [
+      "Do not ignore small signals from your body: rest when you are tired, and see a doctor if discomfort lasts.",
+      "Stay up less and go out less for now; put sleep first.",
+      "Start light with exercise, such as brisk walks and stretching; do not suddenly push harder.",
+      "When your mood is low, do not keep it to yourself; talk to a friend.",
+      "Take extra care when travelling and exercising: a little slower, a little steadier.",
+      "Leave more slack in your schedule, with half a day of buffer for yourself.",
+    ],
+  },
+  wisdom: {
+    good: [
+      "A good time to learn something new: a course or that book you keep putting off will pay off.",
+      "If there is an exam or certificate you want, start a study plan now; you will be efficient.",
+      "Write down your recent ideas; when you read them in three months, you will be surprised.",
+      "When you meet someone experienced, ask them a question or two; it is faster than working it out alone.",
+      "While your head is clear, tackle the work that needs the most thought, such as proposals, writing and planning.",
+      "Find a quiet afternoon to sort your thoughts and list the three things you most want to do in the next three months.",
+    ],
+    mixed: [
+      "When you have many ideas, write them down, then pick one or two to actually do.",
+      "Do not rush to conclusions; check with one more person's view.",
+      "Do not try to learn everything at once; focus on one subject until you know it well.",
+      "Leave time to daydream; inspiration often comes when you relax.",
+      "Before an important decision, list the gains and the costs.",
+      "Set yourself a small goal, such as one chapter this week, and take it slowly.",
+    ],
+    bad: [
+      "When your mind will not work, do not force it; sleep on the hard problem first.",
+      "Do not decide while your feelings are swinging; wait until you are calm.",
+      "Do not let other people's views carry you along; ask yourself what you really want.",
+      "When your thoughts are tangled, write your worries on paper and take them apart one by one.",
+      "Leave an extra day before important exams or interviews; do not prepare at the last minute.",
+      "When things are not going well, scroll less and walk more, and let your mind clear.",
+    ],
+  },
+};

@@ -3,8 +3,8 @@ import { DAY_MS, norm360, type PlanetKey } from "../core/chart";
 import {
   HOUSES,
   JUPITER_STRONG_HOUSES,
-  MERCURY_DIRECT_SOON,
-  MERCURY_RETRO,
+  mercuryDirectSoon,
+  mercuryRetro,
   MONTH_EVENTS,
   PLANET_TEMPLATES,
   SATURN_STRONG_HOUSES,
@@ -14,10 +14,12 @@ import {
   YEAR_EVENTS,
 } from "../data/forecast-astrology";
 import { buildSignal, limitSignals, type Phrase, type Scope } from "../data/forecast-common";
+import { PLANETS } from "../data/planets";
 import { ZODIAC } from "../data/zodiac";
+import { isEn, t } from "../i18n";
 import { signOf } from "../methods/astrology";
 import { wholeSignHouse } from "../methods/hellenistic";
-import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
+import { type Forecast, type ForecastFn, forecastPeriods, MONTH_EN, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
 
 const BODY: Record<string, Astro.Body> = {
   sun: Astro.Body.Sun,
@@ -67,6 +69,12 @@ interface Natal {
 const houseOf = (n: Natal, lon: number) => wholeSignHouse(lon, n.ascSign);
 const signName = (lon: number) => ZODIAC[signOf(lon)]!.name;
 
+/** "1st", "2nd", "13th" for a day of the month. */
+function ordinal(n: number): string {
+  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+  return `${n}${({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
+}
+
 /** Fill a template with the topic and one scene of house `h`. */
 function houseText(tpl: string, h: number, seed: number): string {
   const house = HOUSES[h - 1]!;
@@ -92,7 +100,7 @@ function transitSignal(n: Natal, planet: "jupiter" | "saturn" | TransitPlanet, l
       dim: th.dim,
       tone: tpl.tone,
       weight: scope === "year" ? 2 : 1,
-      pro: `${PLANET_ZH[planet]}在${ZODIAC[sign]!.name}（出生时间未知，仅按星座）`,
+      pro: t(`${PLANET_ZH[planet]}在${ZODIAC[sign]!.name}（出生时间未知，仅按星座）`, `${PLANETS[planet].zh} in ${ZODIAC[sign]!.name} (birth time unknown, sign only)`),
       phrase: { what },
     });
   }
@@ -105,12 +113,14 @@ function transitSignal(n: Natal, planet: "jupiter" | "saturn" | TransitPlanet, l
     dim: house.dim,
     tone: tpl.tone,
     weight: scope === "year" ? weightYear : 1,
-    pro: `${PLANET_ZH[planet]}${retro ? "逆行" : ""}过境${ZODIAC[sign]!.name}，落本命第 ${h} 宫（整宫制）：${house.topic}`,
+    pro: t(`${PLANET_ZH[planet]}${retro ? "逆行" : ""}过境${ZODIAC[sign]!.name}，落本命第 ${h} 宫（整宫制）：${house.topic}`, `${PLANETS[planet].zh}${retro ? " (retrograde)" : ""} transiting ${ZODIAC[sign]!.name}, in natal house ${h} (whole-sign): ${house.topic}`),
     phrase: { what: pool.map((t, i) => houseText(t, h, seed + i)) },
   });
 }
 
 const PLANET_ZH: Record<string, string> = { sun: "太阳", mercury: "水星", venus: "金星", mars: "火星", jupiter: "木星", saturn: "土星" };
+/** How a transit angle reads in English: 0 conjunct, 90 square, 180 opposite. */
+const ASPECT_EN: Record<string, string> = { "0": "conjunct", "90": "square", "180": "opposite" };
 
 function isRetro(key: string, t: Date): boolean {
   let d = lonAt(key, new Date(t.getTime() + DAY_MS)) - lonAt(key, t);
@@ -137,21 +147,21 @@ function yearReading(n: Natal, p: Period): PeriodReading {
   const natal = n.lon;
   const add = (ev: string, pro: string) => {
     const e = YEAR_EVENTS[ev]!;
-    out.push(buildSignal({ key: key(ev), scope: "year", dim: e.dim, tone: e.tone, weight: e.weight, pro: `${p.year} 年：${pro}（${e.label}）`, phrase: e.phrase }));
+    out.push(buildSignal({ key: key(ev), scope: "year", dim: e.dim, tone: e.tone, weight: e.weight, pro: t(`${p.year} 年：${pro}（${e.label}）`, `${p.year}: ${pro} (${e.label})`), phrase: e.phrase }));
   };
-  if (crossings(jup.lons, jup.dates, natal.jupiter).length) add("jupiter-return", `行运木星回到本命木星位置（${signName(natal.jupiter)}）`);
-  if (crossings(sat.lons, sat.dates, natal.saturn).length) add("saturn-return", `行运土星回到本命土星位置（${signName(natal.saturn)}）`);
+  if (crossings(jup.lons, jup.dates, natal.jupiter).length) add("jupiter-return", t(`行运木星回到本命木星位置（${signName(natal.jupiter)}）`, `transiting Jupiter returns to natal Jupiter (${signName(natal.jupiter)})`));
+  if (crossings(sat.lons, sat.dates, natal.saturn).length) add("saturn-return", t(`行运土星回到本命土星位置（${signName(natal.saturn)}）`, `transiting Saturn returns to natal Saturn (${signName(natal.saturn)})`));
   const satAngles: [string, number[]][] = [["0", [0]], ["90", [90, -90]], ["180", [180]]];
   for (const [name, offs] of satAngles) {
-    if (offs.some((o) => crossings(sat.lons, sat.dates, norm360(natal.sun + o)).length)) add(`saturn-sun-${name}`, `行运土星${name === "0" ? "合" : name === "90" ? "刑" : "冲"}本命太阳（${signName(natal.sun)}）`);
-    if (n.known && offs.some((o) => crossings(sat.lons, sat.dates, norm360(natal.moon + o)).length)) add(`saturn-moon-${name}`, `行运土星${name === "0" ? "合" : name === "90" ? "刑" : "冲"}本命月亮（${signName(natal.moon)}）`);
+    if (offs.some((o) => crossings(sat.lons, sat.dates, norm360(natal.sun + o)).length)) add(`saturn-sun-${name}`, t(`行运土星${name === "0" ? "合" : name === "90" ? "刑" : "冲"}本命太阳（${signName(natal.sun)}）`, `transiting Saturn ${ASPECT_EN[name]} natal Sun (${signName(natal.sun)})`));
+    if (n.known && offs.some((o) => crossings(sat.lons, sat.dates, norm360(natal.moon + o)).length)) add(`saturn-moon-${name}`, t(`行运土星${name === "0" ? "合" : name === "90" ? "刑" : "冲"}本命月亮（${signName(natal.moon)}）`, `transiting Saturn ${ASPECT_EN[name]} natal Moon (${signName(natal.moon)})`));
   }
-  if (crossings(jup.lons, jup.dates, natal.sun).length) add("jupiter-sun-0", `行运木星合本命太阳（${signName(natal.sun)}）`);
-  if (n.known && crossings(jup.lons, jup.dates, natal.moon).length) add("jupiter-moon-0", `行运木星合本命月亮（${signName(natal.moon)}）`);
+  if (crossings(jup.lons, jup.dates, natal.sun).length) add("jupiter-sun-0", t(`行运木星合本命太阳（${signName(natal.sun)}）`, `transiting Jupiter conjunct natal Sun (${signName(natal.sun)})`));
+  if (n.known && crossings(jup.lons, jup.dates, natal.moon).length) add("jupiter-moon-0", t(`行运木星合本命月亮（${signName(natal.moon)}）`, `transiting Jupiter conjunct natal Moon (${signName(natal.moon)})`));
 
   const label = n.known
-    ? `木星${signName(jLon)}（第 ${jh} 宫）· 土星${signName(sLon)}（第 ${sh} 宫）`
-    : `木星${signName(jLon)} · 土星${signName(sLon)}`;
+    ? t(`木星${signName(jLon)}（第 ${jh} 宫）· 土星${signName(sLon)}（第 ${sh} 宫）`, `Jupiter in ${signName(jLon)} (house ${jh}) · Saturn in ${signName(sLon)} (house ${sh})`)
+    : t(`木星${signName(jLon)} · 土星${signName(sLon)}`, `Jupiter in ${signName(jLon)} · Saturn in ${signName(sLon)}`);
   return { period: p, label, signals: limitSignals(out) };
 }
 
@@ -192,7 +202,7 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
         dim: SIGN_THEMES[sg]!.dim,
         tone: "mixed",
         weight: 1,
-        pro: `太阳过境${ZODIAC[sg]!.name}（出生时间未知，仅按星座）`,
+        pro: t(`太阳过境${ZODIAC[sg]!.name}（出生时间未知，仅按星座）`, `Sun transiting ${ZODIAC[sg]!.name} (birth time unknown, sign only)`),
         phrase: { what: SIGN_TEMPLATES.sun.map((t) => signText(t, sg)) },
       }),
     );
@@ -219,7 +229,7 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
   for (const ev of events) {
     const e = MONTH_EVENTS[ev.id]!;
     const [planet, tname, angle] = ev.id.split("-") as [string, string, string];
-    const tz = { sun: "本命太阳", venus: "本命金星", moon: "本命月亮", mc: "本命天顶" }[tname];
+    const tz = t({ sun: "本命太阳", venus: "本命金星", moon: "本命月亮", mc: "本命天顶" }[tname]!, { sun: "natal Sun", venus: "natal Venus", moon: "natal Moon", mc: "natal Midheaven" }[tname]!);
     out.push(
       buildSignal({
         key: key(ev.id),
@@ -227,8 +237,8 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
         dim: e.dim,
         tone: e.tone,
         weight: e.weight,
-        pro: `${p.year} 年 ${p.month} 月 ${ev.day} 日前后：行运${PLANET_ZH[planet]}${angle === "0" ? "合" : "冲"}${tz}`,
-        phrase: { what: e.what.map((w) => w.replaceAll("{day}", `${ev.day}日`)) },
+        pro: t(`${p.year} 年 ${p.month} 月 ${ev.day} 日前后：行运${PLANET_ZH[planet]}${angle === "0" ? "合" : "冲"}${tz}`, `Around ${MONTH_EN[p.month! - 1]} ${ev.day}, ${p.year}: transiting ${PLANETS[planet as PlanetKey].zh} ${angle === "0" ? "conjunct" : "opposite"} ${tz}`),
+        phrase: { what: e.what.map((w) => w.replaceAll("{day}", isEn() ? ordinal(ev.day) : `${ev.day}日`)) },
       }),
     );
   }
@@ -246,11 +256,12 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
     const endsThisMonth = last < days;
     const startsEarlier = first === 1;
     const range = first === last ? `${first}日` : `${first}日–${last}日`;
-    let phrase: Phrase = MERCURY_RETRO;
-    let rangeText = range;
+    const rangeEn = first === last ? `${MONTH_EN[p.month! - 1]} ${first}` : `${MONTH_EN[p.month! - 1]} ${first}–${last}`;
+    let phrase: Phrase = mercuryRetro();
+    let rangeText = isEn() ? (first === last ? `the ${ordinal(first)}` : `the ${ordinal(first)} to the ${ordinal(last)}`) : range;
     if (startsEarlier && endsThisMonth) {
-      phrase = MERCURY_DIRECT_SOON;
-      rangeText = `${last + 1}日`;
+      phrase = mercuryDirectSoon();
+      rangeText = isEn() ? `the ${ordinal(last + 1)}` : `${last + 1}日`;
     }
     out.push(
       buildSignal({
@@ -259,14 +270,17 @@ function monthReading(n: Natal, p: Period, prev: { jh: number; jr: boolean; sh: 
         dim: "wisdom",
         tone: "mixed",
         weight: retroDays.length >= 7 ? 2 : 1,
-        pro: `${p.year} 年 ${p.month} 月：水星逆行 ${range}（按逐日黄经推算）`,
+        pro: t(`${p.year} 年 ${p.month} 月：水星逆行 ${range}（按逐日黄经推算）`, `${MONTH_EN[p.month! - 1]} ${p.year}: Mercury retrograde ${rangeEn} (from daily longitudes)`),
         phrase: { ...phrase, what: phrase.what.map((w) => w.replaceAll("{range}", rangeText)) },
       }),
     );
   }
 
-  const retroNote = retroDays.length ? " · 水星逆行" : "";
-  const label = `太阳${signName(sunLon)}${n.known ? `（第 ${houseOf(n, sunLon)} 宫）` : ""} · 木星${signName(jLon)}${jr ? "逆行" : ""}${retroNote}`;
+  const retroNote = retroDays.length ? t(" · 水星逆行", " · Mercury retrograde") : "";
+  const label = t(
+    `太阳${signName(sunLon)}${n.known ? `（第 ${houseOf(n, sunLon)} 宫）` : ""} · 木星${signName(jLon)}${jr ? "逆行" : ""}${retroNote}`,
+    `Sun in ${signName(sunLon)}${n.known ? ` (house ${houseOf(n, sunLon)})` : ""} · Jupiter in ${signName(jLon)}${jr ? " retrograde" : ""}${retroNote}`,
+  );
   return { r: { period: p, label, signals: limitSignals(out) }, state };
 }
 
@@ -296,6 +310,6 @@ export const astrologyForecast: ForecastFn = (chart, now): Forecast => {
   return {
     years: years.map((p) => yearReading(n, p)),
     months: monthReadings,
-    ...(n.known ? {} : { note: "出生时间未知，宫位无法确定，这里只使用木星、土星所在的星座和它们与本命太阳的关系，没有宫位判断。" }),
+    ...(n.known ? {} : { note: t("出生时间未知，宫位无法确定，这里只使用木星、土星所在的星座和它们与本命太阳的关系，没有宫位判断。", "Your birth time is unknown, so the houses cannot be fixed. This reading uses only the signs Jupiter and Saturn are in and how they relate to your natal Sun, with no house readings.") }),
   };
 };

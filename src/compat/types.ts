@@ -1,3 +1,4 @@
+import { pick } from "../i18n";
 import type { BirthInput, Chart } from "../core/chart";
 import type { Dim } from "../data/types";
 import type { Tone } from "../forecast/types";
@@ -17,6 +18,22 @@ export const RELATION_NAMES: Record<RelationKind, string> = {
   colleague: "同事 / 合伙人",
   boss: "上司 / 老师",
 };
+
+export const RELATION_NAMES_EN: Record<RelationKind, string> = {
+  partner: "Partner",
+  crush: "Crush",
+  spouse: "Spouse",
+  father: "Father",
+  mother: "Mother",
+  child: "Child",
+  sibling: "Sibling",
+  friend: "Friend",
+  colleague: "Colleague / partner",
+  boss: "Boss / teacher",
+};
+
+/** The relation in the current language. */
+export const relationName = (r: RelationKind) => pick(RELATION_NAMES, RELATION_NAMES_EN)[r];
 
 /** Another person the user adds. The time and city can be unknown (timeKnown false, city defaults to the user's). */
 export interface Person {

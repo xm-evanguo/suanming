@@ -1,10 +1,12 @@
+import { MERCURY_DIRECT_SOON_EN, MERCURY_RETRO_EN, HOUSES_EN, PLANET_TEMPLATES_EN, SIGN_THEMES_EN, SIGN_TEMPLATES_EN, YEAR_EVENTS_EN, MONTH_EVENTS_EN } from "./en/forecast-astrology";
+import { live, pick } from "../i18n";
 /** Plain-language texts for the 西洋占星 transit forecast. */
 import type { Tone } from "../forecast/types";
 import type { Phrase } from "./forecast-common";
 import type { Dim } from "./types";
 
 /** Whole-sign houses 1-12 (index 0 is house 1): the life area and everyday scenes. */
-export const HOUSES: { dim: Dim; topic: string; scenes: string[] }[] = [
+const HOUSES_ZH: { dim: Dim; topic: string; scenes: string[] }[] = [
   { dim: "health", topic: "自己的状态和形象", scenes: ["发型、穿着和第一印象", "你想开始的新尝试", "精气神和体力"] },
   { dim: "wealth", topic: "收入和花销", scenes: ["工资、奖金和副业", "购物和存钱的习惯", "你对自己价值的判断"] },
   { dim: "wisdom", topic: "沟通和学习", scenes: ["日常的交流和消息", "短途出行", "学一门小技能", "和兄弟姐妹、邻居的往来"] },
@@ -22,7 +24,7 @@ export const HOUSES: { dim: Dim; topic: string; scenes: string[] }[] = [
 export type TransitPlanet = "jupiter" | "saturn" | "mars" | "venus" | "sun";
 
 /** Templates by transiting planet. `{topic}` and `{scene}` come from HOUSES. */
-export const PLANET_TEMPLATES: Record<TransitPlanet, { tone: Tone; direct: string[]; retro?: string[] }> = {
+const PLANET_TEMPLATES_ZH: Record<TransitPlanet, { tone: Tone; direct: string[]; retro?: string[] }> = {
   jupiter: {
     tone: "good",
     direct: [
@@ -76,7 +78,7 @@ export const JUPITER_STRONG_HOUSES = [1, 10];
 export const SATURN_STRONG_HOUSES = [1, 10];
 
 /** Without a birth time we only know signs. Index 0 = Aries. */
-export const SIGN_THEMES: { dim: Dim; theme: string; scene: string }[] = [
+const SIGN_THEMES_ZH: { dim: Dim; theme: string; scene: string }[] = [
   { dim: "career", theme: "主动开始新事物", scene: "想尝试的新项目或新方向" },
   { dim: "wealth", theme: "稳定的收入和享受生活", scene: "存钱、消费和生活品质" },
   { dim: "wisdom", theme: "学习和交流", scene: "读书、课程和日常沟通" },
@@ -91,7 +93,7 @@ export const SIGN_THEMES: { dim: Dim; theme: string; scene: string }[] = [
   { dim: "health", theme: "想象力、休息和疗愈", scene: "睡眠、独处和内心的整理" },
 ];
 
-export const SIGN_TEMPLATES: Record<"jupiter" | "saturn" | "sun", string[]> = {
+const SIGN_TEMPLATES_ZH: Record<"jupiter" | "saturn" | "sun", string[]> = {
   sun: [
     "{T}太阳走在{sign}，{theme}成为大家共同的话题，你也容易把心思放在{scene}上。",
     "{T}太阳走进{sign}，整体氛围偏向{theme}，{scene}值得多花点时间。",
@@ -107,7 +109,7 @@ export const SIGN_TEMPLATES: Record<"jupiter" | "saturn" | "sun", string[]> = {
 };
 
 /** Long-cycle events in a year. `key` combines planet, target and aspect. */
-export const YEAR_EVENTS: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 | 3; phrase: Phrase; label: string }> = {
+const YEAR_EVENTS_ZH: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 | 3; phrase: Phrase; label: string }> = {
   "jupiter-return": {
     dim: "wisdom",
     tone: "good",
@@ -235,7 +237,7 @@ export const YEAR_EVENTS: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 |
 };
 
 /** Month events of fast planets to natal points. Key: planet-target-aspect (0 = conjunction, 180 = opposition). */
-export const MONTH_EVENTS: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2; what: string[] }> = {
+const MONTH_EVENTS_ZH: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2; what: string[] }> = {
   "venus-sun-0": { dim: "love", tone: "good", weight: 2, what: ["{T}约{day}，金星贴近你的太阳，你的魅力和人缘特别好，适合见人、约会、谈合作。"] },
   "venus-sun-180": { dim: "love", tone: "mixed", weight: 1, what: ["{T}约{day}，金星与你的太阳相对，对方的态度和你的想法容易有落差，沟通时多一点体贴。"] },
   "venus-moon-0": { dim: "love", tone: "good", weight: 2, what: ["{T}约{day}，金星贴近你的月亮，心情柔软，亲近的人带来温暖，适合约会和家庭聚会。"] },
@@ -262,7 +264,7 @@ export const MONTH_EVENTS: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2;
   "sun-mc-180": { dim: "career", tone: "mixed", weight: 1, what: ["{T}约{day}，太阳与你的事业点相对，工作与生活要平衡，别把时间都给了工作。"] },
 };
 
-export const MERCURY_RETRO: Phrase = {
+const MERCURY_RETRO_ZH: Phrase = {
   what: [
     "{T}水星逆行（约{range}）：沟通、行程和电子设备容易出现反复，约好的事可能改期。",
     "{T}水星逆行（约{range}）：旧人旧事容易回头找你，文件和消息也容易出现误会。",
@@ -275,9 +277,19 @@ export const MERCURY_RETRO: Phrase = {
   ],
 };
 
-export const MERCURY_DIRECT_SOON: Phrase = {
+const MERCURY_DIRECT_SOON_ZH: Phrase = {
   what: [
     "{T}水星从逆行转为顺行（约{range}），之前卡住的沟通和计划开始松动。",
   ],
   act: ["把之前搁置的事重新拿出来推进，沟通上的结也可以趁现在解开。"],
 };
+
+export const HOUSES = live(HOUSES_ZH, HOUSES_EN);
+export const PLANET_TEMPLATES = live(PLANET_TEMPLATES_ZH, PLANET_TEMPLATES_EN);
+export const SIGN_THEMES = live(SIGN_THEMES_ZH, SIGN_THEMES_EN);
+export const SIGN_TEMPLATES = live(SIGN_TEMPLATES_ZH, SIGN_TEMPLATES_EN);
+export const YEAR_EVENTS = live(YEAR_EVENTS_ZH, YEAR_EVENTS_EN);
+export const MONTH_EVENTS = live(MONTH_EVENTS_ZH, MONTH_EVENTS_EN);
+
+export const mercuryRetro = (): Phrase => pick(MERCURY_RETRO_ZH, MERCURY_RETRO_EN);
+export const mercuryDirectSoon = (): Phrase => pick(MERCURY_DIRECT_SOON_ZH, MERCURY_DIRECT_SOON_EN);

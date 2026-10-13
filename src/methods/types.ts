@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Chart } from "../core/chart";
 import type { Scores, WuXing } from "../data/types";
 
@@ -18,6 +19,10 @@ export type MethodId =
   | "maya";
 
 export type Origin = "中国" | "日本" | "西方" | "古希腊" | "古罗马" | "波斯" | "印度" | "玛雅";
+
+const ORIGIN_EN: Record<Origin, string> = { 中国: "China", 日本: "Japan", 西方: "West", 古希腊: "Ancient Greece", 古罗马: "Ancient Rome", 波斯: "Persia", 印度: "India", 玛雅: "Maya" };
+/** The origin in the current language. `Origin` itself stays the internal key. */
+export const originName = (o: Origin) => t(o, ORIGIN_EN[o]);
 
 export interface Fact {
   label: string;
@@ -75,4 +80,14 @@ export function shiftScores(s: Scores, delta: Partial<Scores>): Scores {
   return out;
 }
 
-export const UNKNOWN_TIME_NOTE = "未提供准确出生时间，按正午 12:00 推算；与时辰相关的部分仅供参考。";
+export const UNKNOWN_TIME_NOTE = () =>
+  t("未提供准确出生时间，按正午 12:00 推算；与时辰相关的部分仅供参考。", "No exact birth time was given, so noon (12:00) was used. Treat the parts that depend on the hour as rough.");
+
+/** Plain section titles that most systems share. The method page folds these, and every method uses these exact titles. */
+export const plainTitles = () => ({
+  who: t("你是怎样的人", "Who you are"),
+  work: t("适合做什么", "What suits you"),
+  love: t("感情里的你", "You in love"),
+  advice: t("给你的建议", "Advice for you"),
+  how: t("这套方法怎么算的", "How this method works"),
+});

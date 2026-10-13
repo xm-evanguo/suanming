@@ -7,6 +7,8 @@
  */
 import type { Signal, Tone } from "../forecast/types";
 import type { Dim } from "./types";
+import { ACT_EN } from "./en/forecast-common";
+import { isEn, live } from "../i18n";
 
 export type Scope = "year" | "month";
 
@@ -31,13 +33,17 @@ export function shiftTone(t: Tone, delta: number): Tone {
   return TONE_ORDER[Math.max(0, Math.min(2, TONE_ORDER.indexOf(t) + delta))]!;
 }
 
-/** Replace the `{T}` time word: "这个月" for a month, "这一年" for a year. */
+/** Replace the `{T}` time word: "这个月" for a month, "这一年" for a year ("This month" or "this year" in English). */
 export function fillTime(text: string, scope: Scope): string {
+  if (isEn()) {
+    const word = scope === "month" ? "this month" : "this year";
+    return text.replace(/^\{T\}/, word[0]!.toUpperCase() + word.slice(1)).replaceAll("{T}", word);
+  }
   return text.replaceAll("{T}", scope === "month" ? "这个月" : "这一年");
 }
 
 /** Generic small actions by life area and tone. Each sentence stands alone after a "what" sentence. */
-export const ACT: Record<Dim, Record<Tone, string[]>> = {
+const ACT_ZH: Record<Dim, Record<Tone, string[]>> = {
   career: {
     good: [
       "想争取的项目或岗位，先把近期的成绩整理成一页纸，再去找负责人聊。",
@@ -170,6 +176,8 @@ export const ACT: Record<Dim, Record<Tone, string[]>> = {
   },
 };
 
+export const ACT = live(ACT_ZH, ACT_EN);
+
 /** A rule meaning: several "what" wordings, and optionally its own "act" pool (empty array = no act sentence). */
 export interface Phrase {
   what: readonly string[];
@@ -192,7 +200,7 @@ export function buildSignal(a: BuildArgs): Signal {
   const what = fillTime(pick(a.phrase.what, hash(`${a.key}:w`)), a.scope);
   const acts = a.phrase.act ?? ACT[a.dim][a.tone];
   const act = acts.length ? pick(acts, hash(`${a.key}:a`)) : "";
-  return { dim: a.dim, tone: a.tone, weight: a.weight, pro: a.pro, plain: what + act };
+  return { dim: a.dim, tone: a.tone, weight: a.weight, pro: a.pro, plain: act ? [what, act].join(isEn() ? " " : "") : what };
 }
 
 /**

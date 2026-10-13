@@ -117,6 +117,11 @@
   .fir-sub small { display: none; }
   .fir-seg small { display: none; }
   .fir-seg b { font-size: 14px; }
+  /* English names are longer: wrap the cells and put the dignity on a second line. */
+  html[lang="en"] .hel-table td { white-space: normal; padding: 5px 4px; border-bottom: 0; }
+  html[lang="en"] .hel-table tr { display: grid; grid-template-columns: 28px 1fr 1fr auto; align-items: center; border-bottom: 1px solid var(--line); }
+  html[lang="en"] .hel-table td:last-child { grid-column: 2 / -1; padding-top: 0; }
+  html[lang="en"] .hel-table td:last-child:empty { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hel-wheel .hel-house, .hel-wheel .hel-body, .ch-wheel .ch-seg, .ch-wheel .ch-node, .ch-chip, .fir-seg, .fir-sub, .fir-legend li, .fir-now-marker { opacity: 1 !important; animation: none !important; }

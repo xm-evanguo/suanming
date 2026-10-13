@@ -1,5 +1,7 @@
+import { PLAIN_TONES_EN } from "./en/plain-maya";
+import { live } from "../i18n";
 /** How the 13 Maya tones show up in your working style. Index 0 is tone 1. */
-export const PLAIN_TONES: string[] = [
+const PLAIN_TONES_ZH: string[] = [
   "你做事喜欢先定目标。你像一个发起人，有想法就想开个头，也能吸引同路的人。",
   "你习惯在两个选项之间比较。你擅长看到事情的两面，遇到挑战时，学会找到平衡点就是你的强项。",
   "你做事爱动手，喜欢把想法变成行动，也喜欢把人和资源连起来，让事情转起来。",
@@ -14,3 +16,5 @@ export const PLAIN_TONES: string[] = [
   "你做事有全局观。你会把各种意见和资源汇合起来，让大家一起往前。",
   "你做事看重意义。你会把一个阶段做完，带着经验开启下一轮，喜欢陪别人走到最后。",
 ];
+
+export const PLAIN_TONES = live(PLAIN_TONES_ZH, PLAIN_TONES_EN);

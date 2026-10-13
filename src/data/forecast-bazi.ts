@@ -1,3 +1,5 @@
+import { GOD_RULES_EN, PARTNER_PHRASE_EN, SPOUSE_RULES_EN, TAISUI_RULES_EN, SHENSHA_RULES_EN, RHYTHM_PHRASE_EN } from "./en/forecast-bazi";
+import { live } from "../i18n";
 /** Plain-language texts for the 八字 period forecast. Jargon stays in `pro`; these are for `plain`. */
 import type { Tone } from "../forecast/types";
 import type { Phrase } from "./forecast-common";
@@ -14,7 +16,7 @@ export interface GodRule {
   extra?: { dim: Dim; tone: Tone; phrase: Phrase };
 }
 
-export const GOD_RULES: Record<string, GodRule> = {
+const GOD_RULES_ZH: Record<string, GodRule> = {
   正官: {
     dim: "career",
     tone: "good",
@@ -184,7 +186,7 @@ export const GOD_RULES: Record<string, GodRule> = {
 };
 
 /** Partner-star text (men: 财星; women: 官杀). */
-export const PARTNER_PHRASE: Record<"steady" | "passion", Phrase> = {
+const PARTNER_PHRASE_ZH: Record<"steady" | "passion", Phrase> = {
   steady: {
     what: [
       "{T}感情上的缘分比较实在，容易遇到愿意认真相处的人。",
@@ -202,7 +204,7 @@ export const PARTNER_PHRASE: Record<"steady" | "passion", Phrase> = {
 };
 
 /** Day-branch (spouse palace) relations. */
-export const SPOUSE_RULES: Record<string, { tone: Tone; weight: 1 | 2; phrase: Phrase }> = {
+const SPOUSE_RULES_ZH: Record<string, { tone: Tone; weight: 1 | 2; phrase: Phrase }> = {
   六合: {
     tone: "good",
     weight: 2,
@@ -258,7 +260,7 @@ export const SPOUSE_RULES: Record<string, { tone: Tone; weight: 1 | 2; phrase: P
 };
 
 /** 太岁 relations (years only). */
-export const TAISUI_RULES: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 | 3; phrase: Phrase }> = {
+const TAISUI_RULES_ZH: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 | 3; phrase: Phrase }> = {
   "值太岁（本命年）": {
     dim: "health",
     tone: "mixed",
@@ -332,7 +334,7 @@ export const TAISUI_RULES: Record<string, { dim: Dim; tone: Tone; weight: 1 | 2 
 };
 
 /** 神煞. */
-export const SHENSHA_RULES: Record<string, { dim: Dim; tone: Tone; phrase: Phrase }> = {
+const SHENSHA_RULES_ZH: Record<string, { dim: Dim; tone: Tone; phrase: Phrase }> = {
   天乙贵人: {
     dim: "career",
     tone: "good",
@@ -382,7 +384,7 @@ export const SHENSHA_RULES: Record<string, { dim: Dim; tone: Tone; phrase: Phras
 };
 
 /** Overall rhythm from favorable elements (not an element name in plain text). */
-export const RHYTHM_PHRASE: Record<"fit" | "off" | "flat", Phrase> = {
+const RHYTHM_PHRASE_ZH: Record<"fit" | "off" | "flat", Phrase> = {
   flat: {
     what: [
       "{T}整体节奏平稳，没有特别顺也没有特别拧，按部就班做事就好。",
@@ -402,3 +404,10 @@ export const RHYTHM_PHRASE: Record<"fit" | "off" | "flat", Phrase> = {
     ],
   },
 };
+
+export const GOD_RULES = live(GOD_RULES_ZH, GOD_RULES_EN);
+export const PARTNER_PHRASE = live(PARTNER_PHRASE_ZH, PARTNER_PHRASE_EN);
+export const SPOUSE_RULES = live(SPOUSE_RULES_ZH, SPOUSE_RULES_EN);
+export const TAISUI_RULES = live(TAISUI_RULES_ZH, TAISUI_RULES_EN);
+export const SHENSHA_RULES = live(SHENSHA_RULES_ZH, SHENSHA_RULES_EN);
+export const RHYTHM_PHRASE = live(RHYTHM_PHRASE_ZH, RHYTHM_PHRASE_EN);

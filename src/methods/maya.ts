@@ -1,7 +1,9 @@
 import { DAY_SIGNS, TONES } from "../data/maya";
 import { PLAIN_TONES } from "../data/plain-maya";
 import { plainProfileSections, profileLucky, profileSections } from "./profile";
-import { type MethodFn, shiftScores } from "./types";
+import { type MethodFn, plainTitles, shiftScores } from "./types";
+import { isEn, lcFirst, listJoin } from "../i18n";
+import { methodName } from "./names";
 
 /** GMT correlation constant: JDN of the Long Count origin 0.0.0.0.0 (4 Ajaw 8 Kumk'u). */
 export const GMT = 584283;
@@ -42,6 +44,53 @@ export const maya: MethodFn<MayaVisual> = (chart) => {
   const guide = DAY_SIGNS[(t.sign + 10) % 20]!;
 
   const base = plainProfileSections(s, `玛雅历把每一天配上20种“印记”（20种类型）和13种“音调”（13种做事节奏）。你出生那天的印记是「${s.name}」，也就是「${s.title}」这一类人。`);
+
+  if (isEn()) {
+    const base = plainProfileSections(s, `The Maya calendar gives every day one of 20 \"signs\" (20 types) and one of 13 \"tones\" (13 rhythms of working). The sign of the day you were born is \"${s.name}\", known as ${lcFirst(s.title)}.`);
+    return {
+      id: "maya",
+      name: methodName("maya"),
+      intro: "The sacred Tzolk'in calendar of the ancient Maya: 13 galactic tones × 20 solar day signs make a cosmic cycle of 260 days.",
+      origin: "玛雅",
+      icon: s.glyph,
+      headline: `Kin ${t.kin} · ${t.tone} ${s.maya}`,
+      tagline: `${s.name} · ${tone.name}`,
+      keywords: [...s.keywords.slice(0, 4), ...tone.keywords.slice(0, 1)],
+      scores: shiftScores(s.scores, { wisdom: t.tone === 13 || t.tone === 1 ? 3 : 0 }),
+      element: s.element,
+      lucky: profileLucky(s),
+      facts: [
+        { label: "Days since the Long Count origin", value: `${t.days.toLocaleString()} days` },
+        { label: "Long Count", value: t.longCount.join(".") },
+        { label: "Tzolk'in", value: `${t.tone} ${s.maya} (Kin ${t.kin}/260)` },
+        { label: "Galactic tone", value: tone.name },
+      ],
+      sections: [
+        ...profileSections(s, `${s.name} · `),
+        { title: `Tone · ${tone.name}`, body: tone.text },
+        { title: "The mirror opposite", body: `On the ring of 20 signs, the one facing you across the circle is \"${guide.name}\". It stands for the strength you are most likely to overlook, yet the one that makes you whole. ${guide.summary}` },
+      ],
+      plain: {
+        summary: `Your sign is \"${s.name}\": ${lcFirst(s.title)}. ${s.summary} The key words for your working rhythm are ${listJoin(tone.keywords.slice(0, 2).map((k) => `\"${k}\"`))}.`,
+        sections: [
+          base[0]!,
+          base[1]!,
+          base[2]!,
+          base[3]!,
+          {
+            title: "Your working rhythm and blind spot",
+            body: `${PLAIN_TONES[t.tone - 1]} The type opposite you is \"${guide.name}\". It stands for the side of you that you are most likely to overlook, yet that makes you more whole. ${guide.summary}`,
+          },
+          {
+            title: plainTitles().how,
+            body: "The Maya had a sacred calendar that runs in a 260-day round: 20 signs and 13 tones, combined in turn. Your birth date gives this day's place in the round, and so your sign and tone. This uses the calculation most scholars agree on.",
+          },
+        ],
+      },
+      caveats: ["This uses the GMT correlation constant (584283) that most scholars accept, to work out the traditional Tzolk'in. The popular \"13 Moon / Dreamspell\" count is different, and its Kin numbers will differ."],
+      visual: { tone: t.tone, sign: t.sign, kin: t.kin, longCount: t.longCount },
+    };
+  }
 
   return {
     id: "maya",

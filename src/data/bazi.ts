@@ -1,3 +1,5 @@
+import { DAY_MASTERS_EN, SHI_SHEN_EN, WU_XING_EN } from "./en/bazi";
+import { live } from "../i18n";
 import type { Brief, Profile, Scores, WuXing } from "./types";
 
 /** Build a Scores object from five integers (career, wealth, love, health, wisdom). */
@@ -16,7 +18,7 @@ export interface DayMaster extends Profile {
   image: string;
 }
 
-export const DAY_MASTERS: Record<
+const DAY_MASTERS_ZH: Record<
   "甲" | "乙" | "丙" | "丁" | "戊" | "己" | "庚" | "辛" | "壬" | "癸",
   DayMaster
 > = {
@@ -222,7 +224,7 @@ export const DAY_MASTERS: Record<
   },
 };
 
-export const SHI_SHEN: Record<
+const SHI_SHEN_ZH: Record<
   "比肩" | "劫财" | "食神" | "伤官" | "偏财" | "正财" | "七杀" | "正官" | "偏印" | "正印",
   Brief
 > = {
@@ -295,7 +297,7 @@ export interface WuXingInfo {
   lackText: string;
 }
 
-export const WU_XING: Record<WuXing, WuXingInfo> = {
+const WU_XING_ZH: Record<WuXing, WuXingInfo> = {
   木: {
     name: "木",
     color: "#3f9b5a",
@@ -372,3 +374,7 @@ export const WU_XING: Record<WuXing, WuXingInfo> = {
       "命中缺水，常显得思路偏窄、应变不足，容易干涩急躁。可多喝水、多学习新知，培养灵活的思维，让生活有更多流动与滋润。",
   },
 };
+
+export const DAY_MASTERS = live(DAY_MASTERS_ZH, DAY_MASTERS_EN);
+export const SHI_SHEN = live(SHI_SHEN_ZH, SHI_SHEN_EN);
+export const WU_XING = live(WU_XING_ZH, WU_XING_EN);

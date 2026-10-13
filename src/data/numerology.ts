@@ -1,3 +1,5 @@
+import { LIFE_PATH_EN, PERSONAL_YEAR_EN } from "./en/numerology";
+import { live } from "../i18n";
 import type { Brief, Profile } from "./types";
 
 export interface NumberProfile extends Profile {
@@ -5,7 +7,7 @@ export interface NumberProfile extends Profile {
 }
 
 /** Life path numbers 1-9 plus master numbers 11, 22, 33. */
-export const LIFE_PATH: Record<number, NumberProfile> = {
+const LIFE_PATH_ZH: Record<number, NumberProfile> = {
   1: {
     num: 1,
     name: "生命灵数 1 · 开创者",
@@ -225,7 +227,7 @@ export const LIFE_PATH: Record<number, NumberProfile> = {
 };
 
 /** Personal year cycle themes, keyed 1-9. */
-export const PERSONAL_YEAR: Record<number, Brief> = {
+const PERSONAL_YEAR_ZH: Record<number, Brief> = {
   1: {
     name: "个人年 1 · 播种之年",
     keywords: ["开端", "行动", "独立"],
@@ -272,3 +274,6 @@ export const PERSONAL_YEAR: Record<number, Brief> = {
     text: "一个九年循环到达终点，适合收尾、整理与告别不再适合的人和事。放下旧的包袱，为下一次新生腾出空间。",
   },
 };
+
+export const LIFE_PATH = live(LIFE_PATH_ZH, LIFE_PATH_EN);
+export const PERSONAL_YEAR = live(PERSONAL_YEAR_ZH, PERSONAL_YEAR_EN);

@@ -1,6 +1,7 @@
 import type { Dim } from "../data/types";
 import type { Forecast, Period, PeriodReading, Signal } from "../forecast/types";
-import { DIM_NAMES, DIMS } from "./fusion";
+import { dimName, DIMS } from "./fusion";
+import { isEn } from "../i18n";
 import type { MethodId, MethodResult } from "./types";
 
 /**
@@ -96,6 +97,7 @@ const SKIP_PRO_TITLE = /称量/;
 
 /** Plain section titles that fix the topic of the whole section. */
 function plainDefault(title: string): Dim | null {
+  if (isEn()) return /suits you/i.test(title) ? "career" : /love/i.test(title) ? "love" : null;
   if (/适合/.test(title)) return "career";
   if (/感情/.test(title)) return "love";
   return null;
@@ -103,6 +105,13 @@ function plainDefault(title: string): Dim | null {
 
 /** Pro section titles that fix the topic of the section. 财帛 comes first so that "事业与财帛" stays career, as 官禄 leads it. */
 function proDefault(title: string): Dim | null {
+  if (isEn()) {
+    if (/career|profession/i.test(title)) return "career";
+    if (/wealth|money/i.test(title)) return "wealth";
+    if (/love|spouse|marriage/i.test(title)) return "love";
+    if (/health/i.test(title)) return "health";
+    return null;
+  }
   if (/事业|官禄|职业/.test(title)) return "career";
   if (/财帛/.test(title)) return "wealth";
   if (/感情|夫妻|姻缘|婚/.test(title)) return "love";
@@ -120,8 +129,30 @@ const PALACE: [RegExp, Dim | "none"][] = [
   [/^迁移/, "none"],
 ];
 
-/** Split Chinese text into sentences; closing quotes and brackets stay with their sentence. */
+// English text uses the same approach with English keywords. Chinese stays the source of truth for tests.
+const RE_EN = {
+  wealth: /\b(money|income|earn|savings?|saving|spend|spending|budget|debt|salary|pay|wealth|finances?|financial|invest|investment|business|assets?)\b/i,
+  wealthStrong: /\b(money|income|earn|savings?|saving|spend|spending|budget|debt|salary|pay|finances?|financial)\b/i,
+  love: /\b(love|romance|romantic|partner|marriage|married|spouse|dating|date|relationship|crush|lover|couple|other half)\b/i,
+  health: /\b(body|health|healthy|energy|sleep|late nights?|diet|meals?|exercise|workout|breathing|skin|joints?|rest|insomnia|tired|tiredness|fatigue|stomach|neck|shoulders|sitting)\b/i,
+  career: /\b(work|career|job|jobs|colleagues?|team|boss|bosses|manager|start-up|industry|projects?|role|company|profession)\b/i,
+  wisdom: /\b(learn|learning|study|studying|read|reading|think|thinking|insight|intuition|wisdom|mind|curious|curiosity|research|reflect|focus|knowledge)\b/i,
+} as const;
+const SKIP_TITLE_EN = /how this method works|\d{4}|next stop|^now\b|^right now|stage of (your )?life|get along|what .* means/i;
+const SKIP_PRO_TITLE_EN = /weighing/i;
+const PALACE_EN: [RegExp, Dim | "none"][] = [
+  [/^Career palace/, "career"],
+  [/^Wealth palace/, "wealth"],
+  [/^Spouse palace/, "love"],
+  [/^Health palace/, "health"],
+  [/^Fortune palace/, "wisdom"],
+  [/^Travel palace/, "none"],
+];
+const DANGLING_EN = /^(it|this|that|and|also|so|therefore|but|however|that is|which)\b/i;
+
+/** Split text into sentences; closing quotes and brackets stay with their sentence. */
 function sentences(text: string): string[] {
+  if (isEn()) return (text.match(/[^.!?]*[.!?]+["')\]]*(?=\s|$)|[^.!?]+$/g) ?? []).map((s) => s.trim()).filter((s) => s.length > 0);
   return (text.match(/[^。！？]*[。！？]+[”’」』）)]*|[^。！？]+$/g) ?? []).map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
@@ -131,6 +162,17 @@ function sentences(text: string): string[] {
  * without a keyword continues the topic of the sentence before it, unless it starts a new "在…上" point.
  */
 function classify(s: string, def: Dim | null, prev: Dim | null): Dim | null {
+  if (isEn()) {
+    const palace = PALACE_EN.find(([re]) => re.test(s));
+    if (palace) return palace[1] === "none" ? null : palace[1];
+    if ((def ? RE_EN.wealthStrong : RE_EN.wealth).test(s)) return "wealth";
+    if (RE_EN.love.test(s)) return "love";
+    if (RE_EN.health.test(s)) return "health";
+    if (def) return /^(in|with|on) [^,]{1,30},/i.test(s) ? def : (prev ?? def);
+    if (RE_EN.career.test(s)) return "career";
+    if (RE_EN.wisdom.test(s)) return "wisdom";
+    return null;
+  }
   const palace = PALACE.find(([re]) => re.test(s));
   if (palace) return palace[1] === "none" ? null : palace[1];
   if ((def ? RE.wealthStrong : RE.wealth).test(s)) return "wealth";
@@ -142,7 +184,7 @@ function classify(s: string, def: Dim | null, prev: Dim | null): Dim | null {
   return null;
 }
 
-const normalize = (s: string) => s.replace(/[\s，。！？；：、“”‘’「」『』（）()]/g, "");
+const normalize = (s: string) => s.replace(/[\s，。！？；：、“”‘’「」『』（）()]/g, "").replace(/[.,!?;:"']/g, "").toLowerCase();
 
 /** A sentence that leans on the one before it cannot start a statement. */
 const DANGLING = /^(它|落在|而且|另外|所以|因此|并且|同时|不过|但|也就是)/;
@@ -158,7 +200,7 @@ function bucket(sections: { title: string; body: string }[], defaultOf: (title: 
     for (const s of sentences(sec.body)) {
       const dim = classify(s, def, prev);
       prev = dim && dim !== def ? dim : null;
-      if (!dim || s.length < 6 || s.length > MAX_SENTENCE) continue;
+      if (!dim || s.length < (isEn() ? 15 : 6) || s.length > (isEn() ? MAX_SENTENCE * 2.6 : MAX_SENTENCE)) continue;
       const key = normalize(s);
       if (used.has(key)) continue;
       used.add(key);
@@ -171,10 +213,12 @@ function bucket(sections: { title: string; body: string }[], defaultOf: (title: 
 /** Join the first one or two usable sentences into a short statement. */
 function pickText(list: string[], skip: Set<string> = new Set()): string {
   const usable = list.filter((s) => !skip.has(normalize(s)));
-  while (usable.length > 0 && DANGLING.test(usable[0]!)) usable.shift();
+  const dangling = isEn() ? DANGLING_EN : DANGLING;
+  while (usable.length > 0 && dangling.test(usable[0]!)) usable.shift();
   if (usable.length === 0) return "";
   const first = usable[0]!;
   const second = usable[1];
+  if (isEn()) return second && first.length + second.length <= MAX_TEXT * 2.6 ? `${first} ${second}` : first;
   return second && first.length + second.length <= MAX_TEXT ? first + second : first;
 }
 
@@ -188,8 +232,8 @@ function allBuckets(results: MethodResult[]): Map<MethodId, { plain: Buckets; pr
     results.map((r) => [
       r.id,
       {
-        plain: bucket(r.plain.sections.filter((s) => !SKIP_TITLE.test(s.title)), plainDefault, plainUsed),
-        pro: bucket(r.sections.filter((s) => !SKIP_PRO_TITLE.test(s.title)), proDefault, proUsed),
+        plain: bucket(r.plain.sections.filter((s) => !(isEn() ? SKIP_TITLE_EN : SKIP_TITLE).test(s.title)), plainDefault, plainUsed),
+        pro: bucket(r.sections.filter((s) => !(isEn() ? SKIP_PRO_TITLE_EN : SKIP_PRO_TITLE).test(s.title)), proDefault, proUsed),
       },
     ]),
   );
@@ -231,6 +275,14 @@ const periodKey = (p: Period) => p.year * 100 + (p.month ?? 0);
 
 /** One line on how far the systems agree, e.g. "14 个体系里，9 个评价偏高，2 个明显偏低（紫微斗数、吠陀占星）". */
 export function consensusText(v: TopicView, total: number): string {
+  if (isEn()) {
+    const namesEn = (list: TopicRank[]) => (list.length > 0 && list.length <= 3 ? ` (${list.map((x) => x.name).join(", ")})` : "");
+    if (v.high.length === 0 && v.low.length === 0) return `The ${total} systems see this much the same way; none rates it clearly higher or lower.`;
+    const partsEn: string[] = [];
+    if (v.high.length > 0) partsEn.push(`${v.high.length} ${v.high.length === 1 ? "rates" : "rate"} it higher${namesEn(v.high)}`);
+    if (v.low.length > 0) partsEn.push(`${v.low.length} ${v.low.length === 1 ? "rates" : "rate"} it clearly lower${namesEn(v.low)}`);
+    return `Of ${total} systems, ${partsEn.join(" and ")}.`;
+  }
   const names = (list: TopicRank[]) => (list.length > 0 && list.length <= 3 ? `（${list.map((x) => x.name).join("、")}）` : "");
   if (v.high.length === 0 && v.low.length === 0) return `${total} 个体系的看法比较接近，没有谁明显偏高或偏低。`;
   const parts: string[] = [];
@@ -262,7 +314,7 @@ export function topicViews(results: MethodResult[], forecasts: Partial<Record<Me
     const rank = (r: MethodResult): TopicRank => ({ id: r.id, name: r.name, score: r.scores[dim] });
     return {
       dim,
-      name: DIM_NAMES[dim],
+      name: dimName(dim),
       avg,
       high: results.filter((r) => r.scores[dim] >= avg + SPREAD).map(rank).sort((a, b) => b.score - a.score),
       low: results.filter((r) => r.scores[dim] <= avg - SPREAD).map(rank).sort((a, b) => a.score - b.score),

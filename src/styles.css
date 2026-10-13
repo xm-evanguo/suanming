@@ -592,6 +592,9 @@ button { font: inherit; color: inherit; }
 @media (max-width: 560px) {
   .view { padding: 20px 16px 72px; }
   .btn-xl { padding: 16px 30px; font-size: 18px; }
+  .hero { min-height: calc(100svh - 120px); }
+  .hero-sub { letter-spacing: 0.12em; }
+  .m-hero { padding-top: 28px; }
   .choices { grid-template-columns: 1fr 1fr; }
   .custom-grid { grid-template-columns: 1fr; }
   .confirm li { grid-template-columns: 72px 1fr auto; font-size: 14px; }

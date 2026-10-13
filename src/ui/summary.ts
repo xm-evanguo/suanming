@@ -2,7 +2,9 @@ import { f } from "./svg-geom";
 import { WU_XING } from "../data/bazi";
 import { periodName } from "../forecast/types";
 import type { WuXing } from "../data/types";
-import { DIM_NAMES, DIMS } from "../methods/fusion";
+import { dimName, DIMS } from "../methods/fusion";
+import { isEn, t } from "../i18n";
+import { wxName } from "../data/en/terms";
 import { consensusText, strongestSignals, type TopicStatement, type TopicView, topicViews } from "../methods/topics";
 import type { MethodResult } from "../methods/types";
 import { cnNum, luckyRow, onlyPlain, onlyPro, scoreBars, sectionTitle, statement, topbar } from "./components";
@@ -27,7 +29,7 @@ export function monthsLine(v: TopicView): string {
   if (withSignals.length === 0) return "";
   const best = withSignals.reduce((a, b) => (b.score > a.score ? b : a));
   const worst = withSignals.reduce((a, b) => (b.score < a.score ? b : a));
-  return [best.score > 50 ? `较顺：${periodName(best.period)}` : "", worst.score < 50 ? `需留意：${periodName(worst.period)}` : ""].filter(Boolean).join(" · ");
+  return [best.score > 50 ? t(`较顺：${periodName(best.period)}`, `Smoother: ${periodName(best.period)}`) : "", worst.score < 50 ? t(`需留意：${periodName(worst.period)}`, `Take care: ${periodName(worst.period)}`) : ""].filter(Boolean).join(" · ");
 }
 
 function topicCard(v: TopicView, total: number, hidden: boolean): HTMLElement {
@@ -36,25 +38,25 @@ function topicCard(v: TopicView, total: number, hidden: boolean): HTMLElement {
   return h(
     "section",
     { class: "glass topic-card", role: "tabpanel", hidden },
-    h("div", { class: "tp-head" }, h("h3", null, v.name), h("span", { class: "tp-avg" }, "出生画像 · ", h("b", null, String(Math.round(v.avg))), " 分")),
+    h("div", { class: "tp-head" }, h("h3", null, v.name), h("span", { class: "tp-avg" }, t("出生画像 · ", "Birth profile · "), h("b", null, String(Math.round(v.avg))), t(" 分", ""))),
     h("p", { class: "tp-consensus" }, consensusText(v, total)),
     h(
       "ul",
       { class: "tp-stmts" },
       ...pickStatements(v, 3).map((s) =>
-        h("li", { class: "tp-stmt" }, onlyPlain(h("p", null, s.text)), onlyPro(h("p", { class: s.pro ? "tp-pro" : "" }, s.pro || s.text)), h("small", { class: "stmt-src" }, `${s.name} · ${s.score} 分`)),
+        h("li", { class: "tp-stmt" }, onlyPlain(h("p", null, s.text)), onlyPro(h("p", { class: s.pro ? "tp-pro" : "" }, s.pro || s.text)), h("small", { class: "stmt-src" }, t(`${s.name} · ${s.score} 分`, `${s.name} · ${s.score}`))),
       ),
     ),
     v.thisYear && (picks.length > 0 || line)
       ? h(
           "div",
           { class: "tp-now" },
-          h("small", { class: "tp-now-title" }, `现在 · ${v.thisYear.period.year} 年`),
+          h("small", { class: "tp-now-title" }, t(`现在 · ${v.thisYear.period.year} 年`, `Now · ${v.thisYear.period.year}`)),
           picks.length > 0 ? h("ul", { class: "stmts" }, ...picks.map((p, i) => statement(p.signal, p.name, i))) : "",
           line ? h("p", { class: "tp-months" }, line) : "",
         )
       : "",
-    h("div", { class: "tp-links" }, h("a", { class: "tp-link", href: "#/timeline" }, "逐月看完整时间线 →"), h("a", { class: "tp-link", href: `#/ask/t/${v.dim}` }, "就这个话题提问 →")),
+    h("div", { class: "tp-links" }, h("a", { class: "tp-link", href: "#/timeline" }, t("逐月看完整时间线 →", "See the full timeline by month →")), h("a", { class: "tp-link", href: `#/ask/t/${v.dim}` }, t("就这个话题提问 →", "Ask about this topic →"))),
   );
 }
 
@@ -73,16 +75,16 @@ function topicSection(results: MethodResult[]): HTMLElement {
           class: `dim-chip${i === 0 ? " on" : ""}`,
           "aria-selected": String(i === 0),
           onclick: () =>
-            tabs.forEach((t, j) => {
-              t.classList.toggle("on", i === j);
-              t.setAttribute("aria-selected", String(i === j));
+            tabs.forEach((tab, j) => {
+              tab.classList.toggle("on", i === j);
+              tab.setAttribute("aria-selected", String(i === j));
               cards[j]!.hidden = i !== j;
             }),
         },
         `${v.name} ${Math.round(v.avg)}`,
       ),
     );
-    slot.append(reveal(h("div", { class: "dim-filter", role: "tablist", "aria-label": "话题" }, ...tabs)), reveal(h("div", { class: "topic-cards" }, ...cards)));
+    slot.append(reveal(h("div", { class: "dim-filter", role: "tablist", "aria-label": t("话题", "Topics") }, ...tabs)), reveal(h("div", { class: "topic-cards" }, ...cards)));
   }, 0);
   return slot;
 }
@@ -97,18 +99,25 @@ export function renderSummary(view: HTMLElement) {
   const score = h("b", null, "0");
   const oracle = h("div", { class: "oracle" }, ...fusion.oracle.map(() => h("p")));
   view.append(
-    topbar(["#/hub", "← 星盘总览"], "FUSION", ["#/new", "↺ 重新输入"]),
+    topbar(["#/hub", t("← 星盘总览", "← Overview")], "FUSION", ["#/new", t("↺ 重新输入", "↺ Start over")]),
     h(
       "header",
       { class: "page-head" },
       h("p", { class: "eyebrow" }, `${results.length} SYSTEMS · ONE CHART`),
-      h("h1", { class: "title-glow small" }, "命运全息图"),
+      h("h1", { class: "title-glow small" }, t("命运全息图", "Your full chart")),
       h("p", { class: "birth-line" }, birthLine()),
-      h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, "出生画像")),
-      h("p", { class: "hub-guide" }, `最闪耀：${DIM_NAMES[fusion.strongest]} · 最需经营：${DIM_NAMES[fusion.weakest]}${hasElements ? ` · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}` : " · 所选体系没有五行资料"}`),
+      h("div", { class: "ring big", style: { "--p": fusion.overall } as never }, score, h("small", null, t("出生画像", "Birth profile"))),
+      h(
+        "p",
+        { class: "hub-guide" },
+        t(
+          `最闪耀：${dimName(fusion.strongest)} · 最需经营：${dimName(fusion.weakest)}${hasElements ? ` · 五行偏${fusion.dominantElement}、缺${fusion.weakElement}` : " · 所选体系没有五行资料"}`,
+          `Brightest: ${dimName(fusion.strongest)} · Most to work on: ${dimName(fusion.weakest)}${hasElements ? ` · Elements: most ${wxName(fusion.dominantElement)}, least ${wxName(fusion.weakElement)}` : " · No five-element data in the selected systems"}`,
+        ),
+      ),
     ),
     reveal(h("section", { class: "glass oracle-card" }, h("span", { class: "oracle-mark" }, "❝"), oracle)),
-    sectionTitle("按话题看：共识与分歧", "画像分数综合已启用体系；年运只用年度信号，月运只用月度信号，均不加入画像分数"),
+    sectionTitle(t("按话题看：共识与分歧", "By topic: agreement and disagreement"), t("画像分数综合已启用体系；年运只用年度信号，月运只用月度信号，均不加入画像分数", "Profile scores average the enabled systems. Year outlooks use only year signals and month outlooks only month signals; neither enters the profile score.")),
     topicSection(results),
   );
   setTimeout(() => countUp(score, fusion.overall, 1800), 300);
@@ -129,7 +138,7 @@ export function renderSummary(view: HTMLElement) {
   const axes = DIMS.map((d, i) => {
     const p = pt(i, 100);
     const l = pt(i, 122);
-    return `<line x1="${C}" y1="${C}" x2="${f(p.x)}" y2="${f(p.y)}" class="grid"/><text x="${f(l.x)}" y="${f(l.y + 5)}" text-anchor="middle" class="rl">${DIM_NAMES[d]} ${fusion.scores[d]}</text>`;
+    return `<line x1="${C}" y1="${C}" x2="${f(p.x)}" y2="${f(p.y)}" class="grid"/><text x="${f(l.x)}" y="${f(l.y + 5)}" text-anchor="middle" class="rl">${dimName(d)} ${fusion.scores[d]}</text>`;
   }).join("");
   const each = results.map((r, i) => `<polygon points="${poly(DIMS.map((d) => r.scores[d]))}" class="each" style="--i:${i}"><title>${r.name}</title></polygon>`).join("");
   const radar = svg("-40 -10 420 360", `${grid}${axes}${each}<polygon points="${poly(DIMS.map((d) => fusion.scores[d]))}" class="avg"/>`, "radar");
@@ -140,8 +149,8 @@ export function renderSummary(view: HTMLElement) {
   }).sort((a, b) => b.sd - a.sd)[0]!;
 
   view.append(
-    sectionTitle("五维星图 · 出生画像", `金色为${n}体系的画像平均值，淡色线为各体系的画像分数`),
-    reveal(h("div", { class: "glass v-row radar-row" }, radar, h("div", null, scoreBars(fusion.scores), h("p", { class: "v-caption" }, `体系之间分歧最大的是「${DIM_NAMES[spread.d]}」（标准差 ${spread.sd.toFixed(1)} 分）——不同文明对它的看法并不一致。`)))),
+    sectionTitle(t("五维星图 · 出生画像", "Five-area star map · birth profile"), t(`金色为${n}体系的画像平均值，淡色线为各体系的画像分数`, `Gold is the average of ${results.length} systems; faint lines are each system's own scores`)),
+    reveal(h("div", { class: "glass v-row radar-row" }, radar, h("div", null, scoreBars(fusion.scores), h("p", { class: "v-caption" }, t(`体系之间分歧最大的是「${dimName(spread.d)}」（标准差 ${spread.sd.toFixed(1)} 分）——不同文明对它的看法并不一致。`, `The systems disagree most about ${dimName(spread.d)} (standard deviation ${spread.sd.toFixed(1)} points): different civilisations do not see it the same way.`))))),
   );
 
   // Five elements donut.
@@ -156,10 +165,11 @@ export function renderSummary(view: HTMLElement) {
       return s;
     })
     .join("");
-  const donut = svg("0 0 240 240", `<g transform="rotate(-90 120 120)">${segs}</g><text x="120" y="118" text-anchor="middle" class="donut-big">${hasElements ? fusion.dominantElement : "—"}</text><text x="120" y="145" text-anchor="middle" class="donut-small">${hasElements ? "主导五行" : "暂无五行资料"}</text>`, "donut");
+  const donut = svg("0 0 240 240", `<g transform="rotate(-90 120 120)">${segs}</g><text x="120" y="118" text-anchor="middle" class="donut-big${isEn() ? " en" : ""}">${hasElements ? wxName(fusion.dominantElement) : "—"}</text><text x="120" y="145" text-anchor="middle" class="donut-small">${hasElements ? t("主导五行", "leading element") : t("暂无五行资料", "no element data")}</text>`, "donut");
+
   const votes = DIMS.filter((d) => fusion.topVotes[d] > 0).sort((a, b) => fusion.topVotes[b] - fusion.topVotes[a]);
   view.append(
-    sectionTitle("五行与共识", "东西方元素折算为五行后投票；以及各体系眼中你最强的天赋"),
+    sectionTitle(t("五行与共识", "Elements and consensus"), t("东西方元素折算为五行后投票；以及各体系眼中你最强的天赋", "Eastern and Western elements, converted to the five elements and counted; and the gift each system rates highest")),
     reveal(
       h(
         "div",
@@ -168,29 +178,29 @@ export function renderSummary(view: HTMLElement) {
           "div",
           { class: "glass pad" },
           donut,
-          h("ul", { class: "legend" }, ...wx.map((w) => h("li", { style: { "--c": WX_COLOR[w] } as never }, `${w} ${fusion.elements[w]}%`))),
-          h("p", { class: "v-caption" }, hasElements ? `补${fusion.weakElement}之道：${WU_XING[fusion.weakElement].lackText}` : "所选体系没有提供五行资料。"),
+          h("ul", { class: "legend" }, ...wx.map((w) => h("li", { style: { "--c": WX_COLOR[w] } as never }, `${wxName(w)} ${fusion.elements[w]}%`))),
+          h("p", { class: "v-caption" }, hasElements ? t(`补${fusion.weakElement}之道：${WU_XING[fusion.weakElement].lackText}`, `To add ${wxName(fusion.weakElement)}: ${WU_XING[fusion.weakElement].lackText}`) : t("所选体系没有提供五行资料。", "The selected systems give no five-element data.")),
         ),
         h(
           "div",
           { class: "glass pad" },
-          h("h4", null, `${n}体系的投票`),
-          h("ul", { class: "votes" }, ...votes.map((d) => h("li", null, h("b", null, DIM_NAMES[d]), h("span", null, ...Array.from({ length: fusion.topVotes[d] }, (_, i) => h("i", { style: { "--i": i } as never }))), h("small", null, `${fusion.topVotes[d]} 票`)))),
-          h("p", { class: "v-caption" }, "每种体系把自己评分最高的一项作为一票。"),
+          h("h4", null, t(`${n}体系的投票`, `Votes of ${results.length} systems`)),
+          h("ul", { class: "votes" }, ...votes.map((d) => h("li", null, h("b", null, dimName(d)), h("span", null, ...Array.from({ length: fusion.topVotes[d] }, (_, i) => h("i", { style: { "--i": i } as never }))), h("small", null, t(`${fusion.topVotes[d]} 票`, `${fusion.topVotes[d]} ${fusion.topVotes[d] === 1 ? "vote" : "votes"}`))))),
+          h("p", { class: "v-caption" }, t("每种体系把自己评分最高的一项作为一票。", "Each system gives one vote to the area it rates highest.")),
         ),
       ),
     ),
   );
 
   view.append(
-    sectionTitle("命运关键词", "每一种体系为你留下的一个词"),
+    sectionTitle(t("命运关键词", "Keywords"), t("每一种体系为你留下的一个词", "One word that each system leaves you")),
     reveal(h("div", { class: "kw-cloud" }, ...fusion.keywords.map((k, i) => h("span", { class: "kw", style: { "--i": i } as never }, k.word, h("small", null, k.from))))),
-    sectionTitle("开运指引", "出现次数最多的颜色、数字与方位，并以五行之缺补色"),
+    sectionTitle(t("开运指引", "Luck guide"), t("出现次数最多的颜色、数字与方位，并以五行之缺补色", "The colours, numbers and directions named most often, with a colour for your weakest element")),
     reveal(luckyRow(fusion.lucky)),
-    sectionTitle(`${year} 流年展望`, "各体系对今年的判断"),
+    sectionTitle(t(`${year} 流年展望`, `${year} outlook`), t("各体系对今年的判断", "What each system says about this year")),
     reveal(h("div", { class: "outlook" }, ...fusion.outlook.map((o, i) => reveal(h("div", { class: "glass outlook-item" }, h("small", null, o.from), h("p", null, o.text)), i * 80)))),
-    reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-primary", href: "#/timeline" }, "逐年逐月看未来运程 ☽"), h("a", { class: "btn btn-ghost", href: "#/people" }, "关系合盘 ❦"))),
-    sectionTitle(`${n}扇门`, "点击回到任意一种体系"),
+    reveal(h("div", { class: "end-actions" }, h("a", { class: "btn btn-primary", href: "#/timeline" }, t("逐年逐月看未来运程 ☽", "Outlook by year and month ☽")), h("a", { class: "btn btn-ghost", href: "#/people" }, t("关系合盘 ❦", "Relationships ❦")))),
+    sectionTitle(t(`${n}扇门`, `${results.length} doors`), t("点击回到任意一种体系", "Go back to any system")),
     reveal(
       h(
         "div",
@@ -207,6 +217,6 @@ export function renderSummary(view: HTMLElement) {
         ),
       ),
     ),
-    h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: "#/hub" }, "← 回到星盘"), h("a", { class: "btn btn-primary", href: "#/new" }, "为另一个人推演 ✦")),
+    h("div", { class: "end-actions" }, h("a", { class: "btn btn-ghost", href: "#/hub" }, t("← 回到星盘", "← Back to the chart")), h("a", { class: "btn btn-primary", href: "#/new" }, t("为另一个人推演 ✦", "Cast another chart ✦"))),
   );
 }

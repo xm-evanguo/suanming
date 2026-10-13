@@ -1,3 +1,5 @@
+import { RELATIONSHIP_NUMBER_EN, HELP_BRINGS_EN } from "./en/compat-numerology";
+import { live } from "../i18n";
 /**
  * Life path compatibility. Master numbers 11, 22, 33 are paired by their base number (2, 4, 6).
  * Pythagorean-style writers group the numbers into three natural families; the cross-family lists below
@@ -48,7 +50,7 @@ export function pairKind(a: number, b: number): PairKind {
 export const PAIR_SCORE: Record<PairKind, number> = { same: 72, family: 82, complement: 68, friction: 40, neutral: 55 };
 
 /** What the sum of the two life paths (the relationship number) points to. */
-export const RELATIONSHIP_NUMBER: Record<number, string> = {
+const RELATIONSHIP_NUMBER_ZH: Record<number, string> = {
   1: "共同开创一件事",
   2: "彼此配合、互相倾听",
   3: "一起表达、一起玩",
@@ -61,7 +63,7 @@ export const RELATIONSHIP_NUMBER: Record<number, string> = {
 };
 
 /** What a person with this life path typically brings as help. */
-export const HELP_BRINGS: Record<number, { career: string; general: string }> = {
+const HELP_BRINGS_ZH: Record<number, { career: string; general: string }> = {
   1: { career: "敢带你往前冲，帮你把犹豫的事变成行动", general: "推你开始行动" },
   2: { career: "擅长牵线协调，能把你引进合适的圈子", general: "耐心倾听、从中调解" },
   3: { career: "擅长表达和人脉，能帮你把想法说出去", general: "带来轻松的气氛和灵感" },
@@ -72,3 +74,6 @@ export const HELP_BRINGS: Record<number, { career: string; general: string }> = 
   8: { career: "有管理和资源方面的经验，能为你指路", general: "帮你把目标变成成果" },
   9: { career: "格局大、人脉广，能让你看到更长远的方向", general: "宽厚包容、带你看大局" },
 };
+
+export const RELATIONSHIP_NUMBER = live(RELATIONSHIP_NUMBER_ZH, RELATIONSHIP_NUMBER_EN);
+export const HELP_BRINGS = live(HELP_BRINGS_ZH, HELP_BRINGS_EN);
