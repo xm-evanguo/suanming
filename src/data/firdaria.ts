@@ -1,3 +1,5 @@
+import { NODE_INFO_EN, SUB_SCENE_EN, TASK_EN } from "./en/firdaria";
+import { live } from "../i18n";
 import type { Trad } from "./hellenistic";
 import type { Scores } from "./types";
 
@@ -30,7 +32,7 @@ export interface NodeInfo {
   care: string[];
 }
 
-export const NODE_INFO: Record<NodeKey, NodeInfo> = {
+const NODE_INFO_ZH: Record<NodeKey, NodeInfo> = {
   northNode: {
     zh: "北交点", glyph: "☊︎", kw: ["成长", "机缘", "陌生领域"], plainKw: "新机会和成长",
     stage: "走出舒适圈、遇到新人新机会的阶段",
@@ -50,7 +52,7 @@ export const NODE_INFO: Record<NodeKey, NodeInfo> = {
 };
 
 /** Scene hints for the sub-period line, keyed by planet. Fits after "这一小段里，". */
-export const SUB_SCENE: Record<FirPlanet, string> = {
+const SUB_SCENE_ZH: Record<FirPlanet, string> = {
   sun: "你会更想被看见，适合主动汇报成果、争取更重要的角色。",
   moon: "家人和情绪的事会占掉不少心思，适合陪伴家人、调整作息。",
   mercury: "沟通、学习和文书事务变多，适合考试、写方案、谈细节。",
@@ -63,7 +65,7 @@ export const SUB_SCENE: Record<FirPlanet, string> = {
 };
 
 /** Short phrase for each period's "main task". Fits "这段时间的功课是…". */
-export const TASK: Record<FirPlanet, string> = {
+const TASK_ZH: Record<FirPlanet, string> = {
   sun: "把自己的价值亮出来，并为此负责",
   moon: "照顾好身体、情绪和身边最亲的人",
   mercury: "多学、多问、把话说清楚",
@@ -74,3 +76,7 @@ export const TASK: Record<FirPlanet, string> = {
   northNode: "走向陌生处，接受新的可能",
   southNode: "放下过多的旧东西，轻装前行",
 };
+
+export const NODE_INFO = live(NODE_INFO_ZH, NODE_INFO_EN);
+export const SUB_SCENE = live(SUB_SCENE_ZH, SUB_SCENE_EN);
+export const TASK = live(TASK_ZH, TASK_EN);

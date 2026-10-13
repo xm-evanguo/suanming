@@ -2,8 +2,12 @@ import * as Astro from "astronomy-engine";
 import { type Chart, DAY_MS, norm360, tzOffsetMinutes } from "../core/chart";
 import { DECAN_FLAVOR, FACE_START, FACE_TECH, TRIO_TEXT, WEEK_HISTORY } from "../data/chaldean";
 import { CHALDEAN_ORDER, TRAD_INFO, type Trad, WEEKDAY_RULER, WEEKDAY_ZH } from "../data/hellenistic";
+import { signName as signEn } from "../data/en/terms";
+import { WEEK_HISTORY_EN } from "../data/en/chaldean";
 import { ZODIAC } from "../data/zodiac";
+import { capFirst, isEn, listJoin } from "../i18n";
 import { pick } from "./hellenistic";
+import { methodName } from "./names";
 import { type MethodFn, mixScores, UNKNOWN_TIME_NOTE } from "./types";
 
 /** Ruler of a Chaldean face (decan) for an ecliptic longitude. Aries 0-10 is Mars. */
@@ -137,6 +141,99 @@ export const chaldean: MethodFn<ChaldeanVisual> = (chart) => {
   const set = localHM(st.sunset.getTime(), tz);
 
   const unk = known ? "" : "（你没有填出生时间，这一项只能当参考）";
+  if (isEn()) {
+    const signN = signEn(sign.name);
+    const decanWord = ["first", "second", "third"][decanNo - 1]!;
+    const hourWordEn = hr.isDay ? "Day" : "Night";
+    const unkEn = known ? "" : " (You did not enter a birth time, so this item is a rough guide only.)";
+    const first = D.dayText.split(", ")[0]!;
+    const trioNames = [`day ruler ${D.zh}`, ...(known ? [`hour ruler ${H.zh}`] : []), `face ruler ${F.zh}`];
+    const trioTextEn = `${nB > nM ? TRIO_TEXT.soft : nM > nB ? TRIO_TEXT.hard : TRIO_TEXT.even}${repeated ? ` ${TRIO_TEXT.repeat}` : ""}`;
+    return {
+      id: "chaldean",
+      name: methodName("chaldean"),
+      intro: "The seven-planet system passed down in ancient Rome, which gave the days of the week their names. Every day, every hour and every 10 degrees where the Sun sits is watched over in turn by the seven classical planets.",
+      origin: "古罗马",
+      icon: D.glyph,
+      headline: `${wdName} · day of ${D.zh}${known ? ` · hour of ${H.zh}` : ""} · Sun in ${signN}, decan ${decanNo}`,
+      tagline: D.title.split("·")[1]!.trim(),
+      keywords: [`Day of ${D.zh}`, ...(known ? [`Hour of ${H.zh}`] : []), `Face of ${F.zh}`, ...D.kw.slice(0, 2)],
+      scores,
+      element: D.wx,
+      lucky: {
+        colors: [...new Set([...D.colors, ...F.colors.slice(0, 1)])],
+        numbers: [...new Set([...D.numbers, ...F.numbers])],
+        directions: [...new Set([D.dir, F.dir])],
+      },
+      facts: [
+        { label: "Birth weekday", value: `${wdName} (the planetary day counts from sunrise)` },
+        { label: "Day ruler", value: `${D.glyph} ${D.zh}` },
+        { label: "Sunrise / sunset", value: `${rise} / ${set}${st.estimated ? " (estimated, polar)" : ""}` },
+        { label: "Planetary hour", value: `${hourWordEn} hour ${hourNo} · ${hr.ruler === dayRuler ? "same as the day ruler · " : ""}${H.glyph} ${H.zh}${known ? "" : " (time unknown, rough guide only)"}` },
+        { label: "Decan of the Sun", value: `${signN} ${decanNo}/3 · ${F.glyph} Face of ${F.zh}` },
+      ],
+      sections: [
+        {
+          title: `Day ruler · ${D.zh}`,
+          body: `A planetary day starts at sunrise, not at midnight. The planetary day you were born on is ${wdName}, and its ruler is ${D.zh} (${listJoin(D.kw)}). ${D.zh} days suit ${D.dayText}. ${st.estimated ? "At your latitude there is no ordinary sunrise or sunset on this day, so the day is counted from 06:00 local time." : `Sunrise that day was at ${rise} and sunset at ${set}.`}`,
+        },
+        {
+          title: `Planetary hour · ${hourWordEn.toLowerCase()} hour ${hourNo}`,
+          body: `The time from sunrise to sunset is split evenly into 12 day hours, and the time from sunset to the next sunrise into 12 night hours, so a summer day hour is longer than a winter one. The first hour belongs to the day ruler, and the rest follow the Chaldean order: Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon. You were born in the hour ${localHM(hr.start.getTime(), tz)}–${localHM(hr.end.getTime(), tz)}, ruled by ${H.zh} (${listJoin(H.kw)}). Hours like this suit ${H.hourText}.${unkEn}`,
+        },
+        {
+          title: `Decan of the Sun · Face of ${F.zh}`,
+          body: `Every 10 degrees of the ecliptic is a \"Face\", 36 in all; the first Face from the start of Aries belongs to Mars, and the rest follow the Chaldean order. Your Sun is in the ${decanWord} 10 degrees of ${signN}, ruled by ${F.zh}. ${FACE_TECH[decanRuler]}.`,
+        },
+        { title: "The three planets together", body: `${capFirst(listJoin(trioNames))}. ${trioTextEn}` },
+        { title: "Where the seven-day week comes from", body: WEEK_HISTORY_EN },
+      ],
+      plain: {
+        summary: `You were born on a ${wdName}, which the ancient Romans said was watched over by ${D.zh} (governs ${D.plainKw}). ${known ? `The hour you were born in was ruled by ${H.zh}, and your` : "Your"} Sun sign also carries a touch of ${F.zh}. Put these planets together and you have your most basic temperament.`,
+        sections: [
+          { title: "The planet of your birth day", body: `${D.zh} rules ${wdName}, so there is a bit of \"${D.plainKw}\" in you. Treat every ${wdName} as your home turf: it suits ${D.dayText}.` },
+          {
+            title: "The planet of your birth moment",
+            body: known
+              ? `The hour you were born in was ruled by ${H.zh} (governs ${H.plainKw}). Hours of ${H.zh} suit ${H.hourText}; if you want to do something like that, try these slots. ${hr.ruler === dayRuler ? `It is also the same planet as the ruler of your birth day, so the character of ${D.zh} shows more strongly in you.` : ""}`.trim()
+              : `Without a birth time we cannot tell which planet ruled the hour you were born in. The part about your day ruler, ${D.zh}, still holds; to see this part, ask your family for your birth time.`,
+          },
+          { title: "Whose flavour your Sun carries", body: DECAN_FLAVOR[decanRuler] },
+          { title: "The three planets together", body: trioTextEn },
+          {
+            title: "A small habit to try now",
+            body: `Every ${wdName}, ${pick([`put the most important thing of the week on this day: ${first}.`, `set aside a short stretch of time for ${first}.`, `this day suits ${first}; you can take the other days a little easier.`], weekday + decanIndex)}`,
+          },
+        ],
+      },
+      caveats: [
+        ...(known ? [] : [UNKNOWN_TIME_NOTE(), "The planetary day and the decan of the Sun are not affected, but the planetary hour depends on the birth time, so treat it as a rough guide."]),
+        "The planetary day counts from local sunrise: anyone born before sunrise belongs to the previous day. Sunrise and sunset use the geometric horizon and standard atmospheric refraction (no altitude).",
+        "The decan of the Sun uses the Chaldean Faces: Aries 0–10° is Mars, then the cycle runs Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon.",
+      ],
+      visual: {
+        dayRuler,
+        weekday,
+        hours: hours.map((x) => ({
+          index: x.index,
+          isDay: x.isDay,
+          ruler: x.ruler,
+          start: localHM(x.start.getTime(), tz),
+          end: localHM(x.end.getTime(), tz),
+          f0: frac(x.start.getTime()),
+          f1: frac(x.end.getTime()),
+        })),
+        birthHour,
+        birthFrac: Math.max(0, Math.min(1, frac(t))),
+        sunrise: rise,
+        sunset: set,
+        decan: { index: decanIndex, number: decanNo, sign: sunSign, ruler: decanRuler },
+        unknownTime: !known,
+        estimated: st.estimated,
+      },
+    };
+  }
+
   return {
     id: "chaldean",
     name: "迦勒底七曜",

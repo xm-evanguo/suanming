@@ -20,9 +20,12 @@ import {
   TRAD_INFO,
   type Trad,
 } from "../data/hellenistic";
+import { signName as signEn } from "../data/en/terms";
 import { ZODIAC } from "../data/zodiac";
+import { isEn, lcFirst, listJoin, sep } from "../i18n";
 import { degInSign, signOf } from "./astrology";
-import { type MethodFn, mixScores, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
+import { methodName } from "./names";
+import { type MethodFn, mixScores, plainTitles, shiftScores, UNKNOWN_TIME_NOTE } from "./types";
 
 export const TRAD_KEYS: Trad[] = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn"];
 
@@ -144,14 +147,18 @@ export function houseAction(house: number, tone: StrengthTone, seed: number): st
   const H = houseInfo(house);
   if (tone === "good") return pick(H.good, seed);
   if (tone === "bad") return pick(H.care, seed);
-  return `${pick(H.good, seed)}同时，${pick(H.care, seed + 1)}`;
+  return isEn() ? `${pick(H.good, seed)} At the same time, ${lcFirst(pick(H.care, seed + 1))}` : `${pick(H.good, seed)}同时，${pick(H.care, seed + 1)}`;
 }
 
-const signName = (i: number) => ZODIAC[i]!.name;
+const signName = (i: number) => signEn(ZODIAC[i]!.name);
+
+/** A house topic without its traditional-name part ("..., the place of Good Fortune"). */
+export const shortTopic = (topic: string) => topic.replace(/[，;].*$/, "");
 
 /** One-line technical description of a planet's natal condition. */
 export function conditionLine(p: Trad, n: Natal): string {
   const pos = n.planets[p];
+  if (isEn()) return `${TRAD_INFO[p].zh} in ${signName(pos.sign)} ${degInSign(pos.lon)} (${DIGNITY_NAME[pos.dignity]}), in house ${pos.house} "${shortTopic(HOUSES[pos.house - 1]!.topic)}"${pos.retro ? ", retrograde" : ""}`;
   return `${TRAD_INFO[p].zh}落${signName(pos.sign)}${degInSign(pos.lon)}（${DIGNITY_NAME[pos.dignity]}），位于第${pos.house}宫「${HOUSES[pos.house - 1]!.topic.replace(/，.*$/, "")}」${pos.retro ? "，逆行" : ""}`;
 }
 
@@ -271,6 +278,110 @@ export function buildHellenistic(chart: Chart, now: Date): ReturnType<MethodFn<H
       },
     ],
   };
+
+  if (isEn()) {
+    const dg = (p: Trad) => DIGNITY_NAME[n.planets[p].dignity];
+    const topicOf = (h: number) => houseOf(h).topic;
+    const ascN = signName(n.ascSign);
+    const plainStateEn = (p: Trad) => stateText(p, toneOfScore(placeScore(p, n)));
+    const venusTone = toneOfScore(placeScore("venus", n));
+    const moonTone = toneOfScore(placeScore("moon", n));
+    const mPos = n.planets[malefic];
+    return {
+      id: "hellenistic",
+      name: methodName("hellenistic"),
+      intro: "Astrology as it took shape in Alexandria around the turn of the era: whole-sign houses, day and night charts (sect), the Lots of Fortune and Spirit, the seven traditional planets and annual profections, used to read a whole life and each year of it.",
+      origin: "古希腊",
+      icon: "⚹︎",
+      headline: `${sect.name} · ${ascN} rising · chart ruler ${R.zh}${known ? "" : " (time unknown)"}`,
+      tagline: `${R.title}, watched over by ${B.zh}`,
+      keywords: [sect.name, `Chart ruler ${R.zh}`, ...R.kw.slice(0, 2), `Lot of Fortune in house ${F.house}`],
+      scores,
+      element: R.wx,
+      lucky: {
+        colors: [...R.colors, ...B.colors.slice(0, 1)],
+        numbers: [...new Set([...R.numbers, ...B.numbers])],
+        directions: [...new Set([R.dir, B.dir])],
+      },
+      facts: [
+        { label: "Day or night chart", value: `${sect.name} (Sun altitude ${n.sunAlt.toFixed(1)}°)` },
+        { label: "Ascendant (ASC)", value: known ? `${ascN} ${degInSign(n.asc)}` : "Needs a birth time" },
+        { label: "Chart ruler", value: `${R.glyph} ${R.zh} · house ${rulerPos.house} · ${dg(ruler)}` },
+        { label: "Lot of Fortune", value: `${fmtPos(F.lon)} · house ${F.house}` },
+        { label: "Lot of Spirit", value: `${fmtPos(S.lon)} · house ${S.house}` },
+        { label: "Benefic of the sect", value: `${B.glyph} ${B.zh} · ${signName(n.planets[benefic].sign)} · house ${n.planets[benefic].house}` },
+        { label: "Malefic contrary to the sect", value: `${M.glyph} ${M.zh} · ${signName(mPos.sign)} · house ${mPos.house}` },
+        { label: `This year's profection (age ${age})`, value: `House ${prof.house} · Lord of the Year ${L.zh}` },
+      ],
+      sections: [
+        {
+          title: `Chart ruler and sect · ${sect.name}`,
+          body: `${sect.text} The Ascendant is in ${ascN} ${degInSign(n.asc)}, and in whole-sign houses that entire sign is house 1. The ruler of the rising sign, ${R.zh}, is your Chart Ruler. It sits in ${fmtPos(rulerPos.lon)}, in house ${rulerPos.house} (${topicOf(rulerPos.house)}), dignity: ${dg(ruler)}. The chart ruler's condition is the engine of the whole chart: ${R.zh} ${stateText(ruler, rulerTone)}. The main light, ${TRAD_INFO[sect.light].zh}, sits in house ${lightPos.house} (${topicOf(lightPos.house)}), dignity: ${dg(sect.light)}.`,
+        },
+        {
+          title: `Lot of Fortune · body, health and luck · ${fmtPos(F.lon)}`,
+          body: `${LOT_TEXT.fortune.meaning} Formula for a ${n.day ? "day" : "night"} chart: ${n.day ? "Ascendant + Moon − Sun" : "Ascendant + Sun − Moon"}. Your Lot of Fortune falls in ${fmtPos(F.lon)}, house ${F.house} (${topicOf(F.house)}). ${FORTUNE_IN_HOUSE[F.house - 1]} The Lot's ruler, ${TRAD_INFO[F.ruler].zh}, is in house ${n.planets[F.ruler].house}, dignity: ${dg(F.ruler)}, and its condition decides whether the good fortune lands smoothly.`,
+        },
+        {
+          title: `Lot of Spirit · mind, ambition and work · ${fmtPos(S.lon)}`,
+          body: `${LOT_TEXT.spirit.meaning} Its formula is the reverse of the Lot of Fortune: ${n.day ? "Ascendant + Sun − Moon" : "Ascendant + Moon − Sun"}. Your Lot of Spirit falls in ${fmtPos(S.lon)}, house ${S.house} (${topicOf(S.house)}). ${SPIRIT_IN_HOUSE[S.house - 1]} The Lot's ruler, ${TRAD_INFO[S.ruler].zh}, is in house ${n.planets[S.ruler].house}, dignity: ${dg(S.ruler)}.`,
+        },
+        {
+          title: "Benefic and malefic",
+          body: `Benefic of the sect: ${conditionLine(benefic, n)}. ${B.zh} ${stateText(benefic, beneficTone)}. Malefic contrary to the sect: ${conditionLine(malefic, n)}. ${M.zh} ${stateText(malefic, maleficTone)}. Traditionally the benefic of the sect is your greatest help, while the contrary malefic is where you need a little more patience; when they sit in good places and hold dignity, the difficulty is softened.`,
+        },
+        {
+          title: `This year's profection · house ${prof.house}`,
+          body: `You are ${age} now. In an annual profection the Ascendant moves forward one sign every year: at ${age} it lands on ${signName(prof.sign)}, your house ${prof.house} (${topicOf(prof.house)}). The ruler of that sign, ${L.zh}, is the Lord of the Year. ${conditionLine(prof.lord, n)}. ${L.zh} ${stateText(prof.lord, lordTone)}. The profection changes at each birthday and repeats in a 12-year cycle.`,
+        },
+      ],
+      plain: {
+        summary: `${known ? "" : "You did not enter a birth time, so the parts below about areas of life are a rough guide only. "}You were born ${n.day ? "with the Sun above the horizon, a \"day birth\"" : "with the Sun below the horizon, a \"night birth\""}. The ancient Greeks held that what drives you forward is ${R.zh} (governs ${R.plainKw}), which ${stateText(ruler, rulerTone)}. The planet that looks after you most is ${B.zh}, and the one that needs a little more patience is ${M.zh}.`,
+        sections: [
+          {
+            title: plainTitles().who,
+            body: `When people first meet you, they tend to feel something of "${asc.title}" in you: ${listJoin(asc.keywords.slice(0, 3))}. What really pushes from behind is ${R.zh} (governs ${R.plainKw}), which ${stateText(ruler, rulerTone)}. It leans toward the area of "${houseOf(rulerPos.house).plainTopic}", so that is where your energy often goes.`,
+          },
+          {
+            title: "Directions that suit you",
+            body: `${SPIRIT_PLAIN[S.house - 1]} ${pick(["If you want to try, practise on a small project first and add more once you have results.", "You do not have to switch careers all at once; start by making a small piece of work in your spare time.", "Find a senior in this field and listen to the road they have walked."], S.house + n.ascSign)}`,
+          },
+          {
+            title: plainTitles().love,
+            body: `Your love life and your taste are led by Venus, which ${plainStateEn("venus")}. It sits in the area of "${houseOf(venusPos.house).plainTopic}", so that is where you fall for things most easily and put in the most. ${venusTone === "bad" ? pick(houseOf(venusPos.house).care, venusPos.sign) : pick(houseOf(venusPos.house).good, venusPos.sign)}`,
+          },
+          {
+            title: "Your body and luck",
+            body: `${FORTUNE_PLAIN[F.house - 1]} The Moon governs your mood and sleep, and it ${plainStateEn("moon")}. ${moonTone === "good" ? "Keeping your current routine is just right." : "Going to bed at the same time every night does more for you than any supplement."}`,
+          },
+          {
+            title: "Worth watching",
+            body: `${M.zh} (governs ${M.plainKw}) is the planet that needs a little more patience from you, and it ${stateText(malefic, maleficTone)}. It sits in the area of "${houseOf(mPos.house).plainTopic}", so if something comes up there, ${lcFirst(pick(houseOf(mPos.house).care, mPos.house + 3))}`,
+          },
+        ],
+      },
+      caveats: [
+        ...(known ? [] : [UNKNOWN_TIME_NOTE(), "The Ascendant, houses and both Lots depend on the birth time, so treat them as a rough guide if it is unknown."]),
+        "Houses are whole-sign: the entire sign of the Ascendant is house 1. Dignity counts only domicile, exaltation, detriment and fall (\"peregrine\" means none of these); triplicity, terms and decans are not counted.",
+        "A day or night chart is decided by the geometric altitude of the Sun's centre (above the horizon is a day chart). The Lord of the Year is worked out from the age you have reached, and changes at each birthday.",
+        "This page uses only the seven classical planets; Uranus, Neptune and Pluto are not part of Hellenistic astrology.",
+      ],
+      visual: {
+        asc: n.asc,
+        ascSign: n.ascSign,
+        day: n.day,
+        sunAlt: n.sunAlt,
+        planets: TRAD_KEYS.map((k) => n.planets[k]),
+        lots: n.lots,
+        profection: { age, ...prof },
+        chartRuler: ruler,
+        sectLight: sect.light,
+        benefic,
+        malefic,
+        unknownTime: !known,
+      },
+    };
+  }
 
   return {
     id: "hellenistic",
