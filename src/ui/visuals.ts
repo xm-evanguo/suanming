@@ -363,21 +363,21 @@ function astrology(r: MethodResult<AstrologyVisual>): HTMLElement {
   const table = h(
     "table",
     { class: "planet-table" },
-    h("tbody", null, ...v.planets.map((p) => h("tr", null, h("td", null, PLANETS[p.key].glyph), h("td", null, PLANETS[p.key].zh), h("td", null, `${ZODIAC[p.sign]!.name} ${Math.floor(p.lon % 30)}°`), h("td", null, `第${p.house}宫`), h("td", null, p.retro ? "℞ 逆行" : "")))),
+    h("tbody", null, ...v.planets.map((p) => h("tr", null, h("td", null, PLANETS[p.key].glyph), h("td", null, PLANETS[p.key].zh), h("td", null, `${ZODIAC[p.sign]!.name} ${Math.floor(p.lon % 30)}°`), h("td", null, t(`第${p.house}宫`, `House ${p.house}`)), h("td", null, p.retro ? t("℞ 逆行", "℞ retrograde") : "")))),
   );
   const total = Object.values(v.elements).reduce((a, b) => a + b, 0) || 1;
   const els = h(
     "div",
     { class: "wx-bars" },
     ...Object.entries(v.elements).map(([k, n], i) =>
-      h("div", { class: "wx-bar", style: { "--v": `${(n / total) * 100}%`, "--c": EL_COLOR[k], "--i": i } as never }, h("b", null, k), h("div", { class: "track" }, h("i")), h("span", null, String(n))),
+      h("div", { class: "wx-bar", style: { "--v": `${(n / total) * 100}%`, "--c": EL_COLOR[k], "--i": i } as never }, h("b", null, isEn() ? ({ 火: "Fire", 土: "Earth", 风: "Air", 水: "Water" } as Record<string, string>)[k] ?? k : k), h("div", { class: "track" }, h("i")), h("span", null, String(n))),
     ),
   );
   return h(
     "div",
     { class: "v-astro" },
-    h("div", { class: "v-row" }, wheel, h("div", null, h("h4", null, "行星位置（整宫制）"), table, h("h4", null, "四元素"), els)),
-    caption("蓝线为和谐相位（三分、六分），红线为紧张相位（刑、冲），金线为合相。"),
+    h("div", { class: "v-row" }, wheel, h("div", null, h("h4", null, t("行星位置（整宫制）", "Planet positions (whole-sign houses)")), table, h("h4", null, t("四元素", "Four elements")), els)),
+    caption(t("蓝线为和谐相位（三分、六分），红线为紧张相位（刑、冲），金线为合相。", "Blue lines are harmonious aspects (trine, sextile), red lines are tense aspects (square, opposition), and gold lines are conjunctions.")),
   );
 }
 

@@ -1,7 +1,9 @@
+import { PLAIN_PLANET_EN, PLAIN_ASPECT_EN, PLAIN_WEST_LACK_EN } from "./en/plain-astrology";
+import { live } from "../i18n";
 import type { AspectKey } from "./planets";
 
 /** Plain-language tables for the 西洋占星 page. Key names match `PlanetKey` in `core/chart.ts`. */
-export const PLAIN_PLANET: Record<string, string> = {
+const PLAIN_PLANET_ZH: Record<string, string> = {
   sun: "核心的自己",
   moon: "情绪和安全感",
   mercury: "思考和说话方式",
@@ -15,7 +17,7 @@ export const PLAIN_PLANET: Record<string, string> = {
 };
 
 /** How two planets in an aspect act on each other, in everyday words. */
-export const PLAIN_ASPECT: Record<AspectKey, string> = {
+const PLAIN_ASPECT_ZH: Record<AspectKey, string> = {
   conjunction: "叠在一起，会互相放大，这两块在你身上特别明显",
   sextile: "互相帮忙，只要你主动用，就会变成实在的机会",
   square: "有点互相拉扯，会让你焦虑，也会逼你行动、变强",
@@ -24,9 +26,13 @@ export const PLAIN_ASPECT: Record<AspectKey, string> = {
 };
 
 /** Advice for the weakest of the four western elements. */
-export const PLAIN_WEST_LACK: Record<string, string> = {
+const PLAIN_WEST_LACK_ZH: Record<string, string> = {
   火: "你身上“行动和热情”的部分相对少一点，想做的事可以先迈出最小的一步，别等到完全准备好。",
   土: "你身上“务实和耐心”的部分相对少一点，可以用清单、预算和固定习惯，帮自己把想法落到地上。",
   风: "你身上“思考和沟通”的部分相对少一点，重要的事多说出口、多问几句，别让对方猜。",
   水: "你身上“感受和共情”的部分相对少一点，可以多留意身边人的情绪，偶尔停下来问问自己“我现在感觉怎么样”。",
 };
+
+export const PLAIN_PLANET = live(PLAIN_PLANET_ZH, PLAIN_PLANET_EN);
+export const PLAIN_ASPECT = live(PLAIN_ASPECT_ZH, PLAIN_ASPECT_EN);
+export const PLAIN_WEST_LACK = live(PLAIN_WEST_LACK_ZH, PLAIN_WEST_LACK_EN);

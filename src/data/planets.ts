@@ -1,3 +1,5 @@
+import { PLANETS_EN, ASPECTS_EN, PLANET_IN_SIGN_HINT_EN } from "./en/planets";
+import { live } from "../i18n";
 import type { Brief } from "./types";
 
 export type PlanetKey =
@@ -15,7 +17,7 @@ export type PlanetKey =
 export type AspectKey = "conjunction" | "sextile" | "square" | "trine" | "opposition";
 
 /** The ten classical and modern planets of a natal chart. */
-export const PLANETS: Record<PlanetKey, Brief & { glyph: string; zh: string }> = {
+const PLANETS_ZH: Record<PlanetKey, Brief & { glyph: string; zh: string }> = {
   sun: {
     glyph: "☉\uFE0E",
     zh: "太阳",
@@ -89,7 +91,7 @@ export const PLANETS: Record<PlanetKey, Brief & { glyph: string; zh: string }> =
 };
 
 /** The five major aspects between planets. harmony: -1 tense, 0 neutral, 1 harmonious. */
-export const ASPECTS: Record<AspectKey, Brief & { angle: number; glyph: string; harmony: number }> = {
+const ASPECTS_ZH: Record<AspectKey, Brief & { angle: number; glyph: string; harmony: number }> = {
   conjunction: {
     angle: 0,
     glyph: "☌\uFE0E",
@@ -133,8 +135,12 @@ export const ASPECTS: Record<AspectKey, Brief & { angle: number; glyph: string; 
 };
 
 /** Sentence prefix per planet. The UI appends a sign name and "的色彩。". */
-export const PLANET_IN_SIGN_HINT: Record<"mercury" | "venus" | "mars", string> = {
+const PLANET_IN_SIGN_HINT_ZH: Record<"mercury" | "venus" | "mars", string> = {
   mercury: "你的思考与表达带着",
   venus: "你的爱与审美带着",
   mars: "你的行动与冲劲带着",
 };
+
+export const PLANETS = live(PLANETS_ZH, PLANETS_EN);
+export const ASPECTS = live(ASPECTS_ZH, ASPECTS_EN);
+export const PLANET_IN_SIGN_HINT = live(PLANET_IN_SIGN_HINT_ZH, PLANET_IN_SIGN_HINT_EN);
