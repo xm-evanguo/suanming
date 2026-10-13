@@ -1,5 +1,7 @@
+import { PLAIN_NUM_LINE_EN, PLAIN_NUM_MISSING_EN } from "./en/plain-numerology";
+import { live } from "../i18n";
 /** Plain-language tables for 生命灵数. Line names match the `name` strings in `numerology.ts` (matched by their cell digits). */
-export const PLAIN_NUM_LINE: Record<string, string> = {
+const PLAIN_NUM_LINE_ZH: Record<string, string> = {
   "4-9-2": "遇到目标会咬住不放，有决心",
   "3-5-7": "直觉和悟性好，喜欢想“为什么”",
   "8-1-6": "行动力强，想到就做",
@@ -11,7 +13,7 @@ export const PLAIN_NUM_LINE: Record<string, string> = {
 };
 
 /** What a digit missing from the birth date asks you to practise. */
-export const PLAIN_NUM_MISSING: Record<string, string> = {
+const PLAIN_NUM_MISSING_ZH: Record<string, string> = {
   "1": "主动开口、表达自己的想法",
   "2": "细心体察别人的感受",
   "3": "表达创意和感受",
@@ -22,3 +24,6 @@ export const PLAIN_NUM_MISSING: Record<string, string> = {
   "8": "管理金钱和设定目标",
   "9": "放下、看大局",
 };
+
+export const PLAIN_NUM_LINE = live(PLAIN_NUM_LINE_ZH, PLAIN_NUM_LINE_EN);
+export const PLAIN_NUM_MISSING = live(PLAIN_NUM_MISSING_ZH, PLAIN_NUM_MISSING_EN);

@@ -2,7 +2,9 @@ import { digitSum } from "../core/ganzhi";
 import { LIFE_PATH, PERSONAL_YEAR } from "../data/numerology";
 import { PLAIN_NUM_LINE, PLAIN_NUM_MISSING } from "../data/plain-numerology";
 import { plainProfileSections, profileLucky, profileSections } from "./profile";
-import type { MethodFn } from "./types";
+import { plainTitles, type MethodFn } from "./types";
+import { isEn, listJoin, t } from "../i18n";
+import { methodName } from "./names";
 
 const MASTER = [11, 22, 33];
 
@@ -18,7 +20,10 @@ export function lifePath(y: number, m: number, d: number): { value: number; step
   const rd = reduce(d);
   const ry = reduce(y);
   const value = reduce(rm + rd + ry);
-  return { value, steps: `月 ${m}→${rm}，日 ${d}→${rd}，年 ${y}→${ry}；${rm}+${rd}+${ry} = ${rm + rd + ry} → ${value}` };
+  return {
+    value,
+    steps: t(`月 ${m}→${rm}，日 ${d}→${rd}，年 ${y}→${ry}；${rm}+${rd}+${ry} = ${rm + rd + ry} → ${value}`, `Month ${m}→${rm}, day ${d}→${rd}, year ${y}→${ry}; ${rm}+${rd}+${ry} = ${rm + rd + ry} → ${value}`),
+  };
 }
 
 export interface NumerologyVisual {
@@ -32,15 +37,15 @@ export interface NumerologyVisual {
 }
 
 /** Lo Shu grid lines considered “connected” when all three digits are present. */
-const LINES: { cells: number[]; name: string }[] = [
-  { cells: [4, 9, 2], name: "4-9-2 决心之线" },
-  { cells: [3, 5, 7], name: "3-5-7 灵性之线" },
-  { cells: [8, 1, 6], name: "8-1-6 行动之线" },
-  { cells: [4, 3, 8], name: "4-3-8 思维之线" },
-  { cells: [9, 5, 1], name: "9-5-1 意志之线" },
-  { cells: [2, 7, 6], name: "2-7-6 情感之线" },
-  { cells: [4, 5, 6], name: "4-5-6 富足之线" },
-  { cells: [2, 5, 8], name: "2-5-8 艺术之线" },
+const LINES: { cells: number[]; name: string; en: string }[] = [
+  { cells: [4, 9, 2], name: "4-9-2 决心之线", en: "4-9-2 line of resolve" },
+  { cells: [3, 5, 7], name: "3-5-7 灵性之线", en: "3-5-7 line of spirit" },
+  { cells: [8, 1, 6], name: "8-1-6 行动之线", en: "8-1-6 line of action" },
+  { cells: [4, 3, 8], name: "4-3-8 思维之线", en: "4-3-8 line of thought" },
+  { cells: [9, 5, 1], name: "9-5-1 意志之线", en: "9-5-1 line of will" },
+  { cells: [2, 7, 6], name: "2-7-6 情感之线", en: "2-7-6 line of feeling" },
+  { cells: [4, 5, 6], name: "4-5-6 富足之线", en: "4-5-6 line of plenty" },
+  { cells: [2, 5, 8], name: "2-5-8 艺术之线", en: "2-5-8 line of art" },
 ];
 
 export const numerology: MethodFn<NumerologyVisual> = (chart) => {
@@ -56,7 +61,7 @@ export const numerology: MethodFn<NumerologyVisual> = (chart) => {
   const grid: Record<number, number> = {};
   for (let i = 1; i <= 9; i++) grid[i] = 0;
   for (const ch of digits) if (ch !== "0") grid[Number(ch)]! += 1;
-  const lines = LINES.filter((l) => l.cells.every((c) => grid[c]! > 0)).map((l) => l.name);
+  const lines = LINES.filter((l) => l.cells.every((c) => grid[c]! > 0)).map((l) => (isEn() ? l.en : l.name));
   const missing = Object.entries(grid)
     .filter(([, v]) => v === 0)
     .map(([k]) => k);
@@ -64,6 +69,62 @@ export const numerology: MethodFn<NumerologyVisual> = (chart) => {
   const base = plainProfileSections(p, `把你出生年月日的数字一位位加起来，直到只剩一位（11、22、33除外），你得到的核心数字是 ${lp.value}，也就是「${p.title}」这一类人。`);
   const plainLines = lines.map((n) => PLAIN_NUM_LINE[n.split(" ")[0]!]).filter(Boolean);
   const plainMissing = missing.map((m) => PLAIN_NUM_MISSING[m]).filter(Boolean).slice(0, 3);
+
+  if (isEn()) {
+    const yearName = py.name.replace(/^Personal Year \d · /, "");
+    const baseEn = plainProfileSections(p, `Add up the digits of your birth date one by one until a single digit is left (11, 22 and 33 are kept). Your core number is ${lp.value}, which is the type known as \"${p.title}\".`);
+    return {
+      id: "numerology",
+      name: methodName("numerology"),
+      intro: "Number mysticism that goes back to Pythagoras: your birth date is reduced to one core number that shows your gifts and lessons in this life.",
+      origin: "西方",
+      icon: "∞",
+      headline: `Life Path ${lp.value}`,
+      tagline: p.title,
+      keywords: p.keywords,
+      scores: p.scores,
+      element: p.element,
+      lucky: profileLucky(p),
+      facts: [
+        { label: "Reduction", value: lp.steps },
+        { label: "Birthday number", value: String(birthday) },
+        { label: `Personal year ${now}`, value: `${personalYear} · ${py.name}` },
+        { label: "Lo Shu lines", value: lines.join(", ") || "No complete line" },
+      ],
+      sections: [
+        ...profileSections(p, `Number ${lp.value} · `),
+        {
+          title: "Nine-square grid",
+          body:
+            `Your birth digits ${digits} fall into the nine squares. ` +
+            (lines.length ? `They join into ${listJoin(lines.map((l) => `the ${l}`))}; this energy flows in you naturally. ` : "No complete line is formed, so your energy is spread out and flexible. ") +
+            (missing.length ? `The missing digits ${listJoin(missing)} are lessons to practise on purpose in this life.` : "All nine digits are present, which is very rare."),
+        },
+        { title: `${now} · Personal year ${personalYear} · ${yearName}`, body: py.text },
+      ],
+      plain: {
+        summary: `Your core number is ${lp.value}: \"${p.title}\". ${p.summary} For you, ${now} is the \"${yearName}\".`,
+        sections: [
+          baseEn[0]!,
+          baseEn[1]!,
+          baseEn[2]!,
+          {
+            title: "Strengths and lessons in your numbers",
+            body:
+              (plainLines.length ? `Taken together, your birth digits show that you ${plainLines.join("; ")}. ` : "Your birth digits are fairly spread out, which makes you flexible and not boxed in by one pattern. ") +
+              (plainMissing.length ? `Some digits do not appear in your birth date, which hints at things to practise, such as: ${plainMissing.join("; ")}.` : "All nine digits appear, so you are fairly balanced across the board."),
+          },
+          { title: `The rhythm of ${now}`, body: `${py.text} ${baseEn[3]!.body}` },
+          {
+            title: plainTitles().how,
+            body: "Numerology comes from the number teachings of Pythagoras in ancient Greece, which hold that numbers hide patterns of character. It reduces your birth year, month and day each to a single digit, then adds them to get one core number. It then looks at which digits appear in your birth date to see which traits are strong and which need practice.",
+          },
+        ],
+      },
+      caveats: ["Schools of numerology reduce the date in different ways. Here the month, day and year are reduced separately and then added, and the master numbers 11, 22 and 33 are kept."],
+      visual: { lifePath: lp.value, digits, grid, lines, birthday, personalYear },
+    };
+  }
 
   return {
     id: "numerology",

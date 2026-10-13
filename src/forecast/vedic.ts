@@ -2,8 +2,9 @@ import * as Astro from "astronomy-engine";
 import { DAY_MS, norm360 } from "../core/chart";
 import { buildSignal, limitSignals, type Scope } from "../data/forecast-common";
 import { GRAHA, JUPITER_GOCHARA, SADE_SATI, SUN_GOCHARA } from "../data/forecast-vedic";
-import { DASHA, lahiri, vedic } from "../methods/vedic";
-import { type Forecast, type ForecastFn, forecastPeriods, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
+import { DASHA, lahiri, lordName, vedic } from "../methods/vedic";
+import { type Forecast, type ForecastFn, forecastPeriods, MONTH_EN, type Period, type PeriodReading, periodInstant, type Signal } from "./types";
+import { isEn, lcFirst, t } from "../i18n";
 
 const YEAR = 365.25 * DAY_MS;
 const NAK_SPAN = 360 / 27;
@@ -79,7 +80,7 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
         dim: g.dim,
         tone: g.tone,
         weight: 2,
-        pro: `Vimshottari 大运：${m.lord}大运（${fmt(m.start)} 至 ${fmt(m.end)}）`,
+        pro: t(`Vimshottari 大运：${m.lord}大运（${fmt(m.start)} 至 ${fmt(m.end)}）`, `Vimshottari dasha: ${lordName(m.lord)} dasha (${fmt(m.start)} to ${fmt(m.end)})`),
         phrase: { what: g.maha },
       }),
     );
@@ -91,7 +92,12 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
       const starts = a.start > from;
       const startMonth = new Date(a.start).getUTCMonth() + 1;
       const endMonth = new Date(a.end).getUTCMonth() + 1;
-      const lead = starts ? `大约从 ${startMonth} 月起，进入新的阶段。` : a.end < to ? `大约到 ${endMonth} 月为止，` : "";
+      const lead = starts
+        ? t(`大约从 ${startMonth} 月起，进入新的阶段。`, `From about ${MONTH_EN[startMonth - 1]}, a new phase begins. `)
+        : a.end < to
+          ? t(`大约到 ${endMonth} 月为止，`, `Until about ${MONTH_EN[endMonth - 1]}, `)
+          : "";
+      const lcLead = (w: string) => (isEn() && lead.endsWith(", ") ? lcFirst(w) : w);
       out.push(
         buildSignal({
           key: key(`antar:${a.lord}`),
@@ -99,8 +105,8 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
           dim: ag.dim,
           tone: ag.tone,
           weight: a === ranked[0]!.a ? 2 : 1,
-          pro: `${m.lord}大运·${a.lord}小运（${fmt(a.start)} 至 ${fmt(a.end)}）`,
-          phrase: { what: ag.antar.map((w) => lead + w) },
+          pro: t(`${m.lord}大运·${a.lord}小运（${fmt(a.start)} 至 ${fmt(a.end)}）`, `${lordName(m.lord)} dasha · ${lordName(a.lord)} antardasha (${fmt(a.start)} to ${fmt(a.end)})`),
+          phrase: { what: ag.antar.map((w) => lead + lcLead(w)) },
         }),
       );
     }
@@ -110,15 +116,15 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
     const stage = houses.includes(1) ? "peak" : houses.includes(12) ? "rising" : houses.includes(2) ? "setting" : undefined;
     if (stage) {
       const s = SADE_SATI[stage];
-      out.push(buildSignal({ key: key("sadesati"), scope, dim: "health", tone: "mixed", weight: s.weight, pro: `${p.year} 年：${s.label}（土星距月亮星座第 ${houses.join("、")} 宫）`, phrase: s.phrase }));
+      out.push(buildSignal({ key: key("sadesati"), scope, dim: "health", tone: "mixed", weight: s.weight, pro: t(`${p.year} 年：${s.label}（土星距月亮星座第 ${houses.join("、")} 宫）`, `${p.year}: ${s.label} (Saturn in house ${houses.join(", ")} from your Moon sign)`), phrase: s.phrase }));
     }
 
     const jh = fromMoon(sidLon(Astro.Body.Jupiter, new Date(mid)), moonSign);
     const jg = JUPITER_GOCHARA[jh];
-    if (jg) out.push(buildSignal({ key: key("jupiter"), scope, dim: jg.dim, tone: jg.tone, weight: jg.weight, pro: `${p.year} 年中：木星（恒星黄道）距月亮星座第 ${jh} 宫`, phrase: jg.phrase }));
+    if (jg) out.push(buildSignal({ key: key("jupiter"), scope, dim: jg.dim, tone: jg.tone, weight: jg.weight, pro: t(`${p.year} 年中：木星（恒星黄道）距月亮星座第 ${jh} 宫`, `Mid-${p.year}: Jupiter (sidereal) in house ${jh} from your Moon sign`), phrase: jg.phrase }));
 
     const a = levels(mid).a;
-    return { period: p, label: `${m.lord}大运 · ${a.lord}小运${stage ? " · 七年半土星期" : ""}`, signals: limitSignals(out) };
+    return { period: p, label: t(`${m.lord}大运 · ${a.lord}小运${stage ? " · 七年半土星期" : ""}`, `${lordName(m.lord)} dasha · ${lordName(a.lord)} antardasha${stage ? " · Sade Sati" : ""}`), signals: limitSignals(out) };
   };
 
   const monthReading = (p: Period): PeriodReading => {
@@ -136,7 +142,7 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
     const next = changeAt && changeAt === a.end ? levels(a.end + DAY_MS).a : undefined;
     const target = next ?? a;
     const tg = GRAHA[target.lord]!;
-    const when = changeAt ? `约在 ${new Date(changeAt).getUTCDate()} 日，` : "";
+    const dayOfChange = changeAt ? new Date(changeAt).getUTCDate() : 0;
     out.push(
       buildSignal({
         key: key("antar"),
@@ -145,9 +151,18 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
         tone: tg.tone,
         weight: changeAt ? 2 : 1,
         pro: changeAt
-          ? `${m.lord}大运内小运换主：${a.lord}小运${changeAt === a.end ? `结束，进入${target.lord}小运` : "开始"}（${fmt(changeAt)}）`
-          : `${m.lord}大运·${a.lord}小运（${fmt(a.start)} 至 ${fmt(a.end)}）`,
-        phrase: { what: (changeAt ? tg.antar.map((w) => `{T}${when}换成${target.lord}主事。${w}`) : ag.antar) },
+          ? t(
+              `${m.lord}大运内小运换主：${a.lord}小运${changeAt === a.end ? `结束，进入${target.lord}小运` : "开始"}（${fmt(changeAt)}）`,
+              `Antardasha change inside the ${lordName(m.lord)} dasha: the ${lordName(a.lord)} antardasha ${changeAt === a.end ? `ends and the ${lordName(target.lord)} antardasha begins` : "begins"} (${fmt(changeAt)})`,
+            )
+          : t(`${m.lord}大运·${a.lord}小运（${fmt(a.start)} 至 ${fmt(a.end)}）`, `${lordName(m.lord)} dasha · ${lordName(a.lord)} antardasha (${fmt(a.start)} to ${fmt(a.end)})`),
+        phrase: {
+          what: changeAt
+            ? tg.antar.map((w) =>
+                isEn() ? `{T} the ${lordName(target.lord)} phase takes over around day ${dayOfChange}. ${w}` : `{T}约在 ${dayOfChange} 日，换成${target.lord}主事。${w}`,
+              )
+            : ag.antar,
+        },
       }),
     );
 
@@ -159,21 +174,24 @@ export const vedicForecast: ForecastFn = (chart, now): Forecast => {
         dim: pg.dim,
         tone: pg.tone,
         weight: 1,
-        pro: `${m.lord}大运·${a.lord}小运·${pr.lord}细运（${fmt(pr.start)} 起约 ${Math.max(1, Math.round((pr.end - pr.start) / DAY_MS))} 天）`,
+        pro: t(
+          `${m.lord}大运·${a.lord}小运·${pr.lord}细运（${fmt(pr.start)} 起约 ${Math.max(1, Math.round((pr.end - pr.start) / DAY_MS))} 天）`,
+          `${lordName(m.lord)} dasha · ${lordName(a.lord)} antardasha · ${lordName(pr.lord)} pratyantardasha (from ${fmt(pr.start)}, about ${Math.max(1, Math.round((pr.end - pr.start) / DAY_MS))} days)`,
+        ),
         phrase: { what: pg.praty },
       }),
     );
 
     const sh = fromMoon(sidLon(Astro.Body.Sun, new Date(mid)), moonSign);
     const sg = SUN_GOCHARA[sh];
-    if (sg) out.push(buildSignal({ key: key("sun"), scope, dim: sg.dim, tone: "good", weight: 1, pro: `${p.year} 年 ${p.month} 月：太阳（恒星黄道）距月亮星座第 ${sh} 宫（吉位 3、6、10、11）`, phrase: sg.phrase }));
+    if (sg) out.push(buildSignal({ key: key("sun"), scope, dim: sg.dim, tone: "good", weight: 1, pro: t(`${p.year} 年 ${p.month} 月：太阳（恒星黄道）距月亮星座第 ${sh} 宫（吉位 3、6、10、11）`, `${MONTH_EN[p.month! - 1]} ${p.year}: the Sun (sidereal) in house ${sh} from your Moon sign (good houses: 3, 6, 10, 11)`), phrase: sg.phrase }));
 
-    return { period: p, label: `${m.lord}大运 · ${(next ?? a).lord}小运 · ${pr.lord}细运`, signals: limitSignals(out) };
+    return { period: p, label: t(`${m.lord}大运 · ${(next ?? a).lord}小运 · ${pr.lord}细运`, `${lordName(m.lord)} dasha · ${lordName((next ?? a).lord)} antardasha · ${lordName(pr.lord)} pratyantardasha`), signals: limitSignals(out) };
   };
 
   return {
     years: years.map(yearReading),
     months: months.map(monthReading),
-    ...(chart.input.timeKnown ? {} : { note: "出生时间未知，月亮位置有半天左右的误差，大运交接的年份可能偏差数年，仅供参考。" }),
+    ...(chart.input.timeKnown ? {} : { note: t("出生时间未知，月亮位置有半天左右的误差，大运交接的年份可能偏差数年，仅供参考。", "The birth time is unknown, so the Moon's position is off by up to half a day, and the year a dasha changes may be off by several years. Treat this as a rough guide.") }),
   };
 };

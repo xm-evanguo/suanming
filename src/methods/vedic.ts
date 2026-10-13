@@ -3,7 +3,13 @@ import { norm360 } from "../core/chart";
 import { NAKSHATRAS, RASHI } from "../data/nakshatra";
 import { PLAIN_DASHA } from "../data/plain-vedic";
 import { plainProfileSections, profileLucky, profileSections } from "./profile";
-import { type MethodFn, UNKNOWN_TIME_NOTE } from "./types";
+import { type MethodFn, plainTitles, UNKNOWN_TIME_NOTE } from "./types";
+import { isEn, lcFirst } from "../i18n";
+import { LORD_EN } from "../data/en/nakshatra";
+import { methodName } from "./names";
+
+/** A dasha lord's name for display: the Chinese key as it is, or the English planet name. */
+export const lordName = (lord: string) => (isEn() ? (LORD_EN[lord] ?? lord) : lord);
 
 /** Lahiri (Chitrapaksha) ayanamsa, degrees. Linear model: 23.853° at J2000, 50.2788″ per year. */
 export function lahiri(date: Date): number {
@@ -66,6 +72,65 @@ export const vedic: MethodFn<VedicVisual> = (chart) => {
   const stageLine = current
     ? `你现在大约处在${current.lord}主管的人生阶段（到 ${Math.floor(current.end)} 年左右）。这个阶段的主题是${PLAIN_DASHA[current.lord] ?? ""}${next ? `之后会进入${next.lord}主管的阶段，主题是${PLAIN_DASHA[next.lord] ?? ""}` : ""}`
     : "";
+
+  if (isEn()) {
+    const stageEn = current
+      ? `You are now roughly in the life stage ruled by ${lordName(current.lord)} (until about ${Math.floor(current.end)}). The theme of this stage is ${lcFirst(PLAIN_DASHA[current.lord] ?? "")}${next ? ` After that you enter the stage ruled by ${lordName(next.lord)}, whose theme is ${lcFirst(PLAIN_DASHA[next.lord] ?? "")}` : ""}`
+      : "";
+    const baseEn = plainProfileSections(n, `Indian astrology looks at where the Moon stood in the sky when you were born. The Moon's path is split into 27 segments called \"nakshatras\" (lunar mansions). At your birth the Moon was in ${n.name}, which stands for your inner nature.`);
+    return {
+      id: "vedic",
+      name: methodName("vedic"),
+      intro: "India's Jyotish, the \"science of light\": it uses the sidereal zodiac and takes the Moon's position among the 27 lunar mansions (nakshatras) as the imprint of the soul.",
+      origin: "印度",
+      icon: "ॐ",
+      headline: `Nakshatra · ${n.name}`,
+      tagline: `Pada ${pada} · ruled by ${n.ruler}`,
+      keywords: n.keywords,
+      scores: n.scores,
+      element: n.element,
+      lucky: profileLucky(n),
+      facts: [
+        { label: "Ayanamsa", value: `${ayanamsa.toFixed(2)}° (Lahiri)` },
+        { label: "Moon (sidereal)", value: `${moonSid.toFixed(2)}° · ${rashi(moonSid)}` },
+        { label: "Sun (sidereal)", value: rashi(sunSid) },
+        { label: "Ascendant (Lagna)", value: known ? rashi(lagnaSid) : "Needs birth time" },
+        { label: "Current dasha", value: current ? `${lordName(current.lord)} dasha (until ${Math.floor(current.end)})` : "—" },
+      ],
+      sections: [
+        { title: `${n.sanskrit} · ${n.symbol}`, body: `Ruling deity: ${n.deity}. Ruling planet: ${n.ruler}. Your Moon is in pada ${pada} of this nakshatra.` },
+        ...profileSections(n),
+        {
+          title: "Moon sign (Chandra Rashi)",
+          body: `In the sidereal zodiac your Moon is in ${rashi(moonSid)} and your Sun is in ${rashi(sunSid)}. Vedic astrology sits about ${Math.round(ayanamsa)}° behind Western astrology, so your Sun sign is often one sign \"back\".`,
+        },
+        {
+          title: "Vimshottari dasha",
+          body:
+            dashas
+              .slice(0, 6)
+              .map((d) => `${lordName(d.lord)} ${Math.floor(d.start)}–${Math.floor(d.end)}`)
+              .join(", ") + (current ? `. You are now in the ${lordName(current.lord)} dasha.` : "."),
+        },
+      ],
+      plain: {
+        summary: `Your nakshatra is ${n.name}, known as \"${n.title}\". Your traits in a few words: ${n.keywords.slice(0, 3).join(", ")}.${stageEn ? ` You have now reached the life stage ruled by ${lordName(current!.lord)}.` : ""}`,
+        sections: [
+          baseEn[0]!,
+          baseEn[1]!,
+          baseEn[2]!,
+          baseEn[3]!,
+          ...(stageEn ? [{ title: "Your life stage now", body: stageEn }] : []),
+          {
+            title: plainTitles().how,
+            body: "Indian astrology uses a slightly different map of the sky from the Western one, so your sign may come out one sign off from the Western answer. It first finds which of the 27 segments the Moon was in at your birth, then follows a fixed order to work out which planet rules each stage of your life.",
+          },
+        ],
+      },
+      caveats: [...(known ? [] : [UNKNOWN_TIME_NOTE()]), "The ayanamsa is a linear Lahiri approximation, off by a few arc-minutes; near a nakshatra boundary you may fall into the neighbouring one."],
+      visual: { nakshatra, pada, moonSid, sunSid, lagnaSid, ayanamsa, dashas },
+    };
+  }
 
   return {
     id: "vedic",
