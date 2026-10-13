@@ -27,6 +27,7 @@ import { ANCIENT_VISUALS } from "./visuals-ancient";
 import { isEn, listJoin, t } from "../i18n";
 import { animalName, ganName, gzName, nayinName, shishenName, wxName, zhiName } from "../data/en/terms";
 import { taiSuiName } from "../methods/shengxiao";
+import { brightName, mutagenName, palaceName, starName } from "../data/en/ziwei-terms";
 
 // Each renderer narrows the visual payload of its own method.
 // biome-ignore lint: heterogeneous visual payloads
@@ -100,13 +101,13 @@ function ziwei(r: MethodResult<ZiweiVisual>): HTMLElement {
     return h(
       "div",
       { class: `zw-cell${p.name === "命宫" ? " soul" : ""}`, style: { gridRow: String(row), gridColumn: String(col), "--i": i } as never },
-      h("div", { class: "zw-stars" }, ...p.major.map((s) => h("b", null, s.name, s.brightness && h("small", null, s.brightness), s.mutagen && h("em", { class: `mut-${s.mutagen}` }, s.mutagen)))),
-      h("div", { class: "zw-minor" }, p.minor.slice(0, 4).join(" ")),
-      h("div", { class: "zw-foot" }, h("span", null, `${p.stem}${p.branch}`), h("b", null, p.name, p.isBody && h("em", { class: "body" }, "身")), h("small", null, p.decadal)),
+      h("div", { class: "zw-stars" }, ...p.major.map((s) => h("b", { title: isEn() && s.brightness ? brightName(s.brightness) : undefined }, starName(s.name), !isEn() && s.brightness && h("small", null, s.brightness), s.mutagen && h("em", { class: `mut-${s.mutagen}` }, mutagenName(s.mutagen))))),
+      h("div", { class: "zw-minor" }, p.minor.slice(0, 4).map(starName).join(isEn() ? " · " : " ")),
+      h("div", { class: "zw-foot" }, h("span", null, isEn() ? gzName(p.stem + p.branch) : `${p.stem}${p.branch}`), h("b", null, palaceName(p.name), p.isBody && h("em", { class: "body" }, t("身", "Body"))), h("small", null, p.decadal)),
     );
   });
-  const center = h("div", { class: "zw-center" }, h("p", { class: "zw-logo" }, "紫微斗数"), ...v.center.map((c) => h("p", null, h("small", null, c.label), " ", c.value)));
-  return h("div", { class: "v-ziwei" }, h("div", { class: "zw-grid" }, ...cells, center), caption("命宫以金色标出。“禄权科忌”为生年四化，括号内为星曜庙旺利陷。"));
+  const center = h("div", { class: "zw-center" }, h("p", { class: "zw-logo" }, t("紫微斗数", "Zi Wei Dou Shu")), ...v.center.map((c) => h("p", null, h("small", null, c.label), " ", c.value)));
+  return h("div", { class: "v-ziwei" }, h("div", { class: "zw-grid" }, ...cells, center), caption(t("命宫以金色标出。“禄权科忌”为生年四化，括号内为星曜庙旺利陷。", "The Life palace is marked in gold. Lu, Quan, Ke and Ji are the Four Transformations of the birth year. Hover over a star for its brightness.")));
 }
 
 // ───────────────────────── 称骨

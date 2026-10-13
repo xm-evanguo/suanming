@@ -1,3 +1,5 @@
+import { PLAIN_STARS_EN, PLAIN_PALACE_AREA_EN, PLAIN_MUTAGEN_EFFECT_EN } from "./en/ziwei";
+import { live } from "../i18n";
 /** Plain-language tables for the 紫微斗数 page. All text is Simplified Chinese. */
 
 export interface PlainStar {
@@ -12,7 +14,7 @@ export interface PlainStar {
   tip: string;
 }
 
-export const PLAIN_STARS: Record<string, PlainStar> = {
+const PLAIN_STARS_ZH: Record<string, PlainStar> = {
   紫微: {
     trait: "爱体面、有格局、会统筹的气质",
     who: "你有一种让人想跟随的气场，凡事想做得体面、有格局。你擅长统筹，但自尊心强，被当众否定时会很难受。",
@@ -142,7 +144,7 @@ export const PLAIN_STARS: Record<string, PlainStar> = {
 };
 
 /** The life area each palace stands for, in everyday words. */
-export const PLAIN_PALACE_AREA: Record<string, string> = {
+const PLAIN_PALACE_AREA_ZH: Record<string, string> = {
   命宫: "你的个性",
   兄弟: "兄弟姐妹和平辈朋友",
   夫妻: "感情和伴侣",
@@ -158,7 +160,7 @@ export const PLAIN_PALACE_AREA: Record<string, string> = {
 };
 
 /** What each 四化 does, as a concrete action. Used after "在X上，". `{t}` is replaced by the star's trait. */
-export const PLAIN_MUTAGEN_EFFECT: Record<"禄" | "权" | "科" | "忌", string> = {
+const PLAIN_MUTAGEN_EFFECT_ZH: Record<"禄" | "权" | "科" | "忌", string> = {
   禄: "你的{t}更容易换来机会和人缘，不妨主动把想法说出来。",
   权: "你的{t}更突出，更想自己拿主意，也愿意担责。做决定前，先听身边人说一遍。",
   科: "你容易有好口碑，遇事有人愿意帮你。该开口求助时，就开口。",
@@ -167,3 +169,7 @@ export const PLAIN_MUTAGEN_EFFECT: Record<"禄" | "权" | "科" | "忌", string>
 
 export const PLAIN_EMPTY_SOUL =
   "你的核心位置没有明显的主星，所以你的风格更多受环境和身边的人影响。这让你很有可塑性：换一个环境，你会变成不同的样子。下面的描述参考了与它相对的位置。";
+
+export const PLAIN_STARS = live(PLAIN_STARS_ZH, PLAIN_STARS_EN);
+export const PLAIN_PALACE_AREA = live(PLAIN_PALACE_AREA_ZH, PLAIN_PALACE_AREA_EN);
+export const PLAIN_MUTAGEN_EFFECT = live(PLAIN_MUTAGEN_EFFECT_ZH, PLAIN_MUTAGEN_EFFECT_EN);
