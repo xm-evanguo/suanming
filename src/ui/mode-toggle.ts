@@ -13,5 +13,17 @@ export function mountModeToggle(): (visible: boolean) => void {
   };
   sync();
   document.body.append(el);
+  // Phones show the pill at the bottom centre. CSS hides it (.tucked) while the reader scrolls down.
+  let lastY = scrollY;
+  addEventListener(
+    "scroll",
+    () => {
+      const y = scrollY;
+      if (Math.abs(y - lastY) < 8) return;
+      el.classList.toggle("tucked", y > lastY && y > 240);
+      lastY = y;
+    },
+    { passive: true },
+  );
   return (visible) => (el.hidden = !visible);
 }

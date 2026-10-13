@@ -39,7 +39,8 @@ function route() {
   const view = document.createElement("div");
   view.className = "view";
   app.replaceChildren(view);
-  view.append(h("nav", { class: "profile-nav", "aria-label": "个人设置" }, h("a", { href: "#/profile", class: "btn btn-ghost" }, "个人资料 · Profile")));
+  // The ritual has its own fixed skip button in this corner.
+  if (parts[0] !== "ritual") view.append(h("nav", { class: "profile-nav", "aria-label": "个人设置" }, h("a", { href: "#/profile", class: "btn btn-ghost" }, "个人资料 · Profile")));
   scrollTo({ top: 0 });
   showModeToggle(["hub", "m", "summary", "timeline", "people", "ask"].includes(parts[0] ?? ""));
 
