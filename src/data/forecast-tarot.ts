@@ -1,3 +1,5 @@
+import { YEAR_CARD_READINGS_EN } from "./en/forecast-tarot";
+import { live } from "../i18n";
 /**
  * Plain-language year reading for each Major Arcana card (Greer year card).
  * Each card gives a main reading and a second reading in another life area.
@@ -10,7 +12,7 @@ export interface YearCardReading {
   second: { dim: Dim; tone: Tone; plain: string };
 }
 
-export const YEAR_CARD_READINGS: YearCardReading[] = [
+const YEAR_CARD_READINGS_ZH: YearCardReading[] = [
   // 0 愚者
   {
     main: { dim: "career", tone: "good", plain: "这一年适合开新局：换赛道、开始一个副项目、去一个没去过的城市，都值得认真考虑。先迈出小小的一步，比想三个月更有用。" },
@@ -122,3 +124,5 @@ export const YEAR_CARD_READINGS: YearCardReading[] = [
     second: { dim: "wealth", tone: "good", plain: "努力有了回报，适合庆祝，也适合把收获整理成长期的安排。" },
   },
 ];
+
+export const YEAR_CARD_READINGS = live(YEAR_CARD_READINGS_ZH, YEAR_CARD_READINGS_EN);

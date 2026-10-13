@@ -1,7 +1,9 @@
 import { digitSum } from "../core/ganzhi";
 import { MAJOR_ARCANA } from "../data/tarot";
 import { plainProfileSections, profileLucky } from "./profile";
-import { type MethodFn, mixScores } from "./types";
+import { type MethodFn, mixScores, plainTitles } from "./types";
+import { isEn, lcFirst } from "../i18n";
+import { methodName } from "./names";
 
 /** Mary K. Greer's birth-card reduction: sum until ≤ 22; 22 is The Fool (0). */
 export function greerCards(sum: number): { personality: number; soul: number } {
@@ -32,7 +34,56 @@ export const tarot: MethodFn<TarotVisual> = (chart) => {
   const s = MAJOR_ARCANA[soul]!;
   const y = MAJOR_ARCANA[yearCard]!;
   const same = personality === soul;
-  const base = plainProfileSections(p, `塔罗的22张大牌里，用出生日期的数字可以找到最对应你的一张，你的是「${p.name}」。`);
+  const base = plainProfileSections(
+    p,
+    isEn() ? `Of the 22 Major Arcana, the numbers of your birth date point to the card that fits you best. Yours is \"${p.name}\".` : `塔罗的22张大牌里，用出生日期的数字可以找到最对应你的一张，你的是「${p.name}」。`,
+  );
+
+  if (isEn()) {
+    const yr = now.getFullYear();
+    return {
+      id: "tarot",
+      name: methodName("tarot"),
+      intro: "Your lifelong \"birth card\", found from the numbers of your birthday (Mary K. Greer's method). If you have a specific question, go to the Ask page and draw three cards yourself.",
+      origin: "西方",
+      icon: p.symbol,
+      headline: same ? `Birth card · ${p.name}` : `Personality card ${p.name} · Soul card ${s.name}`,
+      tagline: p.title,
+      keywords: p.keywords,
+      scores: mixScores(same ? [[p.scores, 3], [y.scores, 1]] : [[p.scores, 3], [s.scores, 1], [y.scores, 1]]),
+      element: p.element,
+      lucky: profileLucky(p),
+      facts: [
+        { label: "Birthday number sum", value: `${month} + ${day} + ${year} = ${sum}` },
+        { label: "Personality card", value: `${p.num} · ${p.name}` },
+        { label: "Soul card", value: `${s.num} · ${s.name}` },
+        { label: `${yr} Year card`, value: `${y.num} · ${y.name}` },
+      ],
+      sections: [
+        { title: `Personality card · ${p.name}`, body: `${p.birthCard} ${p.personality}` },
+        ...(same ? [] : [{ title: `Soul card · ${s.name}`, body: s.birthCard }]),
+        { title: `${yr} Year card · ${y.name}`, body: y.upright },
+        { title: "Career and love", body: `${p.career} ${p.love}` },
+        { title: "Whisper of the cards", body: p.advice },
+      ],
+      plain: {
+        summary: `By your birthday, the card that fits you best is \"${p.name}\" (${lcFirst(p.title)}). ${p.summary}${same ? "" : ` The deeper side of you matches \"${s.name}\".`}`,
+        sections: [
+          { ...base[0]!, body: `${base[0]!.body}${same ? "" : ` The deeper side of you is \"${s.name}\": ${s.birthCard}`}` },
+          base[1]!,
+          base[2]!,
+          base[3]!,
+          { title: `Your ${yr} hint`, body: `This year, the same method gives the hint card \"${y.name}\". ${y.upright}` },
+          {
+            title: plainTitles().how,
+            body: "There are 22 Major Arcana cards, numbered 0 to 21. Add up all the digits of your birth month, day and year, then add the digits again until the total is 22 or less, and that points to one card. No cards are drawn; it speaks of a theme you carry all your life.",
+          },
+        ],
+      },
+      caveats: ["The birth card and year card come from your birthday numbers, with no drawing. The three cards on the Ask page are drawn by you by hand, have nothing to do with your birth data, and do not count in the combined scores."],
+      visual: { personality, soul, yearCard, sum },
+    };
+  }
 
   return {
     id: "tarot",
