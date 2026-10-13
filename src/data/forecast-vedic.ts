@@ -1,3 +1,5 @@
+import { GRAHA_EN, SADE_SATI_EN, JUPITER_GOCHARA_EN, SUN_GOCHARA_EN } from "./en/forecast-vedic";
+import { live } from "../i18n";
 /** Plain-language texts for the 吠陀占星 (Jyotish) period forecast. Lord names match `DASHA` in methods/vedic.ts. */
 import type { Tone } from "../forecast/types";
 import type { Phrase } from "./forecast-common";
@@ -14,7 +16,7 @@ export interface GrahaText {
   praty: string[];
 }
 
-export const GRAHA: Record<string, GrahaText> = {
+const GRAHA_ZH: Record<string, GrahaText> = {
   计都: {
     dim: "wisdom",
     tone: "mixed",
@@ -134,7 +136,7 @@ export const GRAHA: Record<string, GrahaText> = {
   },
 };
 
-export const SADE_SATI: Record<"rising" | "peak" | "setting", { weight: 2 | 3; label: string; phrase: Phrase }> = {
+const SADE_SATI_ZH: Record<"rising" | "peak" | "setting", { weight: 2 | 3; label: string; phrase: Phrase }> = {
   rising: {
     weight: 2,
     label: "七年半土星期（初段）：土星行至月亮前一宫",
@@ -180,7 +182,7 @@ export const SADE_SATI: Record<"rising" | "peak" | "setting", { weight: 2 | 3; l
 };
 
 /** Jupiter's transit house counted from the natal Moon sign. */
-export const JUPITER_GOCHARA: Record<number, { dim: Dim; tone: Tone; weight: 1 | 2; phrase: Phrase }> = {
+const JUPITER_GOCHARA_ZH: Record<number, { dim: Dim; tone: Tone; weight: 1 | 2; phrase: Phrase }> = {
   2: { dim: "wealth", tone: "good", weight: 2, phrase: { what: ["{T}木星走到你月亮的第 2 宫，收入和家里的氛围偏好，容易有进账或家人带来的好消息。"] } },
   5: { dim: "love", tone: "good", weight: 2, phrase: { what: ["{T}木星走到你月亮的第 5 宫，学习、创作和感情都容易开花，也适合陪伴孩子或晚辈。"] } },
   7: { dim: "love", tone: "good", weight: 2, phrase: { what: ["{T}木星走到你月亮的第 7 宫，伴侣和合作关系变得融洽，单身的人容易遇到合适的人。"] } },
@@ -191,9 +193,14 @@ export const JUPITER_GOCHARA: Record<number, { dim: Dim; tone: Tone; weight: 1 |
 };
 
 /** The Sun's transit house counted from the natal Moon sign (good in 3, 6, 10, 11). */
-export const SUN_GOCHARA: Record<number, { dim: Dim; phrase: Phrase }> = {
+const SUN_GOCHARA_ZH: Record<number, { dim: Dim; phrase: Phrase }> = {
   3: { dim: "career", phrase: { what: ["{T}太阳走到你月亮的第 3 宫，勇气和主动性比平时强，适合主动联系、推进想拖的事。"] } },
   6: { dim: "career", phrase: { what: ["{T}太阳走到你月亮的第 6 宫，竞争和难题中你容易占上风，适合处理棘手的工作。"] } },
   10: { dim: "career", phrase: { what: ["{T}太阳走到你月亮的第 10 宫，事业上容易有成绩和曝光，适合汇报与争取机会。"] } },
   11: { dim: "wealth", phrase: { what: ["{T}太阳走到你月亮的第 11 宫，人脉与收入有好势头，适合社交和谈合作。"] } },
 };
+
+export const GRAHA = live(GRAHA_ZH, GRAHA_EN);
+export const SADE_SATI = live(SADE_SATI_ZH, SADE_SATI_EN);
+export const JUPITER_GOCHARA = live(JUPITER_GOCHARA_ZH, JUPITER_GOCHARA_EN);
+export const SUN_GOCHARA = live(SUN_GOCHARA_ZH, SUN_GOCHARA_EN);

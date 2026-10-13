@@ -19,7 +19,7 @@ import type { ShengxiaoVisual } from "../methods/shengxiao";
 import type { SukuyoVisual } from "../methods/sukuyo";
 import type { TarotVisual } from "../methods/tarot";
 import type { MethodId, MethodResult } from "../methods/types";
-import type { VedicVisual } from "../methods/vedic";
+import { lordName, type VedicVisual } from "../methods/vedic";
 import type { ZiweiVisual } from "../methods/ziwei";
 import { caption, EL_COLOR, f, polar, sector } from "./svg-geom";
 import { esc, h, svg, WX_COLOR } from "./dom";
@@ -297,14 +297,14 @@ function vedic(r: MethodResult<VedicVisual>): HTMLElement {
     ...v.dashas.map((d, i) =>
       h(
         "div",
-        { class: `dasha-seg${now >= d.start && now < d.end ? " now" : ""}`, style: { flex: String(d.end - d.start), "--i": i } as never, title: `${d.lord} ${Math.floor(d.start)}–${Math.floor(d.end)}` },
-        h("b", null, d.lord),
+        { class: `dasha-seg${now >= d.start && now < d.end ? " now" : ""}`, style: { flex: String(d.end - d.start), "--i": i } as never, title: `${lordName(d.lord)} ${Math.floor(d.start)}–${Math.floor(d.end)}` },
+        h("b", null, lordName(d.lord)),
         h("small", null, String(Math.floor(d.start))),
       ),
     ),
     h("i", { class: "dasha-now", style: { left: `${((now - span0) / (span1 - span0)) * 100}%` } }),
   );
-  return h("div", { class: "v-wheel" }, wheel, h("h4", null, "Vimshottari 大运（120 年）"), dasha, caption(`同一守护星的三个月宿以金色标出。月亮恒星黄经 ${v.moonSid.toFixed(2)}°，岁差 ${v.ayanamsa.toFixed(2)}°。`));
+  return h("div", { class: "v-wheel" }, wheel, h("h4", null, t("Vimshottari 大运（120 年）", "Vimshottari dasha (120 years)")), dasha, caption(t(`同一守护星的三个月宿以金色标出。月亮恒星黄经 ${v.moonSid.toFixed(2)}°，岁差 ${v.ayanamsa.toFixed(2)}°。`, `The three nakshatras with the same ruling planet are marked in gold. The Moon's sidereal longitude is ${v.moonSid.toFixed(2)}° and the ayanamsa is ${v.ayanamsa.toFixed(2)}°.`)));
 }
 
 // ───────────────────────── 西洋占星
@@ -439,7 +439,7 @@ function numerology(r: MethodResult<NumerologyVisual>): HTMLElement {
     { class: "v-numerology" },
     h("div", { class: "digits" }, ...[...v.digits].map((d, i) => h("span", { style: { "--i": i } as never }, d))),
     h("div", { class: "reduce" }, r.facts[0]?.value ?? ""),
-    h("div", { class: "v-row" }, h("div", { class: "lp" }, h("small", null, "生命灵数"), h("b", null, String(v.lifePath)), h("span", null, `生日数 ${v.birthday} · 流年 ${v.personalYear}`)), h("div", null, h("h4", null, "九宫格 · 连线"), grid)),
+    h("div", { class: "v-row" }, h("div", { class: "lp" }, h("small", null, t("生命灵数", "Life path")), h("b", null, String(v.lifePath)), h("span", null, t(`生日数 ${v.birthday} · 流年 ${v.personalYear}`, `Birthday ${v.birthday} · year ${v.personalYear}`))), h("div", null, h("h4", null, t("九宫格 · 连线", "Nine-square grid · lines")), grid)),
   );
 }
 
