@@ -1,7 +1,9 @@
+import { PLAIN_HEXAGRAMS_EN, PLAIN_TI_YONG_EN, PLAIN_MOVING_STAGE_EN } from "./en/meihua";
+import { live } from "../i18n";
 /** Plain-language tables for the 梅花易数 page. All text is Simplified Chinese. */
 
 /** One entry per hexagram in King Wen order (index = number - 1): what the situation feels like, then one tip. */
-export const PLAIN_HEXAGRAMS: string[] = [
+const PLAIN_HEXAGRAMS_ZH: string[] = [
   "势头向上，你有力量，也有开创的冲劲。越顺越要稳住，别因为自信满格而听不进劝。",
   "宜顺势、配合、积累。不用抢第一，跟对人、做好支持的角色，反而收获更多。",
   "万事开头难，像刚发芽的苗。先稳住基础、找几个帮手，不要急着铺大摊子。",
@@ -68,7 +70,7 @@ export const PLAIN_HEXAGRAMS: string[] = [
   "离成功只差最后一步。别急、别松，谨慎收尾，一切仍在循环中。",
 ];
 
-export const PLAIN_TI_YONG: Record<string, string> = {
+const PLAIN_TI_YONG_ZH: Record<string, string> = {
   比和: "你和所处的环境步调一致，做事顺手，不容易有拧巴的感觉。",
   用生体: "环境对你比较友好，常有人帮忙，或有机会送上门。接住就好。",
   体克用: "你能掌控局面。虽然要花一些力气，但事情最终能按你的想法落地。",
@@ -77,7 +79,7 @@ export const PLAIN_TI_YONG: Record<string, string> = {
 };
 
 /** Which stage of a situation the changing line points to (1 = first line ... 6 = top line). */
-export const PLAIN_MOVING_STAGE: string[] = [
+const PLAIN_MOVING_STAGE_ZH: string[] = [
   "刚起步的阶段",
   "要站稳脚跟的阶段",
   "面临选择的关口",
@@ -85,3 +87,7 @@ export const PLAIN_MOVING_STAGE: string[] = [
   "最有影响力的阶段",
   "接近尾声、该收一收的阶段",
 ];
+
+export const PLAIN_HEXAGRAMS = live(PLAIN_HEXAGRAMS_ZH, PLAIN_HEXAGRAMS_EN);
+export const PLAIN_TI_YONG = live(PLAIN_TI_YONG_ZH, PLAIN_TI_YONG_EN);
+export const PLAIN_MOVING_STAGE = live(PLAIN_MOVING_STAGE_ZH, PLAIN_MOVING_STAGE_EN);

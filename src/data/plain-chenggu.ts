@@ -1,3 +1,5 @@
+import { PLAIN_CHENGGU_TIERS_EN, PLAIN_CHENGGU_PARTS_EN } from "./en/chenggu";
+import { live } from "../i18n";
 /** Plain-language tables for the 称骨 page. Index matches the tier order in `chenggu.ts` (light to heavy). */
 
 export interface PlainChengguTier {
@@ -8,7 +10,7 @@ export interface PlainChengguTier {
   advice: string;
 }
 
-export const PLAIN_CHENGGU_TIERS: PlainChengguTier[] = [
+const PLAIN_CHENGGU_TIERS_ZH: PlainChengguTier[] = [
   {
     core: "按老办法算，你属于“靠自己一步步挣来”的类型，起点不一定高，但韧劲足。",
     rhythm: "年轻时可能要多靠自己，现成的依靠少一点，也因此你比同龄人更早学会扛事。越往后越稳，三四十岁以后会更从容。",
@@ -42,9 +44,12 @@ export const PLAIN_CHENGGU_TIERS: PlainChengguTier[] = [
 ];
 
 /** The four folk stages a 称骨 weight stands for (年 / 月 / 日 / 时). */
-export const PLAIN_CHENGGU_PARTS: Record<string, string> = {
+const PLAIN_CHENGGU_PARTS_ZH: Record<string, string> = {
   年: "小时候和成长环境",
   月: "青年时期",
   日: "中年时期",
   时: "晚年和晚辈的缘分",
 };
+
+export const PLAIN_CHENGGU_TIERS = live(PLAIN_CHENGGU_TIERS_ZH, PLAIN_CHENGGU_TIERS_EN);
+export const PLAIN_CHENGGU_PARTS = live(PLAIN_CHENGGU_PARTS_ZH, PLAIN_CHENGGU_PARTS_EN);

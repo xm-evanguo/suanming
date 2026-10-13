@@ -117,7 +117,7 @@ function chenggu(r: MethodResult<ChengguVisual>): HTMLElement {
   const weights = v.parts
     .map((p, i) => {
       const w = 26 + p.weight * 1.6;
-      return `<g class="weight" style="--i:${i}"><rect x="${88 + i * 34 - w / 2 + 17}" y="${208 - 18}" width="${w}" height="18" rx="4"/><text x="${88 + i * 34 + 17}" y="${208 - 5}" text-anchor="middle">${esc(fmtLiang(p.weight))}</text></g>`;
+      return `<g class="weight" style="--i:${i}"><rect x="${88 + i * 34 - w / 2 + 17}" y="${208 - 18}" width="${w}" height="18" rx="4"/><text x="${88 + i * 34 + 17}" y="${208 - 5}" text-anchor="middle">${esc(isEn() ? (p.weight / 10).toFixed(1) : fmtLiang(p.weight))}</text></g>`;
     })
     .join("");
   const scale = svg(
@@ -126,7 +126,7 @@ function chenggu(r: MethodResult<ChengguVisual>): HTMLElement {
      <g class="beam" style="--tilt:${-tilt}deg">
        <line x1="80" y1="70" x2="400" y2="70" class="bar"/><circle cx="240" cy="70" r="7" class="hub"/>
        <g class="pan"><line x1="100" y1="70" x2="70" y2="210"/><line x1="100" y1="70" x2="230" y2="210"/><path d="M60 208h180a90 20 0 0 1-180 0z"/>${weights}</g>
-       <g class="pan right"><line x1="380" y1="70" x2="330" y2="200"/><line x1="380" y1="70" x2="430" y2="200"/><path d="M320 198h120a60 16 0 0 1-120 0z"/><text x="380" y="190" text-anchor="middle" class="fate">命</text></g>
+       <g class="pan right"><line x1="380" y1="70" x2="330" y2="200"/><line x1="380" y1="70" x2="430" y2="200"/><path d="M320 198h120a60 16 0 0 1-120 0z"/><text x="380" y="190" text-anchor="middle" class="fate${isEn() ? " en" : ""}">${t("命", "fate")}</text></g>
      </g>`,
     "scale",
   );
@@ -135,9 +135,9 @@ function chenggu(r: MethodResult<ChengguVisual>): HTMLElement {
     "div",
     { class: "v-chenggu" },
     scale,
-    h("div", { class: "cg-total" }, h("small", null, "骨重合计"), h("b", null, fmtLiang(v.total))),
-    h("div", { class: "cg-gauge", style: { "--pos": `${pct}%` } as never }, h("i"), h("span", null, "二两一"), h("span", null, "七两一")),
-    caption(v.parts.map((p) => `${p.label}${p.key} ${fmtLiang(p.weight)}`).join(" ＋ ")),
+    h("div", { class: "cg-total" }, h("small", null, t("骨重合计", "Total bone weight")), h("b", null, fmtLiang(v.total))),
+    h("div", { class: "cg-gauge", style: { "--pos": `${pct}%` } as never }, h("i"), h("span", null, t("二两一", "2.1 liang")), h("span", null, t("七两一", "7.1 liang"))),
+    caption(v.parts.map((p) => (isEn() ? `${p.label} (${p.key}) ${fmtLiang(p.weight)}` : `${p.label}${p.key} ${fmtLiang(p.weight)}`)).join(" ＋ ")),
   );
 }
 
@@ -158,7 +158,7 @@ function hexagram(hx: HexView, label: string, moving: number | null, delay: numb
         .map(({ l, i }) => h("div", { class: `yao ${l ? "yang" : "yin"}${moving === i + 1 ? " moving" : ""}`, style: { "--i": i + delay } as never }, h("i"), h("i"))),
     ),
     h("b", null, hx.fullName),
-    h("span", null, `${up.symbol} ${up.nature} 上 · ${lo.symbol} ${lo.nature} 下`),
+    h("span", null, t(`${up.symbol} ${up.nature} 上 · ${lo.symbol} ${lo.nature} 下`, `${up.symbol} ${up.nature} above · ${lo.symbol} ${lo.nature} below`)),
   );
 }
 function meihua(r: MethodResult<MeihuaVisual>): HTMLElement {
@@ -167,8 +167,8 @@ function meihua(r: MethodResult<MeihuaVisual>): HTMLElement {
   return h(
     "div",
     { class: "v-meihua" },
-    h("div", { class: "hexa-row" }, hexagram(v.ben, "本卦 · 现状", v.moving, 0), h("i", { class: "arrow" }, "→"), hexagram(v.hu, "互卦 · 过程", null, 6), h("i", { class: "arrow" }, "→"), hexagram(v.bian, "变卦 · 结果", v.moving, 12)),
-    caption(`农历起卦：年支 ${n.year}、月 ${n.month}、日 ${n.day}、时支 ${n.hour}。上卦 =（年+月+日）÷ 8 取余，下卦 = 再加时数 ÷ 8 取余，动爻 = 总数 ÷ 6 取余，即第 ${v.moving} 爻（发光者）。`),
+    h("div", { class: "hexa-row" }, hexagram(v.ben, t("本卦 · 现状", "Main · now"), v.moving, 0), h("i", { class: "arrow" }, "→"), hexagram(v.hu, t("互卦 · 过程", "Inner · process"), null, 6), h("i", { class: "arrow" }, "→"), hexagram(v.bian, t("变卦 · 结果", "Changed · outcome"), v.moving, 12)),
+    caption(t(`农历起卦：年支 ${n.year}、月 ${n.month}、日 ${n.day}、时支 ${n.hour}。上卦 =（年+月+日）÷ 8 取余，下卦 = 再加时数 ÷ 8 取余，动爻 = 总数 ÷ 6 取余，即第 ${v.moving} 爻（发光者）。`, `Cast from the lunar date: year branch ${n.year}, month ${n.month}, day ${n.day}, hour branch ${n.hour}. Upper trigram = (year + month + day) mod 8; lower trigram = that plus the hour, mod 8; moving line = the total mod 6, here line ${v.moving} (the glowing one).`)),
   );
 }
 

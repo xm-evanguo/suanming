@@ -1,3 +1,5 @@
+import { HEXAGRAMS_EN, TRIGRAMS_EN } from "./en/meihua";
+import { live } from "../i18n";
 import type { Scores, WuXing } from "./types";
 
 export interface Hexagram {
@@ -21,7 +23,7 @@ export interface Hexagram {
   scores: Scores;
 }
 
-export const TRIGRAMS: Record<
+const TRIGRAMS_ZH: Record<
   string,
   { name: string; nature: string; symbol: string; element: WuXing; family: string; attr: string }
 > = {
@@ -63,7 +65,7 @@ function h(
 }
 
 /** The 64 hexagrams in King Wen order; index === num - 1. */
-export const HEXAGRAMS: Hexagram[] = [
+const HEXAGRAMS_ZH: Hexagram[] = [
   h(1, "乾", "乾为天", "乾", "乾", "元亨利贞。", "天行健，君子以自强不息。",
     "纯阳之卦，象征刚健与创始的力量。此刻你正处在向上的势头里，宜主动开拓、立志前行，但也要守正不骄，亢极则悔。",
     ["刚健", "自强", "开创", "领导"], [92, 82, 66, 84, 86]),
@@ -257,3 +259,6 @@ export const HEXAGRAMS: Hexagram[] = [
     "未济是尚未完成之象，万事皆有终而复始。离成功还有最后一步，需要慎重分辨、各归其位，别在临近终点时疏忽大意。",
     ["未竟", "循环", "审慎", "新起点"], [66, 64, 64, 70, 82]),
 ];
+
+export const HEXAGRAMS = live(HEXAGRAMS_ZH, HEXAGRAMS_EN);
+export const TRIGRAMS = live(TRIGRAMS_ZH, TRIGRAMS_EN);
